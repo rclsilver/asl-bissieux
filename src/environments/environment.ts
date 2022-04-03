@@ -9,7 +9,7 @@ const candidats: Candidat[] = [
   {
     firstName: 'John',
     lastName: 'Doe',
-    pictureUrl: 'https://fakeimg.pl/350x200/ff0000,128/000,255',
+    pictureUrl: 'assets/pictures/thomas.betrancourt.jpg',
     age: 42,
     jobTitle: 'Web Developer',
     positions: [

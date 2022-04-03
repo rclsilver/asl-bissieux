@@ -2,6 +2,7 @@
 FROM node:14.16.1-alpine as devel-stage
 WORKDIR /app
 COPY . /app/
+RUN apk update && apk add git
 RUN mkdir /tmp/node_modules && ln -s /tmp/node_modules /app/node_modules
 
 # build application (lts-alpine)

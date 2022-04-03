@@ -1,0 +1,14 @@
+<article *ngIf="candidat">
+  <img src="{{ candidat.pictureUrl }}" alt="">
+  <div class="infos">
+    <h2>{{ candidat.firstName }} {{ candidat.lastName }}</h2>
+    <dl>
+      <dt *ngIf="candidat.age">Age</dt>
+      <dd *ngIf="candidat.age">{{ candidat.age }} ans</dd>
+
+      <dt *ngIf="candidat.jobTitle">Profession</dt>
+      <dd *ngIf="candidat.jobTitle">{{ candidat.jobTitle }}</dd>
+    </dl>
+    <p class="description">{{ candidat.description }}</p>
+  </div>
+</article>

@@ -1,0 +1,9 @@
+$responsive_max_width: 530px;
+
+h1 {
+  margin-left: 1rem;
+
+  @media screen and (max-width: $responsive_max_width) {
+    font-size: 1.4em;
+  }
+}

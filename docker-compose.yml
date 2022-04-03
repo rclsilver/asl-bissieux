@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  frontend:
+    image: asl-bissieux/candidatures
+    build:
+      context: .
+      target: devel-stage
+    volumes:
+    - ${PWD}:/app
+    environment:
+      NPM_CONFIG_PREFIX: /tmp
+    command: sh -c 'npm install && npm install --only=dev && npm start'
+    ports:
+    - 4200:4200

@@ -1,0 +1,12 @@
+<header>
+  <nav>
+    <ul>
+      <li *ngFor="let position of positions">
+        <a [ngClass]="{ active: currentPosition === position }" href="{{ position }}">{{ position }}</a>
+      </li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <app-candidat-list [position]="currentPosition"></app-candidat-list>
+</main>

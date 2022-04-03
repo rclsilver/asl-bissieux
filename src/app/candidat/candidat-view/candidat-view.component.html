@@ -1,0 +1,16 @@
+<section class="candidat" *ngIf="candidat">
+  <h2>{{ candidat.firstName }} {{ candidat.lastName }}</h2>
+  <div class="content">
+    <img src="{{ candidat.pictureUrl }}" alt="">
+    <div class="infos">
+      <dl>
+        <dt class="age" *ngIf="candidat.age">Age</dt>
+        <dd class="age" *ngIf="candidat.age">{{ candidat.age }} ans</dd>
+
+        <dt class="job-title" *ngIf="candidat.jobTitle">Profession</dt>
+        <dd class="job-title" *ngIf="candidat.jobTitle">{{ candidat.jobTitle }}</dd>
+      </dl>
+      <p class="description" [innerHTML]="formatDescription(candidat.description)"></p>
+    </div>
+  </div>
+</section>

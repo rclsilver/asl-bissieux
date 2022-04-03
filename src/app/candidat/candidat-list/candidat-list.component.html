@@ -1,0 +1,3 @@
+<h1>Liste des candidats pour le poste de {{ position }}</h1>
+
+<app-candidat-view *ngFor="let candidat of candidats$ | async" [candidat]="candidat"></app-candidat-view>

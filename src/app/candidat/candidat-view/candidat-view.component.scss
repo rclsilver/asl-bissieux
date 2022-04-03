@@ -1,0 +1,53 @@
+$responsive_max_width: 768px;
+
+.candidat {
+  margin-left: 1rem;
+  margin-bottom: 2rem;
+
+  h2 {
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .content {
+    display: flex;
+
+    @media screen and (max-width: $responsive_max_width) {
+      flex-direction: column;
+    }
+
+    img {
+      width: 350px;
+
+      @media screen and (max-width: $responsive_max_width) {
+        width: calc(100% - 1rem);
+      }
+    }
+
+    .infos {
+      margin-left: 1rem;
+      margin-right: 1rem;
+
+      @media screen and (max-width: $responsive_max_width) {
+        margin-left: 0;
+      }
+
+      dt {
+        font-weight: bold;
+        text-decoration: underline;
+
+        &::after {
+          content: ' : ';
+        }
+      }
+
+      dd {
+        margin-inline-start: 0;
+      }
+
+      .description {
+        text-align: justify;
+      }
+    }
+  }
+}

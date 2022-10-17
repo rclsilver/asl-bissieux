@@ -1,5 +1,5 @@
 # development stage (lts-alpine)
-FROM node:14.16.1-alpine as devel-stage
+FROM node:current-alpine as devel-stage
 WORKDIR /app
 COPY . /app/
 RUN apk update && apk add git

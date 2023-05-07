@@ -1,4 +1,4 @@
-package server
+package auth
 
 import (
 	"fmt"
@@ -15,9 +15,9 @@ const (
 	CurrentUser = "user"
 )
 
-func (s *httpServer) requireAuthentication() func(c *gin.Context) {
+func RequireAuthentication(provider auth.AuthProvider) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		user, err := s.authProvider.Authenticate(c.Request)
+		user, err := provider.Authenticate(c.Request)
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
@@ -28,8 +28,8 @@ func (s *httpServer) requireAuthentication() func(c *gin.Context) {
 			return
 		}
 
-		if user.Level == auth.WaitingValidation {
-			c.AbortWithError(http.StatusUnauthorized, errors.NewUnauthorized(nil, "account not validated"))
+		if !user.IsActive() {
+			c.AbortWithError(http.StatusUnauthorized, errors.NewUnauthorized(nil, "account not active"))
 			return
 		}
 
@@ -38,9 +38,9 @@ func (s *httpServer) requireAuthentication() func(c *gin.Context) {
 	}
 }
 
-func (s *httpServer) requireAction(action string) func(c *gin.Context) {
+func RequireAction(action string) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		u, err := getUser(c)
+		u, err := GetUser(c)
 		if err != nil {
 			logrus.WithError(err).Errorf("unable to get user")
 			c.AbortWithError(http.StatusUnauthorized, err)
@@ -57,7 +57,8 @@ func (s *httpServer) requireAction(action string) func(c *gin.Context) {
 	}
 }
 
-func getUser(c *gin.Context) (*auth.User, error) {
+// GetUser returns the current authenticated user
+func GetUser(c *gin.Context) (*auth.User, error) {
 	cUser, _ := c.Get(CurrentUser)
 
 	u, ok := cUser.(*auth.User)
@@ -69,5 +70,5 @@ func getUser(c *gin.Context) (*auth.User, error) {
 }
 
 func UserInfos(c *gin.Context) (*auth.User, error) {
-	return getUser(c)
+	return GetUser(c)
 }

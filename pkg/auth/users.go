@@ -15,9 +15,10 @@ func init() {
 type AccessLevel int
 
 const (
-	WaitingValidation AccessLevel = 0
-	Administrator     AccessLevel = 1
-	Standard          AccessLevel = 2
+	waitingValidation AccessLevel = 0
+	administrator     AccessLevel = 1
+	standard          AccessLevel = 2
+	disabled          AccessLevel = 3
 )
 
 // User represents an user which can open a session to the application
@@ -25,22 +26,32 @@ type User struct {
 	db.Model
 
 	// Username is the username of the user
-	Username string `gorm:"uniqueIndex" json:"username"`
+	Username string `gorm:"uniqueIndex;notNull" json:"username"`
 
 	// Level is the access level defined to the user
-	Level AccessLevel `gorm:"default:0" json:"level"`
+	Level AccessLevel `gorm:"default:0;notNull" json:"level"`
 
 	// Actions are the allowed actions
 	Actions pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
 }
 
+// IsActive return true if the user is active
+func (u *User) IsActive() bool {
+	return u.Level != waitingValidation && u.Level != disabled
+}
+
+// IsAdmin return true if the user is an administrator
+func (u *User) IsAdmin() bool {
+	return u.Level == administrator
+}
+
 // Allowed tells if user is allowed to execute the action
 func (u *User) Allowed(action string) bool {
-	if u.Level == WaitingValidation {
+	if u.Level == waitingValidation || u.Level == disabled {
 		return false
 	}
 
-	if u.Level == Administrator {
+	if u.Level == administrator {
 		return true
 	}
 

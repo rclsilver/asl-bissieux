@@ -11,10 +11,8 @@ func RegisterMigration(model any) {
 }
 
 func migrate(db *gorm.DB) error {
-	for _, migration := range migrations {
-		if err := db.AutoMigrate(migration); err != nil {
-			return err
-		}
+	if err := db.AutoMigrate(migrations...); err != nil {
+		return err
 	}
 	return nil
 }

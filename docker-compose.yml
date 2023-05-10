@@ -41,6 +41,21 @@ services:
         - CMD-SHELL
         - curl --fail -k http://localhost:8080/api/mon/ping
 
+  frontend:
+    depends_on:
+      server:
+        condition: service_healthy
+    image: local/asl-bissieux-frontend
+    build:
+      context: .
+      target: frontend-devel
+    volumes:
+    - ./frontend:/app
+    working_dir: /app
+    command: su node -c 'npm install && npm install --only=dev && npm start'
+    ports:
+      - 4200
+
   swagger:
     image: swaggerapi/swagger-ui:latest
     environment:
@@ -56,65 +71,3 @@ services:
       test:
         - CMD-SHELL
         - curl --fail -k http://localhost:8080
-
-  ###########
-  # Backend #
-  ###########
-  #backend:
-  #  image: asl/people-server
-  #  build:
-  #    context: .
-  #    target: backend-devel
-  #  environment:
-  #    DEBUG: ${DEBUG:-0}
-  #    CONFIGURATION_FROM: env:CFG
-  #    CFG_SERVER: |-
-  #      {
-  #        "host": "${LISTEN_HOST:-0.0.0.0}",
-  #        "port": ${LISTEN_PORT:-8000}
-  #      }
-  #    CFG_DATABASE: |-
-  #      {
-  #        "host": "postgresql",
-  #        "port": 5432,
-  #        "user": "devel",
-  #        "pass": "devel",
-  #        "base": "devel",
-  #        "migrate": true
-  #      }
-  #  volumes:
-  #  - go-pkg:/go/pkg
-  #  - ${PWD}:/go/src/github.com/rclsilver/asl
-  #  - ${PWD}/google-credentials.json:/google-credentials.json:ro
-  #  ports:
-  #    - 8000:8000
-
-  ############
-  # Frontend #
-  ############
-  #frontend:
-  #  depends_on:
-  #    - backend
-  #  image: asl/people-frontend
-  #  build:
-  #    context: .
-  #    target: frontend-devel
-  #  volumes:
-  #  - ./frontend:/app
-  #  environment:
-  #    NPM_CONFIG_PREFIX: /tmp
-  #  command: sh -c 'npm install && npm install --only=dev && npm start'
-  #  ports:
-  #    - 4200:4200
-
-  ###########
-  # Swagger #
-  ###########
-  #swagger:
-  #  depends_on:
-  #    - backend
-  #  image: swaggerapi/swagger-ui:latest
-  #  environment:
-  #    URL: http://localhost:8000/api/spec.json
-  #  ports:
-  #    - 8888:8080

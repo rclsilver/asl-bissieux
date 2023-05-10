@@ -36,6 +36,10 @@ type getBudgetIn struct {
 
 // GetBudget get a budget
 func GetBudget(c *gin.Context, in *getBudgetIn) (*models.Budget, error) {
+	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
+		return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+	}
+
 	db := db.Connection()
 	var row models.Budget
 
@@ -542,7 +546,7 @@ func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {
 		return errors.NewUnauthorized(err, "not authenticated")
 	}
 
-	if !budget.Draft && !user.IsAdmin() {
+	if !budget.Draft && !user.Admin {
 		return errors.NewForbidden(nil, "budget cannot be modified")
 	}
 

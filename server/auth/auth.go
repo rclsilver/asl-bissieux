@@ -28,12 +28,25 @@ func RequireAuthentication(provider auth.AuthProvider) func(c *gin.Context) {
 			return
 		}
 
-		if !user.IsActive() {
+		c.Set(CurrentUser, user)
+		c.Next()
+	}
+}
+
+func RequireEnabled() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		user, err := GetUser(c)
+		if err != nil {
+			logrus.WithError(err).Errorf("unable to get user")
+			c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+
+		if !user.Enabled {
 			c.AbortWithError(http.StatusUnauthorized, errors.NewUnauthorized(nil, "account not active"))
 			return
 		}
 
-		c.Set(CurrentUser, user)
 		c.Next()
 	}
 }

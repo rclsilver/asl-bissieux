@@ -1,0 +1,5 @@
+wsh
+
+<button *ngIf="!(authenticated$ | async)" (click)="login()">Login</button>
+<button *ngIf="authenticated$ | async" (click)="refresh()">Refresh</button>
+<button *ngIf="authenticated$ | async" (click)="logout()">Logout</button>

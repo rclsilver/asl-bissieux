@@ -43,7 +43,7 @@ service:
 ingressroute:
   enabled: false
   hosts:
-    - www.asl-bissieux-chatillon.ovh
+    - www.lotissement-bissieux-chatillon.ovh
 
 ingress:
   enabled: false

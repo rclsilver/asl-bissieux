@@ -8,7 +8,7 @@ spec:
     - websecure
   routes:
   {{- range .Values.ingressroute.hosts }}
-  - match: Host(\`{{ . }}\`)
+  - match: Host(`{{ . }}`)
     kind: Rule
     services:
     - kind: Service

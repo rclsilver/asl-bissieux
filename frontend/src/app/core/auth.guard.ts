@@ -1,11 +1,13 @@
 import { CanActivateFn } from '@angular/router';
+import { AuthService } from './auth.service';
+import { inject } from '@angular/core';
 
 export const isAuthenticated: CanActivateFn = (route, state) => {
-  return true;
+  return inject(AuthService).active$;
 };
 
 export const isAdministrator: CanActivateFn = (route, state) => {
-  return true;
+  return inject(AuthService).administrator$;
 };
 
 /*

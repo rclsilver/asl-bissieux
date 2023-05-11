@@ -1,4 +1,7 @@
 asl-bissieux.yaml
 Dockerfile
 docker-compose.yml
+
+frontend/.angular
 frontend/node_modules
+frontend/dist

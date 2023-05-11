@@ -22,8 +22,7 @@ FROM frontend-base as frontend-build
 WORKDIR /app
 COPY frontend /app/
 RUN npm install && \
-    npm run-script build && \
-    rm -rf /app/node_modules
+    npm run-script build
 
 
 ############################
@@ -41,9 +40,8 @@ ENTRYPOINT ["go", "run", "main.go"]
 FROM server-base as server-build
 WORKDIR /go/src/github.com/rclsilver/asl-bissieux
 COPY . /go/src/github.com/rclsilver/asl-bissieux
-COPY --from=frontend-build /app/dist/asl-bissieux/* /app/frontend/dist/asl-bissieux
-RUN make asl-bissieux && \
-    du -hs /go
+COPY --from=frontend-build /app/dist/asl-bissieux /go/src/github.com/rclsilver/asl-bissieux/frontend/dist/asl-bissieux
+RUN make asl-bissieux
 
 
 #####################

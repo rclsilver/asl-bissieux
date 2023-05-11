@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "asl-bissieux.fullname" . }}
+  labels:
+    {{- include "asl-bissieux.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "asl-bissieux.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "asl-bissieux.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "asl-bissieux.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default `latest` }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [ server ]
+          env:
+            - name: APP_DB_DIALECT
+              value: "postgresql"
+            - name: APP_DB_HOST
+              value: "{{ .Values.postgresql.hostname | default `asl-bissieux-postgresql` }}"
+            - name: APP_DB_PORT
+              value: "{{ .Values.postgresql.port | default `5432` }}"
+            - name: APP_DB_USERNAME
+              value: "{{ .Values.postgresql.user | default `asl-bissieux` }}"
+            - name: APP_DB_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.postgresql.existingSecret }}"
+                  key: database
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.postgresql.existingSecret }}"
+                  key: password
+            - name: APP_DB_TIME_ZONE
+              value: "{{ .Values.postgresql.timezone | default `UTC` }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/mon/ping
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/mon/ping
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

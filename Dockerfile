@@ -52,6 +52,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY --from=server-build /go/src/github.com/rclsilver/asl-bissieux/asl-bissieux /app/asl-bissieux
+COPY --from=server-build /go/src/github.com/rclsilver/asl-bissieux/asl-bissieux.yaml /app/asl-bissieux.yaml
 
 EXPOSE 8080
 

@@ -53,6 +53,8 @@ spec:
                   key: password
             - name: APP_DB_TIME_ZONE
               value: "{{ .Values.postgresql.timezone | default `UTC` }}"
+            - name: APP_AUTH_GOOGLE_CLIENT_ID
+              value: "{{ .Values.auth.client_id }}"
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

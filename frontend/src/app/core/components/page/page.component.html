@@ -1,0 +1,32 @@
+<mat-toolbar id="top-menu" color="primary">
+  <button mat-icon-button type="button" aria-label="Toggle sidenav" (click)="drawer.toggle()" *ngIf="isHandset$ | async">
+    <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+  </button>
+  <span>ASL Bissieux</span>
+  <span class="spacer"></span>
+  <asl-google-signin-button *ngIf="!(authenticated$ | async)" type="standard" size="medium" theme="outline" shape="rectangular"></asl-google-signin-button>
+  <span style="vertical-align:middle" *ngIf="user$ | async as user">{{ user.username }}</span>
+  <button mat-icon-button *ngIf="authenticated$ | async" type="button" aria-label="Logout" (click)="logout()">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(authenticated$ | async) && (isHandset$ | async) === false">
+    <mat-nav-list id="left-menu">
+      <ng-container *ngFor="let link of links">
+        <a mat-list-item *ngIf="link.allowed$ | async" [routerLink]="link.path" routerLinkActive="active">
+          <span mat-list-icon class="fa fa-{{ link.icon }}"></span>
+          <span mat-line>{{ link.label }}</span>
+        </a>
+      </ng-container>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content class="main-container">
+    <div *ngIf="authenticated$ | async">
+      <router-outlet></router-outlet>
+    </div>
+    <div *ngIf="!(authenticated$ | async)">
+      need to login
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

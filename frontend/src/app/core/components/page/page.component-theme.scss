@@ -1,0 +1,11 @@
+@use 'sass:map';
+@use "@angular/material" as mat;
+
+@mixin page-component-theme($theme) {
+  $color-config: mat.get-color-config($theme);
+  $primary:      map.get($color-config, 'primary');
+
+  #left-menu > a.active {
+    background-color: mat.get-color-from-palette($primary, 0.4);
+  }
+}

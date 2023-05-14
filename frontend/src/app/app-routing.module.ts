@@ -1,16 +1,11 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component';
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-  },
-  {
-    path: 'home',
-    component: HomeComponent,
+    loadChildren: () =>
+      import('./core/core.module').then((mod) => mod.CoreModule),
   },
   {
     path: 'budgets',
@@ -18,13 +13,19 @@ const routes: Routes = [
       import('./budgets/budgets.module').then((mod) => mod.BudgetsModule),
   },
   {
+    path: 'units',
+    loadChildren: () =>
+      import('./units/units.module').then((mod) => mod.UnitsModule),
+  },
+  {
+    path: 'members',
+    loadChildren: () =>
+      import('./members/members.module').then((mod) => mod.MembersModule),
+  },
+  {
     path: 'users',
     loadChildren: () =>
       import('./users/users.module').then((mod) => mod.UsersModule),
-  },
-  {
-    path: '**',
-    redirectTo: 'home',
   },
 ];
 

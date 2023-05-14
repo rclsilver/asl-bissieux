@@ -19,8 +19,15 @@ type Budget struct {
 	Label string `json:"label" gorm:"notNull"`
 	Draft bool   `json:"draft" gorm:"notNull;default:true"`
 
-	Expenses    []*Expense    `json:"expenses,omitempty"`
-	Cotisations []*Cotisation `json:"cotisations,omitempty"`
+	Expenses    []*Expense    `json:"-"`
+	Cotisations []*Cotisation `json:"-"`
+}
+
+type BudgetResult struct {
+	Budget
+
+	Amount float64 `json:"amount"`
+	Paid   float64 `json:"paid"`
 }
 
 func NewBudget(label string) *Budget {
@@ -29,16 +36,6 @@ func NewBudget(label string) *Budget {
 	}
 
 	return b
-}
-
-func (b *Budget) TotalAmount() float64 {
-	var res float64 = 0
-
-	for _, e := range b.Expenses {
-		res += e.Amount
-	}
-
-	return res
 }
 
 // TableName give to gorm the table name to use
@@ -83,6 +80,12 @@ type Cotisation struct {
 	Unit   *Unit  `json:"unit,omitempty" gorm:"notNull;references:ID"`
 
 	Amount float64 `json:"amount" gorm:"notNull"`
+}
+
+type CotisationResult struct {
+	Cotisation
+
+	Paid float64 `json:"paid"`
 }
 
 func NewCotisation(budgetID, unitID string, amount float64) *Cotisation {

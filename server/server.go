@@ -170,6 +170,11 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteBudgetAction), tonic.Handler(handlers.DeleteBudget, http.StatusNoContent))
 
+		budgetGroup.GET(":budget_id/expenses", []fizz.OperationOption{
+			fizz.Summary("Get the expenses"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListExpenses, http.StatusOK))
+
 		budgetGroup.POST(":budget_id/expenses", []fizz.OperationOption{
 			fizz.Summary("Create an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -185,10 +190,10 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteExpenseAction), tonic.Handler(handlers.DeleteExpense, http.StatusNoContent))
 
-		budgetGroup.GET(":budget_id/cotisations/:cotisation_id", []fizz.OperationOption{
-			fizz.Summary("Get a cotisation"),
+		budgetGroup.GET(":budget_id/cotisations", []fizz.OperationOption{
+			fizz.Summary("Get the cotisations"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
-		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetCotisation, http.StatusOK))
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListCotisations, http.StatusOK))
 
 		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/payments", []fizz.OperationOption{
 			fizz.Summary("Create a payment"),

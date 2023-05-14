@@ -1,8 +1,0 @@
-<button *ngIf="!(authenticated$ | async)" class="btn btn-sm btn-outline-primary" href="#" (click)="login()">Login</button>
-<span *ngIf="user$ | async as user" class="me-1">
-  <span *ngIf="(active$ | async) && (administrator$ | async)">[A]</span>
-  <span *ngIf="(active$ | async) && !(administrator$ | async)">[a]</span>
-  <span *ngIf="!(active$ | async)">[D]</span>
-  {{ user.username }}
-</span>
-<button *ngIf="authenticated$ | async" type="button" class="btn btn-sm btn-outline-danger" (click)="logout()">Logout</button>

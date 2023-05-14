@@ -26,7 +26,7 @@ type User struct {
 
 // Allowed tells if user is allowed to execute the action
 func (u *User) Allowed(action string) bool {
-	if u.Enabled {
+	if !u.Enabled {
 		return false
 	}
 

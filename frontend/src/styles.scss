@@ -1,2 +1,68 @@
-@import "~@fortawesome/fontawesome-free/css/all.min.css";
-@import "~bootstrap/dist/css/bootstrap.min.css";
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use "@angular/material" as mat;
+
+// Reset all CSS rules using normalize
+@import "~normalize.css";
+
+// Plus imports for other components in your app.
+@import "app/core/core.theme.scss";
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// Define dark theme
+$app-primary: mat.define-palette(mat.$blue-palette);
+$app-accent: mat.define-palette(mat.$grey-palette, A200, A100, A400);
+$app-warn: mat.define-palette(mat.$red-palette);
+
+$dark-theme: mat.define-dark-theme(
+  (
+    color: (
+      primary: $app-primary,
+      accent: $app-accent,
+      warn: $app-warn,
+    ),
+    typography: mat.define-typography-config(),
+    density: 0,
+  )
+);
+
+// Define light theme
+$light-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $app-primary,
+      accent: $app-accent,
+      warn: $app-warn,
+    ),
+  )
+);
+
+// Apply the dark theem by default
+@include mat.core-theme($dark-theme);
+@include mat.all-component-themes($dark-theme);
+@include core-theme($dark-theme);
+
+// Apply the light theme only when the user prefers light themes.
+@media (prefers-color-scheme: light) {
+  @include mat.core-color($light-theme);
+  @include mat.all-component-colors($light-theme);
+  @include core-theme($light-theme);
+}
+
+// Common styles
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}

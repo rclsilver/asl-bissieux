@@ -1,0 +1,6 @@
+@import "@angular/material";
+@import "./components/page/page.component-theme.scss";
+
+@mixin core-theme($theme) {
+  @include page-component-theme($theme);
+}

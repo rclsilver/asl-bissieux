@@ -8,8 +8,8 @@ import (
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
+	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 	"github.com/rclsilver/asl-bissieux/server/auth"
@@ -18,13 +18,10 @@ import (
 type listBudgetsIn struct{}
 
 // ListBudgets returns the list of the budgets
-func ListBudgets(c *gin.Context, in *listBudgetsIn) ([]*models.Budget, error) {
-	db := db.Connection()
-
-	var result []*models.Budget
-	if err := db.Preload(clause.Associations).Find(&result).Error; err != nil {
+func ListBudgets(c *gin.Context, in *listBudgetsIn) ([]*models.BudgetResult, error) {
+	result, err := controllers.ListBudgets(db.Connection())
+	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budgets")
-		return nil, err
 	}
 
 	return result, nil
@@ -35,23 +32,16 @@ type getBudgetIn struct {
 }
 
 // GetBudget get a budget
-func GetBudget(c *gin.Context, in *getBudgetIn) (*models.Budget, error) {
-	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
-		return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-	}
-
-	db := db.Connection()
-	var row models.Budget
-
-	if err := db.Preload(clause.Associations).Where("id = ?", in.BudgetID).First(&row).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+func GetBudget(c *gin.Context, in *getBudgetIn) (*models.BudgetResult, error) {
+	budget, err := controllers.GetBudget(db.Connection(), in.BudgetID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
 		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
 		return nil, err
 	}
 
-	return &row, nil
+	return budget, nil
 }
 
 type createBudgetIn struct {
@@ -87,7 +77,7 @@ const (
 )
 
 // UpdateBudget update a budget
-func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.Budget, error) {
+func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.BudgetResult, error) {
 	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
 		return nil, err
 	}
@@ -115,7 +105,15 @@ func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.Budget, error) {
 	}
 	logrus.WithContext(c.Request.Context()).Error("budget %s updated", row.ID)
 
-	return &row, nil
+	budget, err := controllers.GetBudget(db, in.BudgetID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
+		}
+		return nil, err
+	}
+
+	return budget, nil
 }
 
 const (
@@ -178,11 +176,7 @@ type publishBudgetIn struct {
 }
 
 // PublishBudget publish a budget
-func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) {
-	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
-		return nil, err
-	}
-
+func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, error) {
 	db := db.Connection().Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
@@ -191,17 +185,16 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) 
 	defer db.Rollback()
 
 	// load the budget
-	var row models.Budget
-	if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", in.BudgetID).Preload("Expenses").First(&row).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+	budget, err := controllers.GetBudget(db, in.BudgetID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
 		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
 		return nil, err
 	}
 
 	// check the permissions
-	if err := checkBudgetPermission(c, &row); err != nil {
+	if err := checkBudgetPermission(c, &budget.Budget); err != nil {
 		return nil, errors.NewForbidden(err, "")
 	}
 
@@ -219,8 +212,7 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) 
 	}
 
 	// create cotisations
-	totalAmount := row.TotalAmount()
-	shareAmount := totalAmount / sharesCount
+	shareAmount := budget.Amount / sharesCount
 
 	for _, u := range units {
 		amount := shareAmount * float64(u.Share)
@@ -229,7 +221,7 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) 
 			continue
 		}
 
-		cotisation := models.NewCotisation(row.ID, u.ID, amount)
+		cotisation := models.NewCotisation(budget.ID, u.ID, amount)
 
 		if err := db.Save(cotisation).Error; err != nil {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create cotisation")
@@ -238,9 +230,17 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) 
 	}
 
 	// update the budget row
-	row.Draft = false
-	if err := db.Save(&row).Error; err != nil {
+	budget.Budget.Draft = false
+	if err := db.Save(&budget.Budget).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to save budget")
+		return nil, err
+	}
+
+	budget, err = controllers.GetBudget(db, in.BudgetID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
+		}
 		return nil, err
 	}
 
@@ -249,7 +249,21 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.Budget, error) 
 		return nil, err
 	}
 
-	return &row, nil
+	return budget, nil
+}
+
+type listExpensesIn struct {
+	BudgetID string `path:"budget_id"`
+}
+
+// ListExpenses returns the list of the expenses of a budget
+func ListExpenses(c *gin.Context, in *listExpensesIn) ([]*models.Expense, error) {
+	result, err := controllers.ListExpenses(db.Connection(), in.BudgetID)
+	if err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
+	}
+
+	return result, nil
 }
 
 type createExpenseIn struct {
@@ -397,25 +411,18 @@ func DeleteExpense(c *gin.Context, in *deleteExpenseIn) error {
 	return nil
 }
 
-type getCotisationIn struct {
-	BudgetID     string `path:"budget_id"`
-	CotisationID string `path:"cotisation_id"`
+type listCotisationsIn struct {
+	BudgetID string `path:"budget_id"`
 }
 
-// GetCotisation get a cotisation
-func GetCotisation(c *gin.Context, in *getCotisationIn) (*models.Cotisation, error) {
-	db := db.Connection()
-	var row models.Cotisation
-
-	if err := db.Preload(clause.Associations).Where("id = ? AND budget_id = ?", in.CotisationID, in.BudgetID).First(&row).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("cotisation %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisation")
-		return nil, err
+// ListBudgets returns the list of the cotisations of a budget
+func ListCotisations(c *gin.Context, in *listCotisationsIn) ([]*models.CotisationResult, error) {
+	result, err := controllers.ListCotisations(db.Connection(), in.BudgetID)
+	if err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
 	}
 
-	return &row, nil
+	return result, nil
 }
 
 const (

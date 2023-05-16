@@ -195,6 +195,11 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListCotisations, http.StatusOK))
 
+		budgetGroup.GET(":budget_id/cotisations/:cotisation_id/payments", []fizz.OperationOption{
+			fizz.Summary("Get the payments"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListPayments, http.StatusOK))
+
 		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/payments", []fizz.OperationOption{
 			fizz.Summary("Create a payment"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -204,6 +209,11 @@ func (s *httpServer) Build() error {
 			fizz.Summary("Update a payment"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdatePaymentAction), tonic.Handler(handlers.UpdatePayment, http.StatusOK))
+
+		budgetGroup.DELETE(":budget_id/cotisations/:cotisation_id/payments/:payment_id", []fizz.OperationOption{
+			fizz.Summary("Delete a payment"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeletePaymentAction), tonic.Handler(handlers.DeletePayment, http.StatusNoContent))
 	}
 
 	router.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{

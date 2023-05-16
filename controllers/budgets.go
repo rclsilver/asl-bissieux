@@ -117,10 +117,38 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 	if err := tx.
 		Model(&models.Cotisation{}).
 		Preload("Unit").
-		Preload("Payments.User").
 		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS payments ON payments.cotisation_id = cotisation.id", paymentsAmounts).
 		Find(&result, "cotisation.budget_id = ?", budget.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func ListPayments(tx *gorm.DB, budgetID, cotisationID string) ([]*models.Payment, error) {
+	if err := validateUUID(budgetID); err != nil {
+		return nil, errors.NewNotFound(nil, fmt.Sprintf("cotisation %q not found", cotisationID))
+	}
+
+	if err := validateUUID(cotisationID); err != nil {
+		return nil, errors.NewNotFound(nil, fmt.Sprintf("cotisation %q not found", cotisationID))
+	}
+
+	var cotisation models.Cotisation
+
+	if err := tx.First(&cotisation, "id = ? AND budget_id = ?", cotisationID, budgetID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("cotisation %q not found", cotisationID))
+		}
+		return nil, err
+	}
+
+	var result []*models.Payment
+
+	if err := tx.
+		Preload("User").
+		Find(&result, "cotisation_id = ?", cotisation.ID).Error; err != nil {
 		return nil, err
 	}
 

@@ -1,7 +1,7 @@
 import { Routes, RouterModule } from '@angular/router';
-import { ListBudgetsComponent } from './components/list-budgets/list-budgets.component';
+import { BudgetListComponent } from './components/budget-list/budget-list.component';
 import { isAuthenticated } from '../core/guards/auth.guard';
-import { ViewBudgetComponent } from './components/view-budget/view-budget.component';
+import { BudgetDetailsComponent } from './components/budget-details/budget-details.component';
 
 let routes: Routes = [
   {
@@ -11,11 +11,11 @@ let routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        component: ListBudgetsComponent,
+        component: BudgetListComponent,
       },
       {
         path: ':id',
-        component: ViewBudgetComponent,
+        component: BudgetDetailsComponent,
       },
     ],
   },

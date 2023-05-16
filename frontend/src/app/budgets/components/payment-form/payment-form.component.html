@@ -1,0 +1,37 @@
+<h1 mat-dialog-title>
+  <ng-container *ngIf="!data.payment">Create payment</ng-container>
+  <ng-container *ngIf="data.payment">Update payment</ng-container>
+</h1>
+<form [formGroup]="form" (submit)="submit()">
+  <div mat-dialog-content class="content">
+    <mat-form-field appearance="fill">
+      <mat-label>Comment</mat-label>
+      <input matInput formControlName="comment" [required]="true">
+      <mat-error *ngIf="form.controls['comment'].touched && form.controls['comment'].invalid">
+        <span *ngIf="form.controls['comment'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['comment'].errors!['server']">{{ form.controls['comment'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Amount</mat-label>
+      <input matInput type="number" formControlName="amount" [required]="true">
+      <mat-error *ngIf="form.controls['amount'].touched && form.controls['amount'].invalid">
+        <span *ngIf="form.controls['amount'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['amount'].errors!['server']">{{ form.controls['amount'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Date</mat-label>
+      <input matInput type="date" formControlName="date" [required]="true">
+      <mat-error *ngIf="form.controls['date'].touched && form.controls['date'].invalid">
+        <span *ngIf="form.controls['date'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['date'].errors!['server']">{{ form.controls['date'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
+    <div class="spacer"></div>
+    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+  </div>
+</form>

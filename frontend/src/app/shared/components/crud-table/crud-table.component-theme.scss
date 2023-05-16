@@ -1,0 +1,22 @@
+@use 'sass:map';
+@use "@angular/material" as mat;
+
+@mixin crud-table-component-theme($theme) {
+  $color-config: mat.get-color-config($theme);
+  $background: map.get($color-config, 'background');
+  $warn: map.get($color-config, 'warn');
+
+  app-crud-table {
+    .error {
+      color: mat.get-color-from-palette($warn);
+    }
+
+    tbody tr:hover {
+      background-color: mat.get-color-from-palette($background, 'focused-button') !important;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: mat.get-color-from-palette($background, 'hover');
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { Routes, RouterModule } from '@angular/router';
 import { isAdministrator } from '../core/guards/auth.guard';
-import { ListUsersComponent } from './list-users/list-users.component';
+import { ListUsersComponent } from './components/list-users/list-users.component';
 
 let routes: Routes = [
   {

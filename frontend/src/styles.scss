@@ -7,6 +7,7 @@
 
 // Plus imports for other components in your app.
 @import "app/core/core.theme.scss";
+@import "app/shared/shared.theme.scss";
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
@@ -45,12 +46,14 @@ $light-theme: mat.define-light-theme(
 @include mat.core-theme($dark-theme);
 @include mat.all-component-themes($dark-theme);
 @include core-theme($dark-theme);
+@include shared-theme($dark-theme);
 
 // Apply the light theme only when the user prefers light themes.
 @media (prefers-color-scheme: light) {
   @include mat.core-color($light-theme);
   @include mat.all-component-colors($light-theme);
   @include core-theme($light-theme);
+  @include shared-theme($light-theme);
 }
 
 // Common styles

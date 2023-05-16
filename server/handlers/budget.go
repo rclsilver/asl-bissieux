@@ -415,11 +415,26 @@ type listCotisationsIn struct {
 	BudgetID string `path:"budget_id"`
 }
 
-// ListBudgets returns the list of the cotisations of a budget
+// ListCotisations returns the list of the cotisations of a budget
 func ListCotisations(c *gin.Context, in *listCotisationsIn) ([]*models.CotisationResult, error) {
 	result, err := controllers.ListCotisations(db.Connection(), in.BudgetID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
+	}
+
+	return result, nil
+}
+
+type listPaymentsIn struct {
+	BudgetID     string `path:"budget_id"`
+	CotisationID string `path:"cotisation_id"`
+}
+
+// ListPayments returns the list of the payments of a cotisation
+func ListPayments(c *gin.Context, in *listPaymentsIn) ([]*models.Payment, error) {
+	result, err := controllers.ListPayments(db.Connection(), in.BudgetID, in.CotisationID)
+	if err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get payments")
 	}
 
 	return result, nil
@@ -433,9 +448,9 @@ type createPaymentIn struct {
 	BudgetID     string `path:"budget_id"`
 	CotisationID string `path:"cotisation_id"`
 
-	Type    models.PaymentType `json:"type" binding:"required"`
-	Amount  float64            `json:"amount" binding:"required"`
-	Comment string             `json:"comment"`
+	Date    time.Time `json:"date" binding:"required"`
+	Amount  float64   `json:"amount" binding:"required"`
+	Comment string    `json:"comment"`
 }
 
 // CreatePayment create a payment
@@ -469,7 +484,7 @@ func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	payment := models.NewPayment(cotisation.ID, user.ID, time.Now(), in.Type, in.Amount, in.Comment)
+	payment := models.NewPayment(cotisation.ID, user.ID, in.Date, in.Amount, in.Comment)
 	if err := db.Save(payment).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create payment")
 		return nil, err
@@ -521,7 +536,9 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 	}
 
 	var payment models.Payment
-	if err := db.Where("id = ? AND cotisation_id = ? AND cotisation.budget_id = ?", in.PaymentID, in.CotisationID, in.BudgetID).First(&payment).Error; err != nil {
+	if err := db.
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		First(&payment, "payment.id = ? AND payment.cotisation_id = ? AND cotisation.budget_id = ?", in.PaymentID, in.CotisationID, in.BudgetID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("payment %q not found", in.CotisationID))
 		}
@@ -529,7 +546,7 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	payment.Type = in.Type
+	payment.Date = in.Date
 	payment.Amount = in.Amount
 	payment.Comment = in.Comment
 
@@ -545,6 +562,61 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 	}
 
 	return &payment, nil
+}
+
+const (
+	DeletePaymentAction = "budget.DeletePayment"
+)
+
+type deletePaymentIn struct {
+	BudgetID     string `path:"budget_id"`
+	CotisationID string `path:"cotisation_id"`
+	PaymentID    string `path:"payment_id"`
+}
+
+// DeletePayment update a payment
+func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
+	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
+		return err
+	}
+
+	if err := validateUUID(in.CotisationID, "invalid cotisation ID"); err != nil {
+		return err
+	}
+
+	if err := validateUUID(in.PaymentID, "invalid payment ID"); err != nil {
+		return err
+	}
+
+	db := db.Connection().Begin()
+	if db.Error != nil {
+		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
+		return db.Error
+	}
+
+	var payment models.Payment
+	if err := db.
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		First(&payment, "payment.id = ? AND payment.cotisation_id = ? AND cotisation.budget_id = ?", in.PaymentID, in.CotisationID, in.BudgetID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return errors.NewNotFound(nil, fmt.Sprintf("payment %q not found", in.CotisationID))
+		}
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get payment")
+		return err
+	}
+
+	if err := db.Delete(&payment).Error; err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete payment")
+		return err
+	}
+	logrus.WithContext(c.Request.Context()).Infof("payment %s deleted", payment.ID)
+
+	if err := db.Commit().Error; err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to commit transaction")
+		return err
+	}
+
+	return nil
 }
 
 func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {

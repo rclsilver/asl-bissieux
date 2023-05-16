@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +15,6 @@ import { GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 const material = [
   MatListModule,
   MatSidenavModule,
-  MatProgressSpinnerModule,
   MatIconModule,
   MatToolbarModule,
   MatButtonModule,

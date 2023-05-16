@@ -1,16 +1,45 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ListBudgetsComponent } from './components/list-budgets/list-budgets.component';
-import { ViewBudgetComponent } from './components/view-budget/view-budget.component';
+import { SharedModule } from '../shared/shared.module';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTableModule } from '@angular/material/table';
 import { BudgetsRouterModule } from './budgets.routes';
-import { EditBudgetComponent } from './components/edit-budget/edit-budget.component';
+import { BudgetListComponent } from './components/budget-list/budget-list.component';
+import { BudgetDetailsComponent } from './components/budget-details/budget-details.component';
+import { BudgetFormComponent } from './components/budget-form/budget-form.component';
+import { MatDialogModule } from '@angular/material/dialog';
+import { ExpenseFormComponent } from './components/expense-form/expense-form.component';
+import { PaymentListComponent } from './components/payment-list/payment-list.component';
+import { PaymentFormComponent } from './components/payment-form/payment-form.component';
 
 @NgModule({
   declarations: [
-    ListBudgetsComponent,
-    ViewBudgetComponent,
-    EditBudgetComponent,
+    BudgetListComponent,
+    BudgetDetailsComponent,
+    BudgetFormComponent,
+    ExpenseFormComponent,
+    PaymentListComponent,
+    PaymentFormComponent,
   ],
-  imports: [CommonModule, BudgetsRouterModule],
+  imports: [
+    CommonModule,
+    SharedModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatTabsModule,
+    MatTableModule,
+    BudgetsRouterModule,
+  ],
 })
 export class BudgetsModule {}

@@ -74,7 +74,7 @@ type Cotisation struct {
 	BudgetID string  `json:"budget_id" gorm:"notNull"`
 	Budget   *Budget `json:"budget,omitempty" gorm:"notNull;references:ID"`
 
-	Payments []*Payment `json:"payments,omitempty"`
+	Payments []*Payment `json:"-"`
 
 	UnitID string `json:"unit_id" gorm:"notNull"`
 	Unit   *Unit  `json:"unit,omitempty" gorm:"notNull;references:ID"`
@@ -105,12 +105,6 @@ func (Cotisation) TableName() string {
 
 type PaymentType int
 
-const (
-	Manual     PaymentType = 1
-	CreditCard PaymentType = 2
-	Check      PaymentType = 3
-)
-
 type Payment struct {
 	db.Model
 
@@ -120,18 +114,16 @@ type Payment struct {
 	UserID string     `json:"user_id" gorm:"notNull"`
 	User   *auth.User `json:"user,omitempty" gorm:"notNull;references:ID"`
 
-	Date    time.Time   `json:"date" gorm:"notNull"`
-	Type    PaymentType `json:"type" gorm:"notNull"`
-	Amount  float64     `json:"amount" gorm:"notNull"`
-	Comment string      `json:"comment"`
+	Date    time.Time `json:"date" gorm:"notNull"`
+	Amount  float64   `json:"amount" gorm:"notNull"`
+	Comment string    `json:"comment"`
 }
 
-func NewPayment(cotisationID, userID string, date time.Time, paymentType PaymentType, amount float64, comment string) *Payment {
+func NewPayment(cotisationID, userID string, date time.Time, amount float64, comment string) *Payment {
 	p := &Payment{
 		CotisationID: cotisationID,
 		UserID:       userID,
 		Date:         date,
-		Type:         paymentType,
 		Amount:       amount,
 		Comment:      comment,
 	}

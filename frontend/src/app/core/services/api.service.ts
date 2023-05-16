@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
 import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
-import { Observable, catchError, filter, map, tap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  empty,
+  filter,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 
@@ -22,13 +32,6 @@ export class ApiService {
     }).pipe(map((r) => r ?? []));
   }
 
-  createBudget(payload: APISchemas['CreateBudgetInput']) {
-    return this.request('/api/budget', {
-      method: 'post',
-      body: payload,
-    });
-  }
-
   getBudget(budgetId: string) {
     return this.request('/api/budget/{budget_id}', {
       method: 'get',
@@ -38,9 +41,35 @@ export class ApiService {
     });
   }
 
+  createBudget(payload: APISchemas['CreateBudgetInput']) {
+    return this.request('/api/budget', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  updateBudget(budgetId: string, payload: APISchemas['UpdateBudgetInput']) {
+    return this.request('/api/budget/{budget_id}', {
+      method: 'put',
+      urlParams: {
+        budget_id: budgetId,
+      },
+      body: payload,
+    });
+  }
+
   publishBudget(budgetId: string) {
     return this.request('/api/budget/{budget_id}/publish', {
       method: 'post',
+      urlParams: {
+        budget_id: budgetId,
+      },
+    });
+  }
+
+  deleteBudget(budgetId: string) {
+    return this.request('/api/budget/{budget_id}', {
+      method: 'delete',
       urlParams: {
         budget_id: budgetId,
       },
@@ -56,6 +85,41 @@ export class ApiService {
     }).pipe(map((r) => r ?? []));
   }
 
+  createExpense(budgetId: string, payload: APISchemas['CreateExpenseInput']) {
+    return this.request('/api/budget/{budget_id}/expenses', {
+      method: 'post',
+      urlParams: {
+        budget_id: budgetId,
+      },
+      body: payload,
+    });
+  }
+
+  updateExpense(
+    budgetId: string,
+    expenseId: string,
+    payload: APISchemas['UpdateExpenseInput']
+  ) {
+    return this.request('/api/budget/{budget_id}/expenses/{expense_id}', {
+      method: 'put',
+      urlParams: {
+        budget_id: budgetId,
+        expense_id: expenseId,
+      },
+      body: payload,
+    });
+  }
+
+  deleteExpense(budgetId: string, expenseId: string) {
+    return this.request('/api/budget/{budget_id}/expenses/{expense_id}', {
+      method: 'delete',
+      urlParams: {
+        budget_id: budgetId,
+        expense_id: expenseId,
+      },
+    });
+  }
+
   listCotisations(budgetId: string) {
     return this.request('/api/budget/{budget_id}/cotisations', {
       method: 'get',
@@ -63,6 +127,71 @@ export class ApiService {
         budget_id: budgetId,
       },
     }).pipe(map((r) => r ?? []));
+  }
+
+  listPayments(budgetId: string, cotisationId: string) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments',
+      {
+        method: 'get',
+        urlParams: {
+          budget_id: budgetId,
+          cotisation_id: cotisationId,
+        },
+      }
+    ).pipe(map((r) => r ?? []));
+  }
+
+  createPayment(
+    budgetId: string,
+    cotisationId: string,
+    payload: APISchemas['CreatePaymentInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments',
+      {
+        method: 'post',
+        urlParams: {
+          budget_id: budgetId,
+          cotisation_id: cotisationId,
+        },
+        body: payload,
+      }
+    );
+  }
+
+  updatePayment(
+    budgetId: string,
+    cotisationId: string,
+    paymentId: string,
+    payload: APISchemas['UpdatePaymentInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments/{payment_id}',
+      {
+        method: 'put',
+        urlParams: {
+          budget_id: budgetId,
+          cotisation_id: cotisationId,
+          payment_id: paymentId,
+        },
+        body: payload,
+      }
+    );
+  }
+
+  deletePayment(budgetId: string, cotisationId: string, paymentId: string) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments/{payment_id}',
+      {
+        method: 'delete',
+        urlParams: {
+          budget_id: budgetId,
+          cotisation_id: cotisationId,
+          payment_id: paymentId,
+        },
+      }
+    );
   }
 
   private request<
@@ -102,6 +231,7 @@ export class ApiService {
         | 'JSONP'
         | 'OPTIONS',
       uri,
+      'body' in options ? options['body'] : undefined,
       {
         params,
       }

@@ -16,6 +16,7 @@ import { environment } from 'src/environments/environment.development';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
   declarations: [AppComponent, HomeComponent],
@@ -27,6 +28,7 @@ import { AuthService } from './core/services/auth.service';
     CoreModule,
     AppRoutingModule,
     UsersModule,
+    MatDialogModule,
   ],
   providers: [
     AuthService,

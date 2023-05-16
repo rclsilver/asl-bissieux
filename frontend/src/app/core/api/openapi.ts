@@ -28,8 +28,8 @@ export type APISchemas = {
     /* Format: double */
     amount?: number;
     comment?: string;
-    /* Format: int32 */
-    type?: number;
+    /* Format: date-time */
+    date?: string;
   };
   CreateUnitInput: {
     address?: string;
@@ -68,7 +68,6 @@ export type APISchemas = {
     /* Format: date-time */
     created_at?: string;
     id?: string;
-    payments?: Array<APISchemas['ModelsPayment']>;
     unit?: APISchemas['ModelsUnit'];
     unit_id?: string;
     /* Format: date-time */
@@ -84,7 +83,6 @@ export type APISchemas = {
     id?: string;
     /* Format: double */
     paid?: number;
-    payments?: Array<APISchemas['ModelsPayment']>;
     unit?: APISchemas['ModelsUnit'];
     unit_id?: string;
     /* Format: date-time */
@@ -126,8 +124,6 @@ export type APISchemas = {
     /* Format: date-time */
     date?: string;
     id?: string;
-    /* Format: int32 */
-    type?: number;
     /* Format: date-time */
     updated_at?: string;
     user?: APISchemas['AuthUser'];
@@ -171,8 +167,8 @@ export type APISchemas = {
     /* Format: double */
     amount?: number;
     comment?: string;
-    /* Format: int32 */
-    type?: number;
+    /* Format: date-time */
+    date?: string;
   };
   UpdateUnitInput: {
     address?: string;
@@ -214,24 +210,38 @@ export type APIEndpoints = {
     requests: { method?: 'get'; urlParams: { budget_id: string } };
   };
   '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments': {
-    responses: { post: null };
-    requests: {
-      method: 'post';
-      urlParams: { budget_id: string; cotisation_id: string };
-      body: APISchemas['CreatePaymentInput'];
-    };
+    responses: { get: Array<APISchemas['ModelsPayment']>; post: null };
+    requests:
+      | {
+          method?: 'get';
+          urlParams: { budget_id: string; cotisation_id: string };
+        }
+      | {
+          method: 'post';
+          urlParams: { budget_id: string; cotisation_id: string };
+          body: APISchemas['CreatePaymentInput'];
+        };
   };
   '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments/{payment_id}': {
-    responses: { put: APISchemas['ModelsPayment'] };
-    requests: {
-      method: 'put';
-      urlParams: {
-        budget_id: string;
-        cotisation_id: string;
-        payment_id: string;
-      };
-      body: APISchemas['UpdatePaymentInput'];
-    };
+    responses: { put: APISchemas['ModelsPayment']; delete: null };
+    requests:
+      | {
+          method: 'put';
+          urlParams: {
+            budget_id: string;
+            cotisation_id: string;
+            payment_id: string;
+          };
+          body: APISchemas['UpdatePaymentInput'];
+        }
+      | {
+          method: 'delete';
+          urlParams: {
+            budget_id: string;
+            cotisation_id: string;
+            payment_id: string;
+          };
+        };
   };
   '/api/budget/{budget_id}/expenses': {
     responses: { get: Array<APISchemas['ModelsExpense']>; post: null };

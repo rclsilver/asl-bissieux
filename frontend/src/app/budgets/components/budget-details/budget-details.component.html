@@ -1,0 +1,32 @@
+<div *ngIf="budget$ | async as budget">
+  <h2>
+    <span class="title">{{ budget.label }}</span>
+    <span *ngIf="budget.draft" class="label">draft</span>
+  </h2>
+
+  <mat-tab-group>
+    <mat-tab *ngIf="cotisations$ | async as cotisations" label="Cotisations">
+      <app-crud-table
+        id="cotisations"
+        [columns]="cotisationsColumns"
+        [dataSource]="cotisations"
+        [rowActions]="cotisationsRowActions$ | async"
+      ></app-crud-table>
+    </mat-tab>
+    <mat-tab label="Expenses">
+      <app-crud-table
+        id="expenses"
+        [columns]="expensesColumns"
+        [dataSource]="expenses$ | async"
+        [canCreate]="canCreateExpense$"
+        [canEdit]="canEditExpense.bind(this)"
+        (edit)="editExpense($event)"
+        [canDelete]="canDeleteExpense.bind(this)"
+        (delete)="deleteExpense($event)"
+      ></app-crud-table>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<div *ngIf="!(budget$ | async)" class="loading">
+  <mat-progress-spinner color="primary" mode="indeterminate"></mat-progress-spinner>
+</div>

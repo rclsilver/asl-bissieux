@@ -1,0 +1,18 @@
+<h2>Budgets</h2>
+
+<app-crud-table
+  [columns]="columns"
+  [dataSource]="datasource"
+  [canCreate]="canCreate$"
+  [canEdit]="canEdit.bind(this)"
+  (edit)="edit($event)"
+  [canDelete]="canDelete.bind(this)"
+  (delete)="delete($event)"
+  [rowActions]="rowActions$ | async"
+>
+  <ng-container matColumnDef="draft">
+    <td mat-cell *matCellDef="let budget">
+      <mat-checkbox [checked]="budget.draft" disabled></mat-checkbox>
+    </td>
+  </ng-container>
+</app-crud-table>

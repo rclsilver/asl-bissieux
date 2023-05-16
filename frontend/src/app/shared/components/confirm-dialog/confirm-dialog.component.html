@@ -1,0 +1,14 @@
+<h1 mat-dialog-title>
+  {{ data.title }}
+</h1>
+<div mat-dialog-content>
+  <p class="dialog-message">{{ data.message }}</p>
+  <p *ngIf="data.force">
+    <mat-checkbox #force>Force this action</mat-checkbox>
+  </p>
+</div>
+<div mat-dialog-actions>
+  <button mat-flat-button color="accent" (click)="cancel()">Cancel</button>
+  <div class="spacer"></div>
+  <button mat-flat-button color="{{ class }}" (click)="confirm()">Confirm</button>
+</div>

@@ -1,0 +1,15 @@
+div.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h2 .label {
+  &::before {
+    content: " (";
+  }
+
+  &::after {
+    content: ")";
+  }
+}

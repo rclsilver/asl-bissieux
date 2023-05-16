@@ -1,0 +1,5 @@
+@import "./components/crud-table/crud-table.component-theme.scss";
+
+@mixin shared-theme($theme) {
+  @include crud-table-component-theme($theme);
+}

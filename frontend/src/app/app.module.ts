@@ -12,7 +12,7 @@ import {
   SocialAuthServiceConfig,
 } from '@abacritt/angularx-social-login';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { environment } from 'src/environments/environment.development';
+import { environment } from 'src/environments/environment';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';

@@ -297,6 +297,53 @@ export class ApiService {
     });
   }
 
+  listActions() {
+    return this.request('/api/auth/actions', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  listUsers() {
+    return this.request('/api/auth/users', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  getUser(userId: string) {
+    return this.request('/api/auth/users/{user_id}', {
+      method: 'get',
+      urlParams: {
+        user_id: userId,
+      },
+    });
+  }
+
+  createUser(payload: APISchemas['CreateUserInput']) {
+    return this.request('/api/auth/users', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  updateUser(userId: string, payload: APISchemas['UpdateUserInput']) {
+    return this.request('/api/auth/users/{user_id}', {
+      method: 'put',
+      urlParams: {
+        user_id: userId,
+      },
+      body: payload,
+    });
+  }
+
+  deleteUser(userId: string) {
+    return this.request('/api/auth/users/{user_id}', {
+      method: 'delete',
+      urlParams: {
+        user_id: userId,
+      },
+    });
+  }
+
   private request<
     Path extends APIPaths,
     Options extends APIRequests<Path>,

@@ -190,7 +190,7 @@ export class CrudTableComponent<T extends {}>
       return [
         columnDefs.map((c) => c.name),
         customColumnDefs.map((c) => c.name),
-        showActions ? ['actions'] : [],
+        showActions ? ['_actions_'] : [],
       ];
     }),
     map(([columns, customColumns, showActions]) => {

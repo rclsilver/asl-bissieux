@@ -67,6 +67,36 @@ func (s *httpServer) Build() error {
 			fizz.Summary("Get the current user details"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), tonic.Handler(_auth.UserInfos, http.StatusOK))
+
+		auth.GET("actions", []fizz.OperationOption{
+			fizz.Summary("Get all the registered actions"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.ListActions, http.StatusOK))
+
+		auth.GET("users", []fizz.OperationOption{
+			fizz.Summary("Get all the registered users"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.ListUsers, http.StatusOK))
+
+		auth.POST("users", []fizz.OperationOption{
+			fizz.Summary("Register a new user"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.CreateUser, http.StatusCreated))
+
+		auth.GET("users/:user_id", []fizz.OperationOption{
+			fizz.Summary("Get an existing user"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.GetUser, http.StatusOK))
+
+		auth.PUT("users/:user_id", []fizz.OperationOption{
+			fizz.Summary("Update an existing user"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.UpdateUser, http.StatusOK))
+
+		auth.DELETE("users/:user_id", []fizz.OperationOption{
+			fizz.Summary("Delete an existing user"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.DeleteUser, http.StatusNoContent))
 	}
 
 	unitGroup := router.Group("/api/unit", "03 - unit", "manages the units")

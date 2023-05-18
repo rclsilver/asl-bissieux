@@ -1,6 +1,6 @@
 import { Routes, RouterModule } from '@angular/router';
 import { isAdministrator } from '../core/guards/auth.guard';
-import { ListUsersComponent } from './components/list-users/list-users.component';
+import { UserListComponent } from './components/user-list/user-list.component';
 
 let routes: Routes = [
   {
@@ -10,7 +10,7 @@ let routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        component: ListUsersComponent,
+        component: UserListComponent,
       },
     ],
   },

@@ -33,11 +33,11 @@
   </button>
 
   <button
-    *ngIf="canCreate$ | async"
     mat-icon-button
     type="button"
     (click)="onEdit()"
     matTooltip="Create a new resource"
+    [disabled]="!(canCreate$ | async)"
   >
     <mat-icon>add</mat-icon>
   </button>
@@ -70,7 +70,7 @@
     </ng-container>
 
     <!-- Action column definition -->
-    <ng-container matColumnDef="actions">
+    <ng-container matColumnDef="_actions_">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let row">
         <ng-container *ngIf="(showActions$ | async) || (rowActions && rowActions!.length)">
@@ -78,11 +78,11 @@
             <mat-icon>more_vert</mat-icon>
           </button>
           <mat-menu #menu="matMenu" xPosition="before">
-            <button *ngIf="canEditRow(row) | async" mat-menu-item (click)="onEdit(row)">
+            <button [disabled]="!(canEditRow(row) | async)" mat-menu-item (click)="onEdit(row)">
               <mat-icon>edit</mat-icon>
               <span>Edit</span>
             </button>
-            <button *ngIf="canDeleteRow(row) | async" mat-menu-item (click)="onDelete(row)">
+            <button [disabled]="!(canDeleteRow(row) | async)" mat-menu-item (click)="onDelete(row)">
               <mat-icon>delete</mat-icon>
               <span>Delete</span>
             </button>

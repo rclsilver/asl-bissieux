@@ -38,6 +38,12 @@ export type APISchemas = {
     /* Format: int32 */
     share?: number;
   };
+  CreateUserInput: {
+    actions?: Array<string>;
+    admin?: boolean;
+    enabled?: boolean;
+    username?: string;
+  };
   ModelsBudget: {
     /* Format: date-time */
     created_at?: string;
@@ -177,12 +183,43 @@ export type APISchemas = {
     /* Format: int32 */
     share?: number;
   };
+  UpdateUserInput: {
+    actions?: Array<string>;
+    admin?: boolean;
+    enabled?: boolean;
+    username?: string;
+  };
 };
 
 export type APIEndpoints = {
+  '/api/auth/actions': {
+    responses: { get: Array<string> };
+    requests: { method?: 'get' };
+  };
   '/api/auth/me': {
     responses: { get: APISchemas['AuthUser'] };
     requests: { method?: 'get' };
+  };
+  '/api/auth/users': {
+    responses: { get: Array<APISchemas['AuthUser']>; post: null };
+    requests:
+      | { method?: 'get' }
+      | { method: 'post'; body: APISchemas['CreateUserInput'] };
+  };
+  '/api/auth/users/{user_id}': {
+    responses: {
+      get: APISchemas['AuthUser'];
+      put: APISchemas['AuthUser'];
+      delete: null;
+    };
+    requests:
+      | { method?: 'get'; urlParams: { user_id: string } }
+      | {
+          method: 'put';
+          urlParams: { user_id: string };
+          body: APISchemas['UpdateUserInput'];
+        }
+      | { method: 'delete'; urlParams: { user_id: string } };
   };
   '/api/budget': {
     responses: { get: Array<APISchemas['ModelsBudgetResult']>; post: null };

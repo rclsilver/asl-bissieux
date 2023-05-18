@@ -478,7 +478,7 @@ func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	user, err := auth.GetUser(c)
+	user, err := auth.GetCurrentUser(c)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get user")
 		return nil, err
@@ -523,7 +523,7 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	user, err := auth.GetUser(c)
+	user, err := auth.GetCurrentUser(c)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get user")
 		return nil, err
@@ -620,7 +620,7 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 }
 
 func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {
-	user, err := auth.GetUser(c)
+	user, err := auth.GetCurrentUser(c)
 	if err != nil {
 		return errors.NewUnauthorized(err, "not authenticated")
 	}

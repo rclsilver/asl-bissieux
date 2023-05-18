@@ -24,6 +24,15 @@ type User struct {
 	Actions  pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
 }
 
+func NewUser(username string, enabled, administrator bool, actions []string) *User {
+	return &User{
+		Username: username,
+		Enabled:  enabled,
+		Admin:    administrator,
+		Actions:  actions,
+	}
+}
+
 // Allowed tells if user is allowed to execute the action
 func (u *User) Allowed(action string) bool {
 	if !u.Enabled {

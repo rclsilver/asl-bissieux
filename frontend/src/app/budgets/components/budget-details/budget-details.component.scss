@@ -13,3 +13,27 @@ h2 .label {
     content: ")";
   }
 }
+
+.mat-column-state {
+  width: 0.5em;
+  text-align: center;
+}
+
+.state {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+
+  &.state-ok {
+    background-color: green;
+  }
+
+  &.state-doing {
+    background-color: orange;
+  }
+
+  &.state-ko {
+    background-color: red;
+  }
+}

@@ -11,7 +11,17 @@
         [columns]="cotisationsColumns"
         [dataSource]="cotisations"
         [rowActions]="cotisationsRowActions$ | async"
-      ></app-crud-table>
+      >
+        <ng-container matColumnDef="state">
+          <td mat-cell *matCellDef="let state">
+            <ng-container [ngSwitch]="cotisationState(state)">
+              <span *ngSwitchCase="'OK'" class="state state-ok"></span>
+              <span *ngSwitchCase="'DOING'" class="state state-doing"></span>
+              <span *ngSwitchCase="'KO'" class="state state-ko"></span>
+            </ng-container>
+          </td>
+        </ng-container>
+      </app-crud-table>
     </mat-tab>
     <mat-tab label="Expenses">
       <app-crud-table

@@ -21,6 +21,7 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { PaymentListComponent } from '../payment-list/payment-list.component';
+import { F } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-budget-details',
@@ -165,8 +166,29 @@ export class BudgetDetailsComponent implements OnInit {
     });
   }
 
+  cotisationState(cotisation: APISchemas['ModelsCotisationResult']) {
+    const amount = cotisation?.amount ?? 0;
+    const paid = cotisation?.paid ?? 0;
+    const remaining = amount - paid;
+
+    if (!remaining) {
+      return 'OK';
+    } else if (paid >= amount / 2) {
+      return 'DOING';
+    } else {
+      return 'KO';
+    }
+  }
+
   // cotisations
   readonly cotisationsColumns = [
+    new CustomRenderColumn<APISchemas['ModelsCotisationResult']>(
+      'state',
+      this.cotisationState,
+      {
+        label: '',
+      }
+    ),
     new Column('unit.number', {
       label: 'Unit',
     }),

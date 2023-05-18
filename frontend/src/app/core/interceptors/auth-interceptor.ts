@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 
-import { Observable, switchMap } from 'rxjs';
+import { Observable, switchMap, take } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
@@ -18,6 +18,7 @@ export class AuthInterceptor implements HttpInterceptor {
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
     return this._auth.token$.pipe(
+      take(1),
       switchMap((token) => {
         if (token && token.length) {
           req = req.clone({

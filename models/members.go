@@ -14,9 +14,9 @@ type Member struct {
 	FirstName string `json:"first_name" gorm:"notNull"`
 	LastName  string `json:"last_name" gorm:"notNull"`
 
-	PhoneNumber *string `json:"phone_number"`
-	Email       *string `json:"email"`
-	Address     *string `json:"address"`
+	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email"`
+	Address     string `json:"address"`
 
 	Units []*Unit `json:"units,omitempty" gorm:"many2many:member_unit"`
 }
@@ -25,9 +25,9 @@ func NewMember(firstName, lastName, phoneNumber, email, address string) *Member 
 	return &Member{
 		FirstName:   firstName,
 		LastName:    lastName,
-		PhoneNumber: &phoneNumber,
-		Email:       &email,
-		Address:     &address,
+		PhoneNumber: phoneNumber,
+		Email:       email,
+		Address:     address,
 	}
 }
 

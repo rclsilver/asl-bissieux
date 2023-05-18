@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
-	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
@@ -29,21 +28,21 @@ func ListMembers(c *gin.Context, in *listMembersIn) ([]*models.Member, error) {
 }
 
 type getMemberIn struct {
-	ID string `path:"id"`
+	MemberID string `path:"member_id"`
 }
 
 // GetMember get a member
 func GetMember(c *gin.Context, in *getMemberIn) (*models.Member, error) {
-	if err := validateUUID(in.ID, "invalid member ID"); err != nil {
+	if err := validateUUID(in.MemberID, "invalid member ID"); err != nil {
 		return nil, err
 	}
 
 	db := db.Connection()
 	var row models.Member
 
-	if err := db.Where("id = ?", in.ID).Preload("Units").First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.MemberID).Preload("Units").First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.ID))
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
 		}
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get member")
 		return nil, err
@@ -61,93 +60,58 @@ type createMemberIn struct {
 	Address     string `json:"address"`
 }
 
-func (in *createMemberIn) toMap() (map[string]any, error) {
-	var data map[string]any
-
-	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: "json",
-		Result:  &data,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err := dec.Decode(in); err != nil {
-		return nil, err
-	}
-
-	if len(in.Email) == 0 {
-		data["email"] = nil
-	}
-
-	if len(in.PhoneNumber) == 0 {
-		data["phone_number"] = nil
-	}
-
-	if len(in.Address) == 0 {
-		data["address"] = nil
-	}
-
-	return data, nil
-}
-
 const (
-	CreateMemberAction = "members.CreateMember"
+	CreateMemberAction = "member.CreateMember"
 )
 
 // CreateMember create a member
 func CreateMember(c *gin.Context, in *createMemberIn) (*models.Member, error) {
-	data, err := in.toMap()
-	if err != nil {
-		return nil, err
-	}
-
+	row := models.NewMember(in.FirstName, in.LastName, in.PhoneNumber, in.Email, in.Address)
 	db := db.Connection()
 
-	var row models.Member
-
-	if err := db.Model(&row).Create(data).Error; err != nil {
+	if err := db.Create(row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create member")
 		return nil, err
 	}
 	logrus.WithContext(c.Request.Context()).Infof("member %s %s (%s) created", row.FirstName, row.LastName, row.ID)
 
-	return &row, nil
+	return row, nil
 }
 
 type updateMemberIn struct {
-	ID string `path:"id"`
+	MemberID string `path:"member_id"`
 
 	createMemberIn
 }
 
 const (
-	UpdateMemberAction = "members.UpdateMember"
+	UpdateMemberAction = "member.UpdateMember"
 )
 
 // UpdateMember update a member
 func UpdateMember(c *gin.Context, in *updateMemberIn) (*models.Member, error) {
-	if err := validateUUID(in.ID, "invalid member ID"); err != nil {
-		return nil, err
-	}
-
-	data, err := in.toMap()
-	if err != nil {
+	if err := validateUUID(in.MemberID, "invalid member ID"); err != nil {
 		return nil, err
 	}
 
 	db := db.Connection()
 	var row models.Member
 
-	if err := db.Where("id = ?", in.ID).First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.MemberID).First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.ID))
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
 		}
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update member")
 		return nil, err
 	}
 
-	if err := db.Model(&row).Updates(&data).Error; err != nil {
+	row.FirstName = in.FirstName
+	row.LastName = in.LastName
+	row.Email = in.Email
+	row.PhoneNumber = in.PhoneNumber
+	row.Address = in.Address
+
+	if err := db.Updates(&row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update member")
 		return nil, err
 	}
@@ -157,16 +121,16 @@ func UpdateMember(c *gin.Context, in *updateMemberIn) (*models.Member, error) {
 }
 
 const (
-	DeleteMemberAction = "members.DeleteMember"
+	DeleteMemberAction = "member.DeleteMember"
 )
 
 type deleteMemberIn struct {
-	ID string `path:"id"`
+	MemberID string `path:"member_id"`
 }
 
 // DeleteMember delete a member
 func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
-	if err := validateUUID(in.ID, "invalid member ID"); err != nil {
+	if err := validateUUID(in.MemberID, "invalid member ID"); err != nil {
 		return err
 	}
 
@@ -179,9 +143,9 @@ func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
 
 	var row models.Member
 
-	if err := db.Where("id = ?", in.ID).First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.MemberID).First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.ID))
+			return errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
 		}
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete member")
 		return err
@@ -202,11 +166,11 @@ func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
 }
 
 const (
-	LinkUnitAction = "members.LinkUnit"
+	LinkUnitAction = "member.LinkUnit"
 )
 
 type addMemberUnitIn struct {
-	MemberID string `path:"id"`
+	MemberID string `path:"member_id"`
 	UnitID   string `json:"unit_id" binding:"required"`
 }
 
@@ -273,11 +237,11 @@ func AddMemberUnit(c *gin.Context, in *addMemberUnitIn) error {
 }
 
 const (
-	UnlinkUnitAction = "members.UnlinkUnit"
+	UnlinkUnitAction = "member.UnlinkUnit"
 )
 
 type removeMemberUnitIn struct {
-	MemberID string `path:"id"`
+	MemberID string `path:"member_id"`
 	UnitID   string `path:"unit_id"`
 }
 

@@ -50,13 +50,14 @@ export abstract class DataSource<T> extends MaterialDataSource<T> {
         tap(() => this._setError()),
         catchError((e) => {
           this._setError(e);
-          this._setLoading(false);
           return of([]);
         })
       )
-      .subscribe((results) => {
-        this._setLoading(false);
-        this._setResults(results);
+      .subscribe({
+        next: (results) => {
+          this._setResults(results);
+        },
+        complete: () => this._setLoading(false),
       });
   }
 }

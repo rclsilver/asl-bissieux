@@ -1,0 +1,122 @@
+import { Component, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { APISchemas } from 'src/app/core/api/openapi';
+import { ApiService } from 'src/app/core/services/api.service';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
+import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { UnitDataSource } from '../../datasources/unit.datasource';
+import { UnitFormComponent } from '../unit-form/unit-form.component';
+import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
+import { Column } from 'src/app/shared/models/column.model';
+import { MemberListDialogComponent } from 'src/app/members/components/member-list-dialog/member-list-dialog.component';
+
+@Component({
+  selector: 'app-unit-list',
+  templateUrl: './unit-list.component.html',
+  styleUrls: ['./unit-list.component.scss'],
+})
+export class UnitListComponent {
+  private readonly _api = inject(ApiService);
+  private readonly _auth = inject(AuthService);
+  private readonly _dialog = inject(MatDialog);
+  private readonly _notifications = inject(NotificationsService);
+
+  readonly rowActions = [
+    new CustomRowAction<APISchemas['ModelsUnit']>(
+      'people',
+      'Manage the members of the unit',
+      'Manage members',
+      (unit) =>
+        this._dialog
+          .open(MemberListDialogComponent, {
+            width: '480px',
+            data: {
+              unit,
+            },
+          })
+          .afterClosed()
+          .subscribe(() => {
+            this.refresh();
+          })
+    ),
+  ];
+
+  readonly columns = [
+    new Column('number', {
+      label: 'Number',
+    }),
+    new Column('share', {
+      label: 'Share',
+    }),
+    new Column('address', {
+      label: 'Address',
+    }),
+  ];
+  readonly datasource = new UnitDataSource();
+
+  readonly canCreate$ = this._auth.allowed$('unit.CreateUnit');
+
+  ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh() {
+    this.datasource.load();
+  }
+
+  canEdit(_: APISchemas['ModelsUnit']) {
+    return this._auth.allowed$('unit.UpdateUnit');
+  }
+
+  canDelete(_: APISchemas['ModelsUnit']) {
+    return this._auth.allowed$('unit.DeleteUnit');
+  }
+
+  edit(unit?: APISchemas['CreateUnitInput'] | APISchemas['UpdateUnitInput']) {
+    this._dialog
+      .open(UnitFormComponent, {
+        width: '480px',
+        data: {
+          unit,
+        },
+      })
+      .afterClosed()
+      .subscribe((result: boolean) => {
+        if (result) {
+          this.refresh();
+        }
+      });
+  }
+
+  delete(unit: APISchemas['ModelsUnit']) {
+    this._notifications
+      .showConfirm({
+        title: 'Delete an unit',
+        message: `Are you sure to delete the unit ${unit.number}?`,
+        class: 'warn',
+      })
+      .afterClosed()
+      .subscribe((confirm: boolean) => {
+        if (confirm) {
+          this._api.deleteUnit(unit.id!).subscribe({
+            next: () => {
+              this.refresh();
+              this._notifications.showDialog({
+                title: 'Info',
+                message: `The unit ${unit.number} has been deleted`,
+                level: NotificationDialogLevel.Info,
+              });
+            },
+            error: (e) => {
+              this._notifications.showDialog({
+                title: 'Error',
+                message: `Unable to delete the unit: ${e}`,
+                level: NotificationDialogLevel.Error,
+              });
+            },
+          });
+        }
+      });
+  }
+}

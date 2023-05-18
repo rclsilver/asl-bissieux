@@ -1,0 +1,9 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  & > * input, app-multi-select {
+    width: 100%;
+  }
+}

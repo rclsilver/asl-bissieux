@@ -28,21 +28,21 @@ func ListUnits(c *gin.Context, in *lisUnitsIn) ([]*models.Unit, error) {
 }
 
 type getUnitIn struct {
-	ID string `path:"id"`
+	UnitID string `path:"unit_id"`
 }
 
 // GetUnit get an unit
 func GetUnit(c *gin.Context, in *getUnitIn) (*models.Unit, error) {
-	if err := validateUUID(in.ID, "invalid unit ID"); err != nil {
+	if err := validateUUID(in.UnitID, "invalid unit ID"); err != nil {
 		return nil, err
 	}
 
 	db := db.Connection()
 	var row models.Unit
 
-	if err := db.Where("id = ?", in.ID).Preload("Members").First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.UnitID).Preload("Members").First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.ID))
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.UnitID))
 		}
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get unit")
 		return nil, err
@@ -58,7 +58,7 @@ type createUnitIn struct {
 }
 
 const (
-	CreateUnitAction = "units.CreateUnit"
+	CreateUnitAction = "unit.CreateUnit"
 )
 
 // CreateUnit create an unit
@@ -76,27 +76,27 @@ func CreateUnit(c *gin.Context, in *createUnitIn) (*models.Unit, error) {
 }
 
 type updateUnitIn struct {
-	ID string `path:"id"`
+	UnitID string `path:"unit_id"`
 
 	createUnitIn
 }
 
 const (
-	UpdateUnitAction = "units.UpdateUnit"
+	UpdateUnitAction = "unit.UpdateUnit"
 )
 
 // UpdateUnit update an unit
 func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
-	if err := validateUUID(in.ID, "invalid unit ID"); err != nil {
+	if err := validateUUID(in.UnitID, "invalid unit ID"); err != nil {
 		return nil, err
 	}
 
 	db := db.Connection()
 	var row models.Unit
 
-	if err := db.Where("id = ?", in.ID).First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.UnitID).First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.ID))
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.UnitID))
 		}
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update unit")
 		return nil, err
@@ -106,7 +106,7 @@ func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
 	row.Address = in.Address
 	row.Share = in.Share
 
-	if err := db.Where("id = ?", in.ID).Updates(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.UnitID).Updates(&row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update unit")
 		return nil, err
 	}
@@ -116,25 +116,25 @@ func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
 }
 
 const (
-	DeleteUnitAction = "units.DeleteUnit"
+	DeleteUnitAction = "unit.DeleteUnit"
 )
 
 type deleteUnitIn struct {
-	ID string `path:"id"`
+	UnitID string `path:"unit_id"`
 }
 
 // DeleteUnit delete an unit
 func DeleteUnit(c *gin.Context, in *deleteUnitIn) error {
-	if err := validateUUID(in.ID, "invalid unit ID"); err != nil {
+	if err := validateUUID(in.UnitID, "invalid unit ID"); err != nil {
 		return err
 	}
 
 	db := db.Connection()
 	var row models.Unit
 
-	if err := db.Where("id = ?", in.ID).First(&row).Error; err != nil {
+	if err := db.Where("id = ?", in.UnitID).First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.ID))
+			return errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.UnitID))
 		}
 		return err
 	}
@@ -146,4 +146,28 @@ func DeleteUnit(c *gin.Context, in *deleteUnitIn) error {
 	logrus.WithContext(c.Request.Context()).Infof("unit %q deleted", row.ID)
 
 	return nil
+}
+
+type listUnitMembersIn struct {
+	UnitID string `path:"unit_id"`
+}
+
+// ListUnitMembers get members of an unit
+func ListUnitMembers(c *gin.Context, in *listUnitMembersIn) ([]*models.Member, error) {
+	if err := validateUUID(in.UnitID, "invalid unit ID"); err != nil {
+		return nil, err
+	}
+
+	db := db.Connection()
+	var row models.Unit
+
+	if err := db.Preload("Members").First(&row, "id = ?", in.UnitID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("unit %q not found", in.UnitID))
+		}
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get unit")
+		return nil, err
+	}
+
+	return row.Members, nil
 }

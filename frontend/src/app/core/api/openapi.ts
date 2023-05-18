@@ -101,14 +101,14 @@ export type APISchemas = {
     updated_at?: string;
   };
   ModelsMember: {
-    address?: null | string;
+    address?: string;
     /* Format: date-time */
     created_at?: string;
-    email?: null | string;
+    email?: string;
     first_name?: string;
     id?: string;
     last_name?: string;
-    phone_number?: null | string;
+    phone_number?: string;
     units?: Array<APISchemas['ModelsUnit']>;
     /* Format: date-time */
     updated_at?: string;
@@ -276,32 +276,35 @@ export type APIEndpoints = {
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateMemberInput'] };
   };
-  '/api/member/{id}': {
+  '/api/member/{member_id}': {
     responses: {
       get: APISchemas['ModelsMember'];
       put: APISchemas['ModelsMember'];
       delete: null;
     };
     requests:
-      | { method?: 'get'; urlParams: { id: string } }
+      | { method?: 'get'; urlParams: { member_id: string } }
       | {
           method: 'put';
-          urlParams: { id: string };
+          urlParams: { member_id: string };
           body: APISchemas['UpdateMemberInput'];
         }
-      | { method: 'delete'; urlParams: { id: string } };
+      | { method: 'delete'; urlParams: { member_id: string } };
   };
-  '/api/member/{id}/units': {
+  '/api/member/{member_id}/units': {
     responses: { post: null };
     requests: {
       method: 'post';
-      urlParams: { id: string };
+      urlParams: { member_id: string };
       body: APISchemas['AddMemberUnitInput'];
     };
   };
-  '/api/member/{id}/units/{unit_id}': {
+  '/api/member/{member_id}/units/{unit_id}': {
     responses: { delete: null };
-    requests: { method: 'delete'; urlParams: { id: string; unit_id: string } };
+    requests: {
+      method: 'delete';
+      urlParams: { member_id: string; unit_id: string };
+    };
   };
   '/api/mon/ping': {
     responses: { get: APISchemas['ServerPingOut'] };
@@ -313,20 +316,24 @@ export type APIEndpoints = {
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateUnitInput'] };
   };
-  '/api/unit/{id}': {
+  '/api/unit/{unit_id}': {
     responses: {
       get: APISchemas['ModelsUnit'];
       put: APISchemas['ModelsUnit'];
       delete: null;
     };
     requests:
-      | { method?: 'get'; urlParams: { id: string } }
+      | { method?: 'get'; urlParams: { unit_id: string } }
       | {
           method: 'put';
-          urlParams: { id: string };
+          urlParams: { unit_id: string };
           body: APISchemas['UpdateUnitInput'];
         }
-      | { method: 'delete'; urlParams: { id: string } };
+      | { method: 'delete'; urlParams: { unit_id: string } };
+  };
+  '/api/unit/{unit_id}/members': {
+    responses: { get: Array<APISchemas['ModelsMember']> };
+    requests: { method?: 'get'; urlParams: { unit_id: string } };
   };
 };
 

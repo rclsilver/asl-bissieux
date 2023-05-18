@@ -1,0 +1,58 @@
+<h1 mat-dialog-title>
+  <ng-container *ngIf="!data.member">Create member</ng-container>
+  <ng-container *ngIf="data.member">Update member</ng-container>
+</h1>
+<form [formGroup]="form" (submit)="submit()">
+  <div mat-dialog-content class="content">
+    <mat-form-field appearance="fill">
+      <mat-label>First name</mat-label>
+      <input matInput formControlName="first_name" [required]="true">
+      <mat-error *ngIf="form.controls['first_name'].touched && form.controls['first_name'].invalid">
+        <span *ngIf="form.controls['first_name'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['first_name'].errors!['server']">{{ form.controls['first_name'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Last name</mat-label>
+      <input matInput formControlName="last_name" [required]="true">
+      <mat-error *ngIf="form.controls['last_name'].touched && form.controls['last_name'].invalid">
+        <span *ngIf="form.controls['last_name'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['last_name'].errors!['server']">{{ form.controls['last_name'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>E-mail</mat-label>
+      <input matInput type="email" formControlName="email">
+      <mat-error *ngIf="form.controls['email'].touched && form.controls['email'].invalid">
+        <span *ngIf="form.controls['email'].errors!['server']">{{ form.controls['email'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Phone</mat-label>
+      <input matInput type="tel" formControlName="phone_number">
+      <mat-error *ngIf="form.controls['phone_number'].touched && form.controls['phone_number'].invalid">
+        <span *ngIf="form.controls['phone_number'].errors!['server']">{{ form.controls['phone_number'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Address</mat-label>
+      <input matInput formControlName="address">
+      <mat-error *ngIf="form.controls['address'].touched && form.controls['address'].invalid">
+        <span *ngIf="form.controls['address'].errors!['server']">{{ form.controls['address'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <app-multi-select
+      label="Units"
+      [display]="displayUnit"
+      [selectedDisplay]="displaySelectedUnit"
+      [(selected)]="selectedUnits"
+      [options]="units$ | async"
+      [filterFunction]="filterUnit"
+    ></app-multi-select>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
+    <div class="spacer"></div>
+    <button mat-button color="primary" type="submit" [disabled]="(saving$ | async) || form.invalid || !form.touched">Submit</button>
+  </div>
+</form>

@@ -1,0 +1,11 @@
+<h2>Members</h2>
+
+<app-crud-table
+  [columns]="columns"
+  [dataSource]="datasource"
+  [canCreate]="canCreate$"
+  [canEdit]="canEdit.bind(this)"
+  (edit)="edit($event)"
+  [canDelete]="canDelete.bind(this)"
+  (delete)="delete($event)"
+></app-crud-table>

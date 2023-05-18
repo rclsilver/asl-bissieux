@@ -76,7 +76,7 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListUnits, http.StatusOK))
 
-		unitGroup.GET(":id", []fizz.OperationOption{
+		unitGroup.GET(":unit_id", []fizz.OperationOption{
 			fizz.Summary("Get an unit"),
 			fizz.Response(fmt.Sprint(http.StatusNotFound), "Not Found", APIError{}, nil, nil),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -87,15 +87,20 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateUnitAction), tonic.Handler(handlers.CreateUnit, http.StatusCreated))
 
-		unitGroup.PUT(":id", []fizz.OperationOption{
+		unitGroup.PUT(":unit_id", []fizz.OperationOption{
 			fizz.Summary("Update an unit"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateUnitAction), tonic.Handler(handlers.UpdateUnit, http.StatusOK))
 
-		unitGroup.DELETE(":id", []fizz.OperationOption{
+		unitGroup.DELETE(":unit_id", []fizz.OperationOption{
 			fizz.Summary("Delete an unit"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteUnitAction), tonic.Handler(handlers.DeleteUnit, http.StatusNoContent))
+
+		unitGroup.GET(":unit_id/members", []fizz.OperationOption{
+			fizz.Summary("Get members of an unit"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListUnitMembers, http.StatusOK))
 	}
 
 	peopleGroup := router.Group("/api/member", "04 - member", "manages the members")
@@ -105,7 +110,7 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListMembers, http.StatusOK))
 
-		peopleGroup.GET(":id", []fizz.OperationOption{
+		peopleGroup.GET(":member_id", []fizz.OperationOption{
 			fizz.Summary("Get a member"),
 			fizz.Response(fmt.Sprint(http.StatusNotFound), "Not Found", APIError{}, nil, nil),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -116,22 +121,22 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateMemberAction), tonic.Handler(handlers.CreateMember, http.StatusCreated))
 
-		peopleGroup.PUT(":id", []fizz.OperationOption{
+		peopleGroup.PUT(":member_id", []fizz.OperationOption{
 			fizz.Summary("Update a member"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateMemberAction), tonic.Handler(handlers.UpdateMember, http.StatusOK))
 
-		peopleGroup.DELETE(":id", []fizz.OperationOption{
+		peopleGroup.DELETE(":member_id", []fizz.OperationOption{
 			fizz.Summary("Delete a member"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteMemberAction), tonic.Handler(handlers.DeleteMember, http.StatusNoContent))
 
-		peopleGroup.POST(":id/units", []fizz.OperationOption{
+		peopleGroup.POST(":member_id/units", []fizz.OperationOption{
 			fizz.Summary("Link an unit to a member"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.LinkUnitAction), tonic.Handler(handlers.AddMemberUnit, http.StatusNoContent))
 
-		peopleGroup.DELETE(":id/units/:unit_id", []fizz.OperationOption{
+		peopleGroup.DELETE(":member_id/units/:unit_id", []fizz.OperationOption{
 			fizz.Summary("Unlink an unit from a member"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UnlinkUnitAction), tonic.Handler(handlers.RemoveMemberUnit, http.StatusNoContent))

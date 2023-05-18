@@ -1,16 +1,6 @@
 import { Injectable } from '@angular/core';
 import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  empty,
-  filter,
-  map,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { Observable, catchError, filter, map } from 'rxjs';
 import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 
@@ -192,6 +182,119 @@ export class ApiService {
         },
       }
     );
+  }
+
+  listUnits() {
+    return this.request('/api/unit', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  getUnit(unitId: string) {
+    return this.request('/api/unit/{unit_id}', {
+      method: 'get',
+      urlParams: {
+        unit_id: unitId,
+      },
+    });
+  }
+
+  createUnit(payload: APISchemas['CreateUnitInput']) {
+    return this.request('/api/unit', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  updateUnit(unitId: string, payload: APISchemas['UpdateUnitInput']) {
+    return this.request('/api/unit/{unit_id}', {
+      method: 'put',
+      urlParams: {
+        unit_id: unitId,
+      },
+      body: payload,
+    });
+  }
+
+  deleteUnit(unitId: string) {
+    return this.request('/api/unit/{unit_id}', {
+      method: 'delete',
+      urlParams: {
+        unit_id: unitId,
+      },
+    });
+  }
+
+  listUnitMembers(unitId: string) {
+    return this.request('/api/unit/{unit_id}/members', {
+      method: 'get',
+      urlParams: {
+        unit_id: unitId,
+      },
+    }).pipe(map((r) => r ?? []));
+  }
+
+  listMembers() {
+    return this.request('/api/member', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  getMember(memberId: string) {
+    return this.request('/api/member/{member_id}', {
+      method: 'get',
+      urlParams: {
+        member_id: memberId,
+      },
+    });
+  }
+
+  createMember(payload: APISchemas['CreateMemberInput']) {
+    return this.request('/api/member', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  updateMember(memberId: string, payload: APISchemas['UpdateMemberInput']) {
+    return this.request('/api/member/{member_id}', {
+      method: 'put',
+      urlParams: {
+        member_id: memberId,
+      },
+      body: payload,
+    });
+  }
+
+  deleteMember(memberId: string) {
+    return this.request('/api/member/{member_id}', {
+      method: 'delete',
+      urlParams: {
+        member_id: memberId,
+      },
+    });
+  }
+
+  addMemberUnit(memberId: string, unitId: string) {
+    return this.request('/api/member/{member_id}/units', {
+      method: 'post',
+      urlParams: {
+        member_id: memberId,
+      },
+      body: {
+        unit_id: unitId,
+      },
+    });
+  }
+
+  removeMemberUnit(memberId: string, unitId: string) {
+    return this.request('/api/member/{member_id}/units/{unit_id}', {
+      method: 'delete',
+      urlParams: {
+        member_id: memberId,
+        unit_id: unitId,
+      },
+    });
   }
 
   private request<

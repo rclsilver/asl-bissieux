@@ -116,7 +116,7 @@ export class BudgetListComponent implements OnInit {
           return of(false);
         }
 
-        return this._auth.allowed$('budget.EditBudget');
+        return this._auth.allowed$('budget.UpdateBudget');
       })
     );
   }

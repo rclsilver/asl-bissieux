@@ -1,8 +1,8 @@
 import { DatePipe } from '@angular/common';
 
-export type RenderFunction = (value: any) => any;
+export type RenderFunction<T = any> = (value: T) => any;
 export type RenderFactory = (...args: any[]) => RenderFunction;
-export type RouteFunction = (value: any) => string;
+export type RouteFunction<T = any> = (value: T) => string;
 
 export const DefaultValueRenderer: RenderFactory =
   (defaultValue: any) => (value: any) =>
@@ -19,8 +19,8 @@ export class Column<T = any> {
   readonly defaultSort: boolean;
   readonly canSort: boolean;
   readonly sortColumn: string;
-  readonly render: RenderFunction;
-  readonly routeTo?: RouteFunction;
+  readonly render: RenderFunction<T>;
+  readonly routeTo?: RouteFunction<T>;
 
   constructor(name: string, options?: Partial<Column<T>>) {
     this.name = name;

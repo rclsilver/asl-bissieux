@@ -1,6 +1,6 @@
 import { Routes, RouterModule } from '@angular/router';
 import { isAuthenticated } from '../core/guards/auth.guard';
-import { ListUnitsComponent } from './components/list-units/list-units.component';
+import { UnitListComponent } from './components/unit-list/unit-list.component';
 
 let routes: Routes = [
   {
@@ -10,7 +10,7 @@ let routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        component: ListUnitsComponent,
+        component: UnitListComponent,
       },
     ],
   },

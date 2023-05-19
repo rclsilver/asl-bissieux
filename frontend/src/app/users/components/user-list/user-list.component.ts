@@ -35,7 +35,7 @@ export class UserListComponent {
     }),
     new Column<string[] | undefined>('actions', {
       label: 'Action(s)',
-      render: (actions) => (actions ?? []).length,
+      render: (actions) => (actions ?? []).length + '',
     }),
   ];
   readonly datasource = new UserDataSource();

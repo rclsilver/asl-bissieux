@@ -173,7 +173,7 @@ export class BudgetDetailsComponent implements OnInit {
 
   // cotisations
   readonly cotisationsColumns = [
-    new CustomRenderColumn<APISchemas['ModelsCotisationResult']>(
+    new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'state',
       (cotisation) => {
         const amount = cotisation?.amount ?? 0;
@@ -198,6 +198,37 @@ export class BudgetDetailsComponent implements OnInit {
       canSort: true,
       defaultSort: true,
     }),
+    new CustomRenderColumn<
+      APISchemas['ModelsCotisationResult'],
+      { first_name: string; last_name: string }[]
+    >(
+      'members',
+      (row) =>
+        (row.unit?.members ?? []).map((member) => ({
+          first_name: member.first_name!,
+          last_name: member.last_name!,
+        })),
+      {
+        label: 'Members',
+        canSort: true,
+        render: (v) =>
+          v
+            .map((member) => `${member.first_name} ${member.last_name}`)
+            .join(', '),
+        sortFunc: (a, b) => {
+          const aMinLastName = a.map((m) => m.last_name).sort()[0];
+          const bMinLastName = b.map((m) => m.last_name).sort()[0];
+
+          if (aMinLastName === bMinLastName) {
+            return 0;
+          } else if (aMinLastName < bMinLastName) {
+            return 1;
+          } else {
+            return -1;
+          }
+        },
+      }
+    ),
     new Column('unit.address', {
       label: 'Address',
     }),
@@ -215,7 +246,7 @@ export class BudgetDetailsComponent implements OnInit {
       render: (v) => `${v} €`,
       canSort: true,
     }),
-    new CustomRenderColumn<APISchemas['ModelsCotisationResult']>(
+    new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'remaining',
       (row) => (row?.amount ?? 0) - (row?.paid ?? 0),
       {

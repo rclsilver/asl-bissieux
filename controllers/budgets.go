@@ -116,7 +116,7 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 
 	if err := tx.
 		Model(&models.Cotisation{}).
-		Preload("Unit").
+		Preload("Unit.Members").
 		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS payments ON payments.cotisation_id = cotisation.id", paymentsAmounts).
 		Find(&result, "cotisation.budget_id = ?", budget.ID).Error; err != nil {

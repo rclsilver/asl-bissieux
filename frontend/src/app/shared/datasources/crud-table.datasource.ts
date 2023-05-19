@@ -1,4 +1,4 @@
-import { Observable, combineLatest, map, startWith, tap } from 'rxjs';
+import { Observable, combineLatest, map, startWith } from 'rxjs';
 import { AbstractDataSource, DataSource } from '.';
 import { Column } from '../models/column.model';
 import { CollectionViewer } from '@angular/cdk/collections';
@@ -22,7 +22,17 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
     CrudTableRow<T>[] | readonly CrudTableRow<T>[]
   > {
     return combineLatest([
-      this._columns$,
+      this._columns$.pipe(
+        map((columns) => {
+          const result: { [k: string]: Column<T> } = {};
+
+          for (let column of columns) {
+            result[column.name] = column;
+          }
+
+          return result;
+        })
+      ),
       this._source.results$,
       this._sort$.pipe(startWith(null)),
     ]).pipe(
@@ -34,7 +44,7 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
               original: result,
             };
 
-            for (let column of columns) {
+            for (let column of Object.values(columns)) {
               row.columns[column.name] = {
                 value: column.getValue(result),
                 display: column.renderValue(result),
@@ -52,15 +62,10 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
             const aValue = a.columns[sort.active].value;
             const bValue = b.columns[sort.active].value;
 
-            if (aValue === bValue) {
-              return 0;
-            }
-
-            if (aValue < bValue) {
-              return sort.direction === 'asc' ? 1 : -1;
-            }
-
-            return sort.direction === 'asc' ? -1 : 1;
+            return (
+              columns[sort.active].sortFunc(aValue, bValue) *
+              (sort.direction === 'desc' ? -1 : 1)
+            );
           });
       })
     );

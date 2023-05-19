@@ -42,6 +42,18 @@ export class MemberListComponent {
       label: 'Unit(s)',
       render: (units) => (units ?? []).map((unit) => unit.number).join(', '),
       canSort: true,
+      sortFunc: (a, b) => {
+        const aMinNumber = Math.min(...a.map((unit) => unit.number ?? 0));
+        const bMinNumber = Math.min(...b.map((unit) => unit.number ?? 0));
+
+        if (aMinNumber === 0) {
+          return 0;
+        } else if (aMinNumber < bMinNumber) {
+          return 1;
+        } else {
+          return -1;
+        }
+      },
     }),
   ];
   readonly datasource = new MemberDataSource();

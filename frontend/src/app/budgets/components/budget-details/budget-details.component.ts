@@ -47,10 +47,12 @@ export class BudgetDetailsComponent implements OnInit {
   readonly expensesColumns = [
     new Column('label', {
       label: 'Label',
+      canSort: true,
     }),
     new Column('amount', {
       label: 'Amount',
       render: (v) => `${v} €`,
+      canSort: true,
     }),
   ];
   readonly expenses$ = this.budget$.pipe(

@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
+import { SortDirection } from '@angular/material/sort';
 
 export type ValueFunction<T = any> = (value: T) => any;
 export type RenderFunction<T = any> = (value: T) => any;
+export type SortFunction<T = any> = (a: T, b: T) => number;
 export type RenderFactory = (...args: any[]) => RenderFunction;
 export type RouteFunction<T = any> = (value: T) => string;
 
@@ -19,6 +21,7 @@ export class Column<T = any> {
   readonly label: string;
   readonly defaultSort: boolean;
   readonly canSort: boolean;
+  readonly sortFunc: SortFunction<T>;
   readonly render: RenderFunction<T>;
   readonly routeTo?: RouteFunction<T>;
 
@@ -27,6 +30,17 @@ export class Column<T = any> {
     this.label = options?.label ?? name;
     this.defaultSort = options?.defaultSort ?? false;
     this.canSort = options?.canSort ?? false;
+    this.sortFunc =
+      options?.sortFunc ??
+      ((a: T, b: T) => {
+        if (a === b) {
+          return 0;
+        } else if (a < b) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
     this.render = options?.render ?? ((value: T) => value);
     this.routeTo = options?.routeTo;
   }

@@ -5,7 +5,6 @@ import {
   EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
   Output,
   QueryList,
   ViewChild,
@@ -13,6 +12,7 @@ import {
 } from '@angular/core';
 import {
   BehaviorSubject,
+  NEVER,
   Observable,
   Subject,
   combineLatest,
@@ -20,9 +20,15 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs';
-import { DataSource, EmptyDataSource } from '../../datasources';
+import { DataSource } from '../../datasources';
 import { Column } from '../../models/column.model';
 import { MatColumnDef, MatTable } from '@angular/material/table';
+import { EmptyDataSource } from '../../datasources/empty.datasource';
+import {
+  CrudTableDataSource,
+  CrudTableRow,
+} from '../../datasources/crud-table.datasource';
+import { MatSort } from '@angular/material/sort';
 
 export class CustomAction {
   constructor(public readonly icon: string, public readonly tooltip: string) {}
@@ -63,15 +69,11 @@ export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
   styleUrls: ['./crud-table.component.scss'],
 })
 export class CrudTableComponent<T extends {}>
-  implements OnInit, OnDestroy, AfterViewInit
+  implements OnDestroy, AfterViewInit
 {
   private _destroyed$ = new Subject<void>();
 
   private _rowActions$ = new BehaviorSubject<CustomRowAction<T>[]>([]);
-
-  private _dataSource$ = new BehaviorSubject<DataSource<T>>(
-    new EmptyDataSource<T>()
-  );
 
   private _canEdit$ = new BehaviorSubject(false);
   private _canEditFunc$ = new BehaviorSubject<CanEditFunction<T> | undefined>(
@@ -176,7 +178,7 @@ export class CrudTableComponent<T extends {}>
     return this._rowActions$.value;
   }
 
-  private _columnDefs$ = new BehaviorSubject<Column[]>([]);
+  private _columnDefs$ = new BehaviorSubject<Column<T>[]>([]);
   readonly columnDefs$ = this._columnDefs$.asObservable();
 
   private _customColumnDefs$ = new BehaviorSubject<MatColumnDef[]>([]);
@@ -199,6 +201,14 @@ export class CrudTableComponent<T extends {}>
   );
   readonly columnsCount$ = this.columns$.pipe(map((columns) => columns.length));
 
+  private _dataSource$ = new BehaviorSubject<CrudTableDataSource<T>>(
+    new CrudTableDataSource<T>(
+      new EmptyDataSource<T>(),
+      this._columnDefs$,
+      NEVER
+    )
+  );
+
   readonly loading$ = this._dataSource$.pipe(switchMap((ds) => ds.loading$));
   readonly loaded$ = this._dataSource$.pipe(switchMap((ds) => ds.loaded$));
   readonly error$ = this._dataSource$.pipe(switchMap((ds) => ds.error$));
@@ -215,22 +225,54 @@ export class CrudTableComponent<T extends {}>
     if (dataSource === null) {
       dataSource = new EmptyDataSource<T>();
     }
-    this._dataSource$.next(dataSource);
+    this._dataSource$.next(
+      new CrudTableDataSource<T>(
+        dataSource,
+        this._columnDefs$,
+        this.sort.sortChange
+      )
+    );
   }
 
   @ViewChildren(MatColumnDef) defaultColumns?: QueryList<MatColumnDef>;
   @ContentChildren(MatColumnDef) customColumns?: QueryList<MatColumnDef>;
 
-  @ViewChild(MatTable, { static: true }) table!: MatTable<T>;
+  @ViewChild(MatTable, { static: true }) table!: MatTable<CrudTableRow<T>>;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
   @Output() edit = new EventEmitter<T | undefined>();
   @Output() delete = new EventEmitter<T>();
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.refresh();
   }
 
   ngAfterViewInit(): void {
+    this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
+      this.table.dataSource = ds;
+    });
+
+    this._columnDefs$.pipe(takeUntil(this._destroyed$)).subscribe((columns) => {
+      this.sort.active = '';
+
+      // Define default active sort
+      for (let column of columns!) {
+        if (column.canSort && column.defaultSort) {
+          this.sort.active = column.name;
+          break;
+        }
+      }
+
+      if (!this.sort.active) {
+        for (let column of columns) {
+          if (column.canSort) {
+            this.sort.active = column.name;
+            break;
+          }
+        }
+      }
+    });
+
     (this.customColumns ?? []).forEach((custom) => {
       const defaultColumn = (this.defaultColumns ?? []).filter(
         (column) => column.name === custom.name
@@ -245,10 +287,6 @@ export class CrudTableComponent<T extends {}>
           custom,
         ]);
       }
-    });
-
-    this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
-      this.table.dataSource = ds;
     });
   }
 

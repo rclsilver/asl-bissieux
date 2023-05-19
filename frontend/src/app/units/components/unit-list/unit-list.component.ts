@@ -45,9 +45,12 @@ export class UnitListComponent {
   readonly columns = [
     new Column('number', {
       label: 'Number',
+      canSort: true,
+      defaultSort: true,
     }),
     new Column('share', {
       label: 'Share',
+      canSort: true,
     }),
     new Column('address', {
       label: 'Address',
@@ -56,10 +59,6 @@ export class UnitListComponent {
   readonly datasource = new UnitDataSource();
 
   readonly canCreate$ = this._auth.allowed$('unit.CreateUnit');
-
-  ngOnInit(): void {
-    this.refresh();
-  }
 
   refresh() {
     this.datasource.load();

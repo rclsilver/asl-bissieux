@@ -21,7 +21,6 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { PaymentListComponent } from '../payment-list/payment-list.component';
-import { F } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-budget-details',
@@ -29,6 +28,10 @@ import { F } from '@angular/cdk/keycodes';
   styleUrls: ['./budget-details.component.scss'],
 })
 export class BudgetDetailsComponent implements OnInit {
+  readonly STATE_OK = 1;
+  readonly STATE_DOING = 2;
+  readonly STATE_KO = 3;
+
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
   private readonly _route = inject(ActivatedRoute);
@@ -166,45 +169,49 @@ export class BudgetDetailsComponent implements OnInit {
     });
   }
 
-  cotisationState(cotisation: APISchemas['ModelsCotisationResult']) {
-    const amount = cotisation?.amount ?? 0;
-    const paid = cotisation?.paid ?? 0;
-    const remaining = amount - paid;
-
-    if (!remaining) {
-      return 'OK';
-    } else if (paid >= amount / 2) {
-      return 'DOING';
-    } else {
-      return 'KO';
-    }
-  }
-
   // cotisations
   readonly cotisationsColumns = [
     new CustomRenderColumn<APISchemas['ModelsCotisationResult']>(
       'state',
-      this.cotisationState,
+      (cotisation) => {
+        const amount = cotisation?.amount ?? 0;
+        const paid = cotisation?.paid ?? 0;
+        const remaining = amount - paid;
+
+        if (!remaining) {
+          return this.STATE_OK;
+        } else if (paid >= amount / 2) {
+          return this.STATE_DOING;
+        } else {
+          return this.STATE_KO;
+        }
+      },
       {
         label: '',
+        canSort: true,
       }
     ),
     new Column('unit.number', {
       label: 'Unit',
+      canSort: true,
+      defaultSort: true,
     }),
     new Column('unit.address', {
       label: 'Address',
     }),
     new Column('unit.share', {
       label: 'Share',
+      canSort: true,
     }),
     new Column('amount', {
       label: 'Amount',
       render: (v) => `${v} €`,
+      canSort: true,
     }),
     new Column('paid', {
       label: 'Paid',
       render: (v) => `${v} €`,
+      canSort: true,
     }),
     new CustomRenderColumn<APISchemas['ModelsCotisationResult']>(
       'remaining',
@@ -212,6 +219,7 @@ export class BudgetDetailsComponent implements OnInit {
       {
         label: 'Remaining',
         render: (v) => `${v} €`,
+        canSort: true,
       }
     ),
   ];

@@ -22,13 +22,16 @@ export class UserListComponent {
 
   readonly columns = [
     new Column('username', {
-      label: 'First name',
+      label: 'Username',
+      canSort: true,
     }),
     new Column('enabled', {
       label: 'Enabled',
+      canSort: true,
     }),
     new Column('admin', {
       label: 'Administrator',
+      canSort: true,
     }),
     new Column<string[] | undefined>('actions', {
       label: 'Action(s)',
@@ -38,10 +41,6 @@ export class UserListComponent {
   readonly datasource = new UserDataSource();
 
   readonly canCreate$ = this._auth.administrator$;
-
-  ngOnInit(): void {
-    this.refresh();
-  }
 
   refresh() {
     this.datasource.load();

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/juju/errors"
+	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
@@ -217,7 +218,7 @@ func UpdateUser(c *gin.Context, in *updateUserIn) (*auth.User, error) {
 		"username": in.Username,
 		"enabled":  in.Enabled,
 		"admin":    in.Admin,
-		"actions":  in.Actions,
+		"actions":  pq.StringArray(in.Actions),
 	}
 
 	if err := db.Model(&row).Where("id = ?", row.ID).Updates(values).Error; err != nil {

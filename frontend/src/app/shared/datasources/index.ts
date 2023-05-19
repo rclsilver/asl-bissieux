@@ -2,30 +2,56 @@ import {
   CollectionViewer,
   DataSource as MaterialDataSource,
 } from '@angular/cdk/collections';
-import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  catchError,
+  of,
+  takeUntil,
+  tap,
+} from 'rxjs';
 
-export abstract class DataSource<T> extends MaterialDataSource<T> {
-  private _results$ = new BehaviorSubject<T[]>([]);
-  readonly results$ = this._results$.asObservable();
+export abstract class AbstractDataSource<T> extends MaterialDataSource<T> {
+  abstract get results$(): Observable<T[] | readonly T[]>;
 
-  private _loading$ = new BehaviorSubject(false);
-  readonly loading$ = this._loading$.asObservable();
+  abstract get loading$(): Observable<boolean>;
 
-  private _loaded$ = new BehaviorSubject(false);
-  readonly loaded$ = this._loaded$.asObservable();
+  abstract get loaded$(): Observable<boolean>;
 
-  private _error$ = new BehaviorSubject<any | undefined>(undefined);
-  readonly error$ = this._error$.asObservable();
+  abstract get error$(): Observable<any | undefined>;
 
-  connect(_: CollectionViewer): Observable<T[] | readonly T[]> {
+  override connect(_: CollectionViewer): Observable<T[] | readonly T[]> {
     return this.results$;
   }
 
-  disconnect(_: CollectionViewer): void {
-    this._results$.complete();
-    this._loading$.complete();
-    this._loaded$.complete();
-    this._error$.complete();
+  abstract load(): void;
+}
+
+export abstract class DataSource<T> extends AbstractDataSource<T> {
+  private _disconnected$ = new Subject<void>();
+  private _results$ = new BehaviorSubject<T[]>([]);
+
+  override get results$() {
+    return this._results$.asObservable();
+  }
+
+  private _loading$ = new BehaviorSubject(false);
+
+  override get loading$() {
+    return this._loading$.asObservable();
+  }
+
+  private _loaded$ = new BehaviorSubject(false);
+
+  override get loaded$() {
+    return this._loaded$.asObservable();
+  }
+
+  private _error$ = new BehaviorSubject<any | undefined>(undefined);
+
+  override get error$() {
+    return this._error$.asObservable();
   }
 
   protected _setResults(results: T[]): void {
@@ -43,10 +69,20 @@ export abstract class DataSource<T> extends MaterialDataSource<T> {
 
   protected abstract _fetch(): Observable<T[]>;
 
-  load() {
+  override disconnect(_: CollectionViewer): void {
+    this._disconnected$.next();
+    this._disconnected$.complete();
+    this._results$.complete();
+    this._loading$.complete();
+    this._loaded$.complete();
+    this._error$.complete();
+  }
+
+  override load() {
     this._setLoading(true);
     this._fetch()
       .pipe(
+        takeUntil(this._disconnected$),
         tap(() => this._setError()),
         catchError((e) => {
           this._setError(e);
@@ -59,11 +95,5 @@ export abstract class DataSource<T> extends MaterialDataSource<T> {
         },
         complete: () => this._setLoading(false),
       });
-  }
-}
-
-export class EmptyDataSource<T> extends DataSource<T> {
-  protected override _fetch(): Observable<T[]> {
-    return of([]);
   }
 }

@@ -16,7 +16,7 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
   templateUrl: './budget-list.component.html',
   styleUrls: ['./budget-list.component.scss'],
 })
-export class BudgetListComponent implements OnInit {
+export class BudgetListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _dialog = inject(MatDialog);
@@ -80,26 +80,26 @@ export class BudgetListComponent implements OnInit {
       routeTo: (v) => {
         return `/budgets/${v.id}`;
       },
+      canSort: true,
     }),
     new Column('draft', {
       label: 'Draft',
+      canSort: true,
     }),
     new Column('amount', {
       label: 'Amount',
       render: (v) => `${v} €`,
+      canSort: true,
     }),
     new Column('paid', {
       label: 'Paid',
       render: (v) => `${v} €`,
+      canSort: true,
     }),
   ];
   readonly datasource = new BudgetDataSource();
 
   readonly canCreate$ = this._auth.allowed$('budget.CreateBudget');
-
-  ngOnInit(): void {
-    this.refresh();
-  }
 
   refresh() {
     this.datasource.load();

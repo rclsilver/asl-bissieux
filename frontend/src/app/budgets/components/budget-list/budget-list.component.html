@@ -12,7 +12,7 @@
 >
   <ng-container matColumnDef="draft">
     <td mat-cell *matCellDef="let budget">
-      <mat-checkbox [checked]="budget.draft" disabled></mat-checkbox>
+      <mat-checkbox [checked]="budget.columns.draft.value" disabled></mat-checkbox>
     </td>
   </ng-container>
 </app-crud-table>

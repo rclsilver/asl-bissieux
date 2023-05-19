@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 
+export type ValueFunction<T = any> = (value: T) => any;
 export type RenderFunction<T = any> = (value: T) => any;
 export type RenderFactory = (...args: any[]) => RenderFunction;
 export type RouteFunction<T = any> = (value: T) => string;
@@ -18,7 +19,6 @@ export class Column<T = any> {
   readonly label: string;
   readonly defaultSort: boolean;
   readonly canSort: boolean;
-  readonly sortColumn: string;
   readonly render: RenderFunction<T>;
   readonly routeTo?: RouteFunction<T>;
 
@@ -26,21 +26,24 @@ export class Column<T = any> {
     this.name = name;
     this.label = options?.label ?? name;
     this.defaultSort = options?.defaultSort ?? false;
-    this.canSort = options?.defaultSort ?? false;
-    this.sortColumn = options?.sortColumn || name;
+    this.canSort = options?.canSort ?? false;
     this.render = options?.render ?? ((value: T) => value);
     this.routeTo = options?.routeTo;
   }
 
-  renderValue(row: any): any {
+  getValue(row: T): any {
     const parts = this.name.split('.');
-    let value = row;
+    let value = row as any;
 
     for (let name = parts.shift(); name; name = parts.shift()) {
       value = value[name];
     }
 
-    return this.render(value);
+    return value;
+  }
+
+  renderValue(row: any): any {
+    return this.render(this.getValue(row));
   }
 }
 
@@ -56,7 +59,7 @@ export class CustomRenderColumn<T = any> extends Column<T> {
     this._renderValue = renderValue;
   }
 
-  override renderValue(row: any): any {
-    return this.render(this._renderValue(row));
+  override getValue(row: T) {
+    return this._renderValue(row);
   }
 }

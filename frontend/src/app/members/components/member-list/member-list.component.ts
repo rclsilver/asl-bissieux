@@ -23,9 +23,11 @@ export class MemberListComponent {
   readonly columns = [
     new Column('first_name', {
       label: 'First name',
+      canSort: true,
     }),
     new Column('last_name', {
       label: 'Last name',
+      canSort: true,
     }),
     new Column('address', {
       label: 'Address',
@@ -39,15 +41,12 @@ export class MemberListComponent {
     new Column<APISchemas['ModelsUnit'][]>('units', {
       label: 'Unit(s)',
       render: (units) => (units ?? []).map((unit) => unit.number).join(', '),
+      canSort: true,
     }),
   ];
   readonly datasource = new MemberDataSource();
 
   readonly canCreate$ = this._auth.allowed$('member.CreateMember');
-
-  ngOnInit(): void {
-    this.refresh();
-  }
 
   refresh() {
     this.datasource.load();

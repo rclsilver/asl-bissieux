@@ -81,6 +81,7 @@ export class BudgetListComponent {
         return `/budgets/${v.id}`;
       },
       canSort: true,
+      canFilter: true,
     }),
     new Column('draft', {
       label: 'Draft',

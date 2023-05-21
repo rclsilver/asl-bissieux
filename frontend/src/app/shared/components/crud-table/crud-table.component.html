@@ -1,4 +1,7 @@
 <mat-toolbar>
+  <mat-toolbar-row>
+
+
   <div class="spacer"></div>
 
   <ng-container *ngFor="let action of toolbarActions">
@@ -21,6 +24,8 @@
     </mat-progress-spinner>
   </ng-container>
 
+  <app-search-input [columns]="filters$ | async"></app-search-input>
+
   <button
     mat-icon-button
     *ngIf="canRefresh"
@@ -41,6 +46,7 @@
   >
     <mat-icon>add</mat-icon>
   </button>
+</mat-toolbar-row>
 </mat-toolbar>
 
 <div class="table-container">

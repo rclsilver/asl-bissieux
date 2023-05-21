@@ -35,8 +35,9 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
       ),
       this._source.results$,
       this._sort$.pipe(startWith(null)),
+      this._filter$.pipe(startWith('')),
     ]).pipe(
-      map(([columns, results, sort]) => {
+      map(([columns, results, sort, filter]) => {
         return results
           .map((result) => {
             const row: CrudTableRow<T> = {
@@ -53,6 +54,24 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
             }
 
             return row;
+          })
+          .filter((result) => {
+            if (!filter) {
+              return true;
+            }
+
+            for (let column of Object.values(columns)) {
+              if (!column.canFilter) {
+                continue;
+              }
+              if (
+                column.filterFunc(result.columns[column.name].value, filter)
+              ) {
+                return true;
+              }
+            }
+
+            return false;
           })
           .sort((a, b) => {
             if (!sort || !sort.active) {
@@ -86,7 +105,8 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
   constructor(
     private readonly _source: DataSource<T>,
     private readonly _columns$: Observable<Column<T>[]>,
-    private readonly _sort$: Observable<Sort>
+    private readonly _sort$: Observable<Sort>,
+    private readonly _filter$: Observable<string>
   ) {
     super();
   }

@@ -24,19 +24,24 @@ export class MemberListComponent {
     new Column('first_name', {
       label: 'First name',
       canSort: true,
+      canFilter: true,
     }),
     new Column('last_name', {
       label: 'Last name',
       canSort: true,
+      canFilter: true,
     }),
     new Column('address', {
       label: 'Address',
+      canFilter: true,
     }),
     new Column('phone_number', {
       label: 'Phone number',
+      canFilter: true,
     }),
     new Column('email', {
       label: 'E-mail address',
+      canFilter: true,
     }),
     new Column<APISchemas['ModelsUnit'][]>('units', {
       label: 'Unit(s)',
@@ -53,6 +58,20 @@ export class MemberListComponent {
         } else {
           return -1;
         }
+      },
+      canFilter: true,
+      filterFunc: (units, pattern) => {
+        if (!pattern) {
+          return true;
+        }
+
+        for (let unit of units) {
+          if ((unit.number ?? 0).toString().indexOf(pattern) !== -1) {
+            return true;
+          }
+        }
+
+        return false;
       },
     }),
   ];

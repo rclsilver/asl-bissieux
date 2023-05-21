@@ -47,6 +47,7 @@ export class UnitListComponent {
       label: 'Number',
       canSort: true,
       defaultSort: true,
+      canFilter: true,
     }),
     new Column('share', {
       label: 'Share',
@@ -54,6 +55,7 @@ export class UnitListComponent {
     }),
     new Column('address', {
       label: 'Address',
+      canFilter: true,
     }),
   ];
   readonly datasource = new UnitDataSource();

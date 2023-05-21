@@ -20,6 +20,7 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
 import { CrudTableComponent } from './components/crud-table/crud-table.component';
 import { NotificationDialogComponent } from './components/notification-dialog/notification-dialog.component';
 import { MultiSelectComponent } from './components/multi-select/multi-select.component';
+import { SearchInputComponent } from './components/search-input/search-input.component';
 
 const material = [
   MatAutocompleteModule,
@@ -44,6 +45,7 @@ const material = [
     CrudTableComponent,
     NotificationDialogComponent,
     MultiSelectComponent,
+    SearchInputComponent,
   ],
   exports: [CrudTableComponent, MultiSelectComponent],
   imports: [CommonModule, ReactiveFormsModule, RouterModule, ...material],

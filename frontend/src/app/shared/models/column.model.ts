@@ -1,16 +1,27 @@
 import { DatePipe } from '@angular/common';
 
-export type ValueFunction<In = any, Out = In> = (value: In) => Out;
-export type RenderFunction<In = any, Out = In> = (value: In) => Out;
-export type SortFunction<T = any> = (a: T, b: T) => number;
-export type RenderFactory = (...args: any[]) => RenderFunction;
-export type RouteFunction<T = any> = (value: T) => string;
+type Factory<T> = (...args: any[]) => T;
 
-export const DefaultValueRenderer: RenderFactory =
+export type ValueFunction<In = any, Out = In> = (value: In) => Out;
+export type ValueFunctionFactory = Factory<ValueFunction>;
+
+export type FilterFunction<T = any> = (value: T, pattern: string) => boolean;
+export type FilterFunctionFactory = Factory<FilterFunction>;
+
+export type SortFunction<T = any> = (a: T, b: T) => number;
+export type SortFunctionFactory = Factory<SortFunction>;
+
+export type RenderFunction<In = any, Out = In> = (value: In) => Out;
+export type RenderFunctionFactory = Factory<RenderFunction>;
+
+export type RouteFunction<T = any> = (value: T) => string;
+export type RouteFunctionFactory = Factory<RouteFunction>;
+
+export const DefaultValueRenderer: RenderFunctionFactory =
   (defaultValue: any) => (value: any) =>
     value || defaultValue;
 
-export const DateRender: RenderFactory =
+export const DateRender: RenderFunctionFactory =
   (format: string = 'Y-MM-dd HH:mm:ss') =>
   (value: any) =>
     new DatePipe('en-us').transform(value, format);
@@ -18,6 +29,8 @@ export const DateRender: RenderFactory =
 export class Column<ColumnType = any, ValueType = ColumnType> {
   readonly name: string;
   readonly label: string;
+  readonly canFilter: boolean;
+  readonly filterFunc: FilterFunction<ValueType>;
   readonly defaultSort: boolean;
   readonly canSort: boolean;
   readonly sortFunc: SortFunction<ValueType>;
@@ -27,11 +40,20 @@ export class Column<ColumnType = any, ValueType = ColumnType> {
   constructor(name: string, options?: Partial<Column<ColumnType, ValueType>>) {
     this.name = name;
     this.label = options?.label ?? name;
+    this.canFilter = options?.canFilter ?? false;
+    this.filterFunc =
+      options?.filterFunc ??
+      ((value, pattern) => {
+        return (
+          String(value).toLocaleLowerCase().indexOf(pattern.toLowerCase()) !==
+          -1
+        );
+      });
     this.defaultSort = options?.defaultSort ?? false;
     this.canSort = options?.canSort ?? false;
     this.sortFunc =
       options?.sortFunc ??
-      ((a: ValueType, b: ValueType) => {
+      ((a, b) => {
         if (a === b) {
           return 0;
         } else if (a < b) {
@@ -40,7 +62,7 @@ export class Column<ColumnType = any, ValueType = ColumnType> {
           return -1;
         }
       });
-    this.render = options?.render ?? ((value: ValueType) => value as any);
+    this.render = options?.render ?? ((value) => value as any);
     this.routeTo = options?.routeTo;
   }
 

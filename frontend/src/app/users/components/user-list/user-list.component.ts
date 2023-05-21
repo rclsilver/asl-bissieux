@@ -24,6 +24,7 @@ export class UserListComponent {
     new Column('username', {
       label: 'Username',
       canSort: true,
+      canFilter: true,
     }),
     new Column('enabled', {
       label: 'Enabled',

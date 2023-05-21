@@ -29,6 +29,7 @@ import {
   CrudTableRow,
 } from '../../datasources/crud-table.datasource';
 import { MatSort } from '@angular/material/sort';
+import { SearchInputComponent } from '../search-input/search-input.component';
 
 export class CustomAction {
   constructor(public readonly icon: string, public readonly tooltip: string) {}
@@ -205,6 +206,7 @@ export class CrudTableComponent<T extends {}>
     new CrudTableDataSource<T>(
       new EmptyDataSource<T>(),
       this._columnDefs$,
+      NEVER,
       NEVER
     )
   );
@@ -229,7 +231,8 @@ export class CrudTableComponent<T extends {}>
       new CrudTableDataSource<T>(
         dataSource,
         this._columnDefs$,
-        this.sort.sortChange
+        this.sort.sortChange,
+        this.search.onPatternChange.asObservable()
       )
     );
   }
@@ -239,9 +242,15 @@ export class CrudTableComponent<T extends {}>
 
   @ViewChild(MatTable, { static: true }) table!: MatTable<CrudTableRow<T>>;
   @ViewChild(MatSort, { static: true }) sort!: MatSort;
+  @ViewChild(SearchInputComponent, { static: true })
+  search!: SearchInputComponent;
 
   @Output() edit = new EventEmitter<T | undefined>();
   @Output() delete = new EventEmitter<T>();
+
+  readonly filters$ = this._columnDefs$.pipe(
+    map((columns) => columns.filter((c) => c.canFilter))
+  );
 
   ngOnInit() {
     this.refresh();

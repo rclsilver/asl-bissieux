@@ -3,7 +3,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { CoreModule } from './core/core.module';
 import { UsersModule } from './users/users.module';
 import { AppComponent } from './app.component';
-import { HomeComponent } from './core/components/home/home.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
@@ -19,7 +18,7 @@ import { AuthService } from './core/services/auth.service';
 import { MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
-  declarations: [AppComponent, HomeComponent],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

@@ -4,8 +4,8 @@ import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    loadChildren: () =>
-      import('./core/core.module').then((mod) => mod.CoreModule),
+    pathMatch: 'full',
+    redirectTo: '/budgets',
   },
   {
     path: 'budgets',

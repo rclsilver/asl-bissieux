@@ -48,6 +48,7 @@ export class BudgetDetailsComponent implements OnInit {
     new Column('label', {
       label: 'Label',
       canSort: true,
+      canFilter: true,
     }),
     new Column('amount', {
       label: 'Amount',
@@ -197,6 +198,7 @@ export class BudgetDetailsComponent implements OnInit {
       label: 'Unit',
       canSort: true,
       defaultSort: true,
+      canFilter: true,
     }),
     new CustomRenderColumn<
       APISchemas['ModelsCotisationResult'],
@@ -211,6 +213,26 @@ export class BudgetDetailsComponent implements OnInit {
       {
         label: 'Members',
         canSort: true,
+        canFilter: true,
+        filterFunc: (members, pattern) => {
+          if (!pattern) {
+            return true;
+          }
+
+          pattern = pattern.toLocaleLowerCase();
+
+          for (let member of members) {
+            if (member.first_name.toLowerCase().indexOf(pattern) !== -1) {
+              return true;
+            }
+
+            if (member.last_name.toLowerCase().indexOf(pattern) !== -1) {
+              return true;
+            }
+          }
+
+          return false;
+        },
         render: (v) =>
           v
             .map((member) => `${member.first_name} ${member.last_name}`)
@@ -231,6 +253,7 @@ export class BudgetDetailsComponent implements OnInit {
     ),
     new Column('unit.address', {
       label: 'Address',
+      canFilter: true,
     }),
     new Column('unit.share', {
       label: 'Share',

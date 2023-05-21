@@ -1,0 +1,13 @@
+<ng-container *ngIf="(columns$ | async)?.length">
+  <button *ngIf="this.folded$ | async" mat-icon-button type="button" (click)="show()" matTooltip="Filter data">
+    <mat-icon>search</mat-icon>
+  </button>
+  <mat-form-field *ngIf="!(this.folded$ | async)" subscriptSizing="dynamic">
+    <mat-label>{{ label$ | async }}</mat-label>
+    <input matInput #input>
+    <mat-icon matPrefix>search</mat-icon>
+    <button mat-icon-button matSuffix type="button" (click)="clear($event)" matTooltip="Clear filters">
+      <mat-icon>clear</mat-icon>
+    </button>
+  </mat-form-field>
+</ng-container>

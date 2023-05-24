@@ -45,6 +45,12 @@ export class PageComponent {
       allowed$: this.authenticated$,
     },
     {
+      label: 'E-mails',
+      path: '/emails',
+      icon: 'mail-bulk',
+      allowed$: this.authenticated$,
+    },
+    {
       label: 'Users',
       path: '/users',
       icon: 'key',

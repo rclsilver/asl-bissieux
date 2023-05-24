@@ -1,0 +1,29 @@
+<h1 mat-dialog-title>Send an e-mail</h1>
+<form [formGroup]="form" (submit)="submit()">
+  <div mat-dialog-content class="content">
+    <mat-form-field appearance="fill">
+      <mat-label>Subject</mat-label>
+      <input matInput formControlName="subject" [required]="true">
+      <mat-error *ngIf="form.controls['subject'].touched && form.controls['subject'].invalid">
+        <span *ngIf="form.controls['subject'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['subject'].errors!['server']">{{ form.controls['subject'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Message</mat-label>
+      <input matInput formControlName="message" [required]="true">
+      <textarea matInput rows="15" formControlName="message" [required]="true"></textarea>
+      <mat-error *ngIf="form.controls['message'].touched && form.controls['message'].invalid">
+        <span *ngIf="form.controls['message'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['message'].errors!['server']">{{ form.controls['message'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <mat-checkbox matInput formControlName="to_doing">Send to doing</mat-checkbox>
+    <mat-checkbox matInput formControlName="to_paid">Send to paid</mat-checkbox>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
+    <div class="spacer"></div>
+    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+  </div>
+</form>

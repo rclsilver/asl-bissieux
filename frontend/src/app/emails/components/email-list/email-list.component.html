@@ -1,0 +1,24 @@
+<h2>E-mails</h2>
+
+<app-crud-table
+  [columns]="columns"
+  [dataSource]="datasource"
+  [canDelete]="canDelete.bind(this)"
+  (delete)="delete($event)"
+  [rowActions]="rowActions$ | async"
+>
+  <ng-container matColumnDef="state">
+    <td mat-cell *matCellDef="let email">
+      <span class="{{email.columns.state.value | lowercase}}">{{email.columns.state.value}}</span>
+      <span *ngIf="email.original.error" class="fa fa-exclamation-circle error" [matTooltip]="email.original.error"></span>
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="message">
+    <td mat-cell *matCellDef="let row">
+      <button mat-icon-button (click)="show(row.original)" matTooltip="Display the message">
+        <mat-icon>preview</mat-icon>
+      </button>
+    </td>
+  </ng-container>
+</app-crud-table>

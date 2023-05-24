@@ -94,6 +94,18 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsEmail: {
+    /* Format: date-time */
+    created_at?: string;
+    error?: string;
+    id?: string;
+    message?: string;
+    state?: string;
+    subject?: string;
+    to?: string;
+    /* Format: date-time */
+    updated_at?: string;
+  };
   ModelsExpense: {
     /* Format: double */
     amount?: number;
@@ -148,6 +160,13 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  SendBudgetEmailInput: {
+    message?: string;
+    send_to_doing?: boolean;
+    send_to_paid?: boolean;
+    subject?: string;
+  };
+  SendEmailInput: { wait?: boolean };
   ServerAPIError: {
     /*
      * The error message returned to the client.
@@ -280,6 +299,14 @@ export type APIEndpoints = {
           };
         };
   };
+  '/api/budget/{budget_id}/email': {
+    responses: { post: null };
+    requests: {
+      method: 'post';
+      urlParams: { budget_id: string };
+      body: APISchemas['SendBudgetEmailInput'];
+    };
+  };
   '/api/budget/{budget_id}/expenses': {
     responses: { get: Array<APISchemas['ModelsExpense']>; post: null };
     requests:
@@ -306,6 +333,28 @@ export type APIEndpoints = {
   '/api/budget/{budget_id}/publish': {
     responses: { post: APISchemas['ModelsBudgetResult'] };
     requests: { method: 'post'; urlParams: { budget_id: string } };
+  };
+  '/api/email': {
+    responses: { get: Array<APISchemas['ModelsEmail']> };
+    requests: { method?: 'get' };
+  };
+  '/api/email/{email_id}': {
+    responses: { get: APISchemas['ModelsEmail']; delete: null };
+    requests:
+      | { method?: 'get'; urlParams: { email_id: string } }
+      | { method: 'delete'; urlParams: { email_id: string } };
+  };
+  '/api/email/{email_id}/send': {
+    responses: { post: null };
+    requests: {
+      method: 'post';
+      urlParams: { email_id: string };
+      body: APISchemas['SendEmailInput'];
+    };
+  };
+  '/api/email/{email_id}/tracker': {
+    responses: { get: null };
+    requests: { method?: 'get'; urlParams: { email_id: string } };
   };
   '/api/member': {
     responses: { get: Array<APISchemas['ModelsMember']>; post: null };

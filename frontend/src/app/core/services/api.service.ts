@@ -66,6 +66,19 @@ export class ApiService {
     });
   }
 
+  sendBudgetEmail(
+    budgetId: string,
+    payload: APISchemas['SendBudgetEmailInput']
+  ) {
+    return this.request('/api/budget/{budget_id}/email', {
+      method: 'post',
+      urlParams: {
+        budget_id: budgetId,
+      },
+      body: payload,
+    });
+  }
+
   listExpenses(budgetId: string) {
     return this.request('/api/budget/{budget_id}/expenses', {
       method: 'get',
@@ -341,6 +354,40 @@ export class ApiService {
       urlParams: {
         user_id: userId,
       },
+    });
+  }
+
+  listEmails() {
+    return this.request('/api/email', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  getEmail(emailId: string) {
+    return this.request('/api/email/{email_id}', {
+      method: 'get',
+      urlParams: {
+        email_id: emailId,
+      },
+    });
+  }
+
+  deleteEmail(emailId: string) {
+    return this.request('/api/email/{email_id}', {
+      method: 'delete',
+      urlParams: {
+        email_id: emailId,
+      },
+    });
+  }
+
+  sendEmail(emailId: string, payload: APISchemas['SendEmailInput']) {
+    return this.request('/api/email/{email_id}/send', {
+      method: 'post',
+      urlParams: {
+        email_id: emailId,
+      },
+      body: payload,
     });
   }
 

@@ -249,6 +249,40 @@ func (s *httpServer) Build() error {
 			fizz.Summary("Delete a payment"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeletePaymentAction), tonic.Handler(handlers.DeletePayment, http.StatusNoContent))
+
+		budgetGroup.POST(":budget_id/email", []fizz.OperationOption{
+			fizz.Summary("Send an e-mail"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.SendBudgetEmailAction), tonic.Handler(handlers.SendBudgetEmail, http.StatusAccepted))
+	}
+
+	emailGroup := router.Group("/api/email", "06 - email", "manages the emails")
+	{
+		emailGroup.GET("", []fizz.OperationOption{
+			fizz.Summary("Get the emails"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListEmails, http.StatusOK))
+
+		emailGroup.GET(":email_id", []fizz.OperationOption{
+			fizz.Summary("Get an email"),
+			fizz.Response(fmt.Sprint(http.StatusNotFound), "Not Found", APIError{}, nil, nil),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmail, http.StatusOK))
+
+		emailGroup.DELETE(":email_id", []fizz.OperationOption{
+			fizz.Summary("Delete an email"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteEmailAction), tonic.Handler(handlers.DeleteEmail, http.StatusNoContent))
+
+		emailGroup.POST(":email_id/send", []fizz.OperationOption{
+			fizz.Summary("Send an email"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.SendEmailAction), tonic.Handler(handlers.SendEmail, http.StatusNoContent))
+
+		emailGroup.GET(":email_id/tracker", []fizz.OperationOption{
+			fizz.Summary("Track an email"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, tonic.Handler(handlers.TrackEmail, http.StatusOK))
 	}
 
 	router.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{

@@ -17,6 +17,7 @@ import { BudgetFormComponent } from './components/budget-form/budget-form.compon
 import { ExpenseFormComponent } from './components/expense-form/expense-form.component';
 import { PaymentListComponent } from './components/payment-list/payment-list.component';
 import { PaymentFormComponent } from './components/payment-form/payment-form.component';
+import { BudgetEmailFormComponent } from './components/budget-email-form/budget-email-form.component';
 
 const material = [
   MatButtonModule,
@@ -37,6 +38,7 @@ const material = [
     ExpenseFormComponent,
     PaymentListComponent,
     PaymentFormComponent,
+    BudgetEmailFormComponent,
   ],
   imports: [
     CommonModule,

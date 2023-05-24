@@ -1,7 +1,4 @@
 <mat-toolbar>
-  <mat-toolbar-row>
-
-
   <div class="spacer"></div>
 
   <ng-container *ngFor="let action of toolbarActions">
@@ -46,7 +43,6 @@
   >
     <mat-icon>add</mat-icon>
   </button>
-</mat-toolbar-row>
 </mat-toolbar>
 
 <div class="table-container">
@@ -94,7 +90,7 @@
             </button>
             <ng-container *ngFor="let action of rowActions">
               <button
-                *ngIf="action.show(row)"
+                *ngIf="action.show(row.original)"
                 [disabled]="action.disabled(row.original)"
                 mat-menu-item
                 (click)="action.func(row.original)"

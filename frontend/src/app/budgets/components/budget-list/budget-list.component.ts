@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { BudgetFormComponent } from '../budget-form/budget-form.component';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
+import { BudgetEmailFormComponent } from '../budget-email-form/budget-email-form.component';
 
 @Component({
   selector: 'app-budget-list',
@@ -24,8 +25,9 @@ export class BudgetListComponent {
 
   readonly rowActions$ = combineLatest([
     this._auth.allowed$('budget.PublishBudget'),
+    this._auth.allowed$('budget.SendEmail'),
   ]).pipe(
-    map(([publishBudget]) => {
+    map(([publishBudget, sendEmail]) => {
       const actions: CustomRowAction<APISchemas['ModelsBudgetResult']>[] = [];
 
       if (publishBudget) {
@@ -65,6 +67,26 @@ export class BudgetListComponent {
                 }),
             (row) => {
               return row.draft === true;
+            }
+          )
+        );
+      }
+
+      if (sendEmail) {
+        actions.push(
+          new CustomRowAction<APISchemas['ModelsBudgetResult']>(
+            'mail',
+            'Send e-mail',
+            'E-mail',
+            (row) =>
+              this._dialog.open(BudgetEmailFormComponent, {
+                width: '800px',
+                data: {
+                  budget: row,
+                },
+              }),
+            (row) => {
+              return !row.draft;
             }
           )
         );

@@ -16,6 +16,17 @@ services:
         - CMD-SHELL
         - pg_isready
 
+  smtp-mock:
+    image: 'local/smtp-mock'
+    build:
+      context: smtp-mock
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+        - CMD-SHELL
+        - nc -z -v localhost 2024
+
   server:
     image: 'local/asl-bissieux'
     build:
@@ -33,6 +44,8 @@ services:
       - 8080
     depends_on:
       postgresql:
+        condition: service_healthy
+      smtp-mock:
         condition: service_healthy
     healthcheck:
       interval: 10s

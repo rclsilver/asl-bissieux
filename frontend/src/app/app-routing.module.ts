@@ -23,6 +23,11 @@ const routes: Routes = [
       import('./members/members.module').then((mod) => mod.MembersModule),
   },
   {
+    path: 'emails',
+    loadChildren: () =>
+      import('./emails/emails.module').then((mod) => mod.EmailsModule),
+  },
+  {
     path: 'users',
     loadChildren: () =>
       import('./users/users.module').then((mod) => mod.UsersModule),

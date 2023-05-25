@@ -1,10 +1,12 @@
 <h2>E-mails</h2>
 
 <app-crud-table
+  [canSelect]="true"
   [columns]="columns"
   [dataSource]="datasource"
   [canDelete]="canDelete.bind(this)"
   (delete)="delete($event)"
+  [toolbarActions]="toolbarActions$ | async"
   [rowActions]="rowActions$ | async"
 >
   <ng-container matColumnDef="state">

@@ -254,6 +254,11 @@ func (s *httpServer) Build() error {
 			fizz.Summary("Send an e-mail"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.SendBudgetEmailAction), tonic.Handler(handlers.SendBudgetEmail, http.StatusAccepted))
+
+		budgetGroup.POST(":budget_id/email-preview", []fizz.OperationOption{
+			fizz.Summary("Preview an e-mail"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.PreviewBudgetEmail, http.StatusOK))
 	}
 
 	emailGroup := router.Group("/api/email", "06 - email", "manages the emails")

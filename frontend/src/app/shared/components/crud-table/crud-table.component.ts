@@ -16,7 +16,10 @@ import {
   Observable,
   Subject,
   combineLatest,
+  distinctUntilChanged,
+  first,
   map,
+  skip,
   switchMap,
   takeUntil,
 } from 'rxjs';
@@ -60,6 +63,39 @@ export class CustomRowAction<T> extends CustomAction {
   }
 }
 
+export class SelectionModel<T> {
+  private readonly _selected$ = new BehaviorSubject<{ hash: string; row: T }[]>(
+    []
+  );
+
+  readonly selected$ = this._selected$.pipe(
+    map((items) => items.map((item) => item.row)),
+    distinctUntilChanged()
+  );
+
+  private _getIndex(row: T): number {
+    const hash = JSON.stringify(row);
+    return this._selected$.value.findIndex((value) => value.hash === hash);
+  }
+
+  toggle(row: T): void {
+    const index = this._getIndex(row);
+    const hash = JSON.stringify(row);
+
+    if (index === -1) {
+      this._selected$.next([...this._selected$.value, { hash, row }]);
+    } else {
+      this._selected$.next(
+        this._selected$.value.filter((item) => item.hash !== hash)
+      );
+    }
+  }
+
+  isSelected(row: T): boolean {
+    return this._getIndex(row) !== -1;
+  }
+}
+
 export type RowClassFunction<T = any> = (row: T) => string | undefined;
 export type CanEditFunction<T = any> = (row: T) => Observable<boolean>;
 export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
@@ -75,6 +111,20 @@ export class CrudTableComponent<T extends {}>
   private _destroyed$ = new Subject<void>();
 
   private _rowActions$ = new BehaviorSubject<CustomRowAction<T>[]>([]);
+
+  private _canSelect$ = new BehaviorSubject(false);
+
+  @Input() set canSelect(canSelect: boolean | Observable<boolean>) {
+    if (typeof canSelect === 'boolean') {
+      this._canSelect$.next(canSelect);
+    } else {
+      canSelect
+        .pipe(takeUntil(this._destroyed$))
+        .subscribe((v) => this._canSelect$.next(v));
+    }
+  }
+
+  readonly selected = new SelectionModel<T>();
 
   private _canEdit$ = new BehaviorSubject(false);
   private _canEditFunc$ = new BehaviorSubject<CanEditFunction<T> | undefined>(
@@ -188,16 +238,20 @@ export class CrudTableComponent<T extends {}>
     this.columnDefs$,
     this._customColumnDefs$.asObservable(),
     this.showActions$,
+    this._canSelect$,
   ]).pipe(
-    map(([columnDefs, customColumnDefs, showActions]) => {
+    map(([columnDefs, customColumnDefs, showActions, canSelect]) => {
       return [
+        canSelect ? ['_select_'] : [],
         columnDefs.map((c) => c.name),
         customColumnDefs.map((c) => c.name),
         showActions ? ['_actions_'] : [],
       ];
     }),
-    map(([columns, customColumns, showActions]) => {
-      return [...new Set([...columns, ...customColumns, ...showActions])];
+    map(([select, columns, customColumns, actions]) => {
+      return [
+        ...new Set([...select, ...columns, ...customColumns, ...actions]),
+      ];
     })
   );
   readonly columnsCount$ = this.columns$.pipe(map((columns) => columns.length));
@@ -227,6 +281,7 @@ export class CrudTableComponent<T extends {}>
     if (dataSource === null) {
       dataSource = new EmptyDataSource<T>();
     }
+
     this._dataSource$.next(
       new CrudTableDataSource<T>(
         dataSource,
@@ -257,8 +312,32 @@ export class CrudTableComponent<T extends {}>
   }
 
   ngAfterViewInit(): void {
+    // set the table datasource
     this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
       this.table.dataSource = ds;
+    });
+
+    // if select is enabled, unselect non-existant results
+    this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
+      ds.results$
+        .pipe(
+          takeUntil(this._destroyed$),
+          takeUntil(this._dataSource$.pipe(skip(1)))
+        )
+        .subscribe((result) => {
+          this.selected.selected$.pipe(first()).subscribe((rows) => {
+            rows.forEach((row) => {
+              if (
+                result.findIndex(
+                  (item) =>
+                    JSON.stringify(item.original) === JSON.stringify(row)
+                ) === -1
+              ) {
+                this.selected.toggle(row);
+              }
+            });
+          });
+        });
     });
 
     this._columnDefs$.pipe(takeUntil(this._destroyed$)).subscribe((columns) => {

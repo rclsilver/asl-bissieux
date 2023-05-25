@@ -25,8 +25,11 @@
     <div *ngIf="authenticated$ | async">
       <router-outlet></router-outlet>
     </div>
-    <div *ngIf="!(authenticated$ | async)">
-      need to login
-    </div>
+    <mat-card *ngIf="!(authenticated$ | async)" class="need-login">
+      <mat-card-title>Restricted area</mat-card-title>
+      <mat-card-content>
+        <p>You need to login to continue.</p>
+      </mat-card-content>
+    </mat-card>
   </mat-sidenav-content>
 </mat-sidenav-container>

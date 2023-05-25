@@ -66,6 +66,19 @@ export class ApiService {
     });
   }
 
+  previewBudgetEmail(
+    budgetId: string,
+    payload: APISchemas['PreviewBudgetEmailInput']
+  ) {
+    return this.request('/api/budget/{budget_id}/email-preview', {
+      method: 'post',
+      urlParams: {
+        budget_id: budgetId,
+      },
+      body: payload,
+    });
+  }
+
   sendBudgetEmail(
     budgetId: string,
     payload: APISchemas['SendBudgetEmailInput']

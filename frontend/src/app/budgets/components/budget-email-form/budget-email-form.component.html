@@ -11,12 +11,18 @@
     </mat-form-field>
     <mat-form-field appearance="fill">
       <mat-label>Message</mat-label>
-      <input matInput formControlName="message" [required]="true">
       <textarea matInput rows="15" formControlName="message" [required]="true"></textarea>
       <mat-error *ngIf="form.controls['message'].touched && form.controls['message'].invalid">
         <span *ngIf="form.controls['message'].errors!['required']">This field is mandatory</span>
         <span *ngIf="form.controls['message'].errors!['server']">{{ form.controls['message'].errors!['server'] }}</span>
       </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="fill" [style.display]="form.controls['previewMode'].value ? 'block' : 'none'">
+      <mat-label>Member</mat-label>
+      <input matInput type="text" formControlName="previewMember" [matAutocomplete]="previewMember" [required]="form.controls['previewMode'].value">
+      <mat-autocomplete #previewMember="matAutocomplete" [displayWith]="previewMemberDisplay.bind(this)">
+        <mat-option *ngFor="let member of members$ | async" [value]="member.id">{{member.first_name}} {{member.last_name}}</mat-option>
+      </mat-autocomplete>
     </mat-form-field>
     <mat-checkbox matInput formControlName="to_doing">Send to doing</mat-checkbox>
     <mat-checkbox matInput formControlName="to_paid">Send to paid</mat-checkbox>
@@ -24,6 +30,8 @@
   <div mat-dialog-actions>
     <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
     <div class="spacer"></div>
-    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+    <mat-slide-toggle formControlName="previewMode">Preview mode</mat-slide-toggle>
+    <button *ngIf="form.controls['previewMode'].value" mat-button color="primary" type="button" [disabled]="form.invalid || !form.touched" (click)="preview()">Preview</button>
+    <button *ngIf="!form.controls['previewMode'].value" mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
   </div>
 </form>

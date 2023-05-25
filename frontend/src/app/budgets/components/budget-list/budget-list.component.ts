@@ -80,7 +80,7 @@ export class BudgetListComponent {
             'E-mail',
             (row) =>
               this._dialog.open(BudgetEmailFormComponent, {
-                width: '800px',
+                width: '100%',
                 data: {
                   budget: row,
                 },

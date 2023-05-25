@@ -10,6 +10,10 @@ import (
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
+
 	"github.com/rclsilver/asl-bissieux/models"
 	"github.com/rclsilver/asl-bissieux/pkg/smtp"
 )
@@ -93,4 +97,17 @@ func MarkAsRead(c context.Context, tx *gorm.DB, emailID string) error {
 		return err
 	}
 	return nil
+}
+
+func ToHTML(md []byte) ([]byte, error) {
+	extensions := parser.CommonExtensions | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
+	doc := p.Parse(md)
+
+	// create HTML renderer with extensions
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+
+	return markdown.Render(doc, renderer), nil
 }

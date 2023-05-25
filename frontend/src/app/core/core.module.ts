@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 
+import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +14,7 @@ import { CoreRouterModule } from './core.routes';
 import { GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 
 const material = [
+  MatCardModule,
   MatListModule,
   MatSidenavModule,
   MatIconModule,

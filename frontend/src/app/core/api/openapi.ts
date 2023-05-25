@@ -44,6 +44,7 @@ export type APISchemas = {
     enabled?: boolean;
     username?: string;
   };
+  HandlersPreviewBudgetEmailOut: { message?: string; subject?: string };
   ModelsBudget: {
     /* Format: date-time */
     created_at?: string;
@@ -159,6 +160,11 @@ export type APISchemas = {
     share?: number;
     /* Format: date-time */
     updated_at?: string;
+  };
+  PreviewBudgetEmailInput: {
+    member_id?: string;
+    message?: string;
+    subject?: string;
   };
   SendBudgetEmailInput: {
     message?: string;
@@ -305,6 +311,14 @@ export type APIEndpoints = {
       method: 'post';
       urlParams: { budget_id: string };
       body: APISchemas['SendBudgetEmailInput'];
+    };
+  };
+  '/api/budget/{budget_id}/email-preview': {
+    responses: { post: APISchemas['HandlersPreviewBudgetEmailOut'] };
+    requests: {
+      method: 'post';
+      urlParams: { budget_id: string };
+      body: APISchemas['PreviewBudgetEmailInput'];
     };
   };
   '/api/budget/{budget_id}/expenses': {

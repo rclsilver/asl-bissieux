@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
@@ -16,12 +17,9 @@ type listMembersIn struct{}
 
 // ListMembers returns the list of the members
 func ListMembers(c *gin.Context, in *listMembersIn) ([]*models.Member, error) {
-	db := db.Connection()
-
-	var result []*models.Member
-	if err := db.Preload("Units").Find(&result).Error; err != nil {
+	result, err := controllers.ListMembers(db.Connection())
+	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get members")
-		return nil, err
 	}
 
 	return result, nil
@@ -33,22 +31,15 @@ type getMemberIn struct {
 
 // GetMember get a member
 func GetMember(c *gin.Context, in *getMemberIn) (*models.Member, error) {
-	if err := validateUUID(in.MemberID, "invalid member ID"); err != nil {
-		return nil, err
-	}
-
-	db := db.Connection()
-	var row models.Member
-
-	if err := db.Where("id = ?", in.MemberID).Preload("Units").First(&row).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
+	member, err := controllers.GetMember(db.Connection(), in.MemberID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get member")
 		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get member")
 		return nil, err
 	}
 
-	return &row, nil
+	return member, nil
 }
 
 type createMemberIn struct {
@@ -130,10 +121,6 @@ type deleteMemberIn struct {
 
 // DeleteMember delete a member
 func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
-	if err := validateUUID(in.MemberID, "invalid member ID"); err != nil {
-		return err
-	}
-
 	db := db.Connection().Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
@@ -141,21 +128,14 @@ func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
 	}
 	defer db.Rollback()
 
-	var row models.Member
-
-	if err := db.Where("id = ?", in.MemberID).First(&row).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
+	if err := controllers.DeleteMember(db, in.MemberID); err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete member")
 		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete member")
 		return err
 	}
 
-	if err := db.Select("Units").Delete(&row).Error; err != nil {
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete member")
-		return err
-	}
-	logrus.WithContext(c.Request.Context()).Infof("member %q deleted", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("member %q deleted", in.MemberID)
 
 	if err := db.Commit().Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to commit transaction")

@@ -71,6 +71,14 @@
       </ng-container>
     </ng-container>
 
+    <!-- Select column definition -->
+    <ng-container matColumnDef="_select_">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row">
+        <mat-checkbox [value]="row" (click)="$event.stopPropagation()" (change)="$event ? selected.toggle(row.original) : null" [checked]="selected.isSelected(row.original)"></mat-checkbox>
+      </td>
+    </ng-container>
+
     <!-- Action column definition -->
     <ng-container matColumnDef="_actions_">
       <th mat-header-cell *matHeaderCellDef></th>

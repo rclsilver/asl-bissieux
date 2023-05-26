@@ -29,6 +29,7 @@ export const DateRender: RenderFunctionFactory =
 export class Column<ColumnType = any, ValueType = ColumnType> {
   readonly name: string;
   readonly label: string;
+  readonly hidden: boolean;
   readonly canFilter: boolean;
   readonly filterFunc: FilterFunction<ValueType>;
   readonly defaultSort: boolean;
@@ -40,6 +41,7 @@ export class Column<ColumnType = any, ValueType = ColumnType> {
   constructor(name: string, options?: Partial<Column<ColumnType, ValueType>>) {
     this.name = name;
     this.label = options?.label ?? name;
+    this.hidden = options?.hidden ?? false;
     this.canFilter = options?.canFilter ?? false;
     this.filterFunc =
       options?.filterFunc ??

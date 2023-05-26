@@ -85,25 +85,9 @@ export class UserFormComponent implements OnInit {
           .afterClosed()
           .subscribe(() => this._dialogRef.close(true));
       },
-      error: (error) => {
-        /*
-      if (error.fields) {
-        error.fields.forEach((field) =>
-          this.form.controls[field.name].setErrors({ server: field.message })
-        );
-      } else {
-        */
-        this._notifications.showDialog({
-          title: 'Error',
-          message: this.data.user?.id
-            ? `Unable to update user: ${error}`
-            : `Unable to create user: ${error}`,
-          level: NotificationDialogLevel.Error,
-        });
-        /*
-      }
-      */
-      },
+      error: this._api.handleError(
+        this.data.user?.id ? 'Unable to update user' : 'Unable to create user'
+      ),
     });
   }
 }

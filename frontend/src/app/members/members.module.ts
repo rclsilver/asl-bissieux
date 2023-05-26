@@ -9,7 +9,6 @@ import { MatTableModule } from '@angular/material/table';
 import { SharedModule } from '../shared/shared.module';
 import { MembersRouterModule } from './members.routes';
 import { MemberListComponent } from './components/member-list/member-list.component';
-import { MemberListDialogComponent } from './components/member-list-dialog/member-list-dialog.component';
 import { MemberFormComponent } from './components/member-form/member-form.component';
 
 const material = [
@@ -21,11 +20,7 @@ const material = [
 ];
 
 @NgModule({
-  declarations: [
-    MemberListComponent,
-    MemberListDialogComponent,
-    MemberFormComponent,
-  ],
+  declarations: [MemberListComponent, MemberFormComponent],
   imports: [
     CommonModule,
     SharedModule,

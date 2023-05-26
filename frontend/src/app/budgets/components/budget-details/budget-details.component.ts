@@ -15,7 +15,6 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { ExpenseDataSource } from '../../datasources/expense.datasource';
 import { Column, CustomRenderColumn } from 'src/app/shared/models/column.model';
 import { ExpenseFormComponent } from '../expense-form/expense-form.component';
-import { MatDialog } from '@angular/material/dialog';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
@@ -36,7 +35,6 @@ export class BudgetDetailsComponent implements OnInit {
   private readonly _api = inject(ApiService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _notifications = inject(NotificationsService);
-  private readonly _dialog = inject(MatDialog);
 
   private _budget$ = new BehaviorSubject<
     APISchemas['ModelsBudgetResult'] | null
@@ -99,16 +97,15 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   editExpense(expense?: APISchemas['ModelsExpense']) {
-    this._dialog
-      .open(ExpenseFormComponent, {
-        width: '480px',
+    this._notifications
+      .showForm(ExpenseFormComponent, {
         data: {
           budgetId: this._budget$.value?.id,
           expense,
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refreshExpenses();
         }
@@ -139,7 +136,7 @@ export class BudgetDetailsComponent implements OnInit {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api
             .deleteExpense(this._budget$.value?.id!, expense.id!)
@@ -152,13 +149,7 @@ export class BudgetDetailsComponent implements OnInit {
                   level: NotificationDialogLevel.Info,
                 });
               },
-              error: (e) => {
-                this._notifications.showDialog({
-                  title: 'Error',
-                  message: `Unable to delete the expense: ${e}`,
-                  level: NotificationDialogLevel.Error,
-                });
-              },
+              error: this._api.handleError('Unable to delete the expense'),
             });
         }
       });
@@ -299,9 +290,8 @@ export class BudgetDetailsComponent implements OnInit {
             'Manage the payments',
             'Manage payments',
             (row) =>
-              this._dialog
-                .open(PaymentListComponent, {
-                  width: '800px',
+              this._notifications
+                .showForm(PaymentListComponent, {
                   data: {
                     budgetId: this._budget$.value?.id,
                     cotisationId: row.id,

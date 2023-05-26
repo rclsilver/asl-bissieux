@@ -6,7 +6,6 @@ import { Column } from 'src/app/shared/models/column.model';
 import { combineLatest, map, of, switchMap } from 'rxjs';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { ApiService } from 'src/app/core/services/api.service';
-import { MatDialog } from '@angular/material/dialog';
 import { BudgetFormComponent } from '../budget-form/budget-form.component';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -20,7 +19,6 @@ import { BudgetEmailFormComponent } from '../budget-email-form/budget-email-form
 export class BudgetListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
 
   readonly rowActions$ = combineLatest([
@@ -55,13 +53,9 @@ export class BudgetListComponent {
                           level: NotificationDialogLevel.Info,
                         });
                       },
-                      error: (e) => {
-                        this._notifications.showDialog({
-                          title: 'Error',
-                          message: `Unable to delete the budget: ${e}`,
-                          level: NotificationDialogLevel.Error,
-                        });
-                      },
+                      error: this._api.handleError(
+                        'Unable to publish the budget'
+                      ),
                     });
                   }
                 }),
@@ -79,11 +73,11 @@ export class BudgetListComponent {
             'Send e-mail',
             'E-mail',
             (row) =>
-              this._dialog.open(BudgetEmailFormComponent, {
-                width: '100%',
+              this._notifications.showForm(BudgetEmailFormComponent, {
                 data: {
                   budget: row,
                 },
+                width: '480px',
               }),
             (row) => {
               return !row.draft;
@@ -161,15 +155,14 @@ export class BudgetListComponent {
   }
 
   edit(budget?: APISchemas['ModelsBudgetResult']) {
-    this._dialog
-      .open(BudgetFormComponent, {
-        width: '480px',
+    this._notifications
+      .showForm(BudgetFormComponent, {
         data: {
           budget,
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refresh();
         }
@@ -184,7 +177,7 @@ export class BudgetListComponent {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api.deleteBudget(budget.id!).subscribe({
             next: () => {
@@ -195,13 +188,7 @@ export class BudgetListComponent {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the budget: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the budget'),
           });
         }
       });

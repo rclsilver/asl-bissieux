@@ -1,15 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
-import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { UnitDataSource } from '../../datasources/unit.datasource';
 import { UnitFormComponent } from '../unit-form/unit-form.component';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { Column } from 'src/app/shared/models/column.model';
-import { MemberListDialogComponent } from 'src/app/members/components/member-list-dialog/member-list-dialog.component';
 
 @Component({
   selector: 'app-unit-list',
@@ -19,28 +16,7 @@ import { MemberListDialogComponent } from 'src/app/members/components/member-lis
 export class UnitListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
-
-  readonly rowActions = [
-    new CustomRowAction<APISchemas['ModelsUnit']>(
-      'people',
-      'Manage the members of the unit',
-      'Manage members',
-      (unit) =>
-        this._dialog
-          .open(MemberListDialogComponent, {
-            width: '480px',
-            data: {
-              unit,
-            },
-          })
-          .afterClosed()
-          .subscribe(() => {
-            this.refresh();
-          })
-    ),
-  ];
 
   readonly columns = [
     new Column('number', {
@@ -75,15 +51,14 @@ export class UnitListComponent {
   }
 
   edit(unit?: APISchemas['CreateUnitInput'] | APISchemas['UpdateUnitInput']) {
-    this._dialog
-      .open(UnitFormComponent, {
-        width: '480px',
+    this._notifications
+      .showForm(UnitFormComponent, {
         data: {
           unit,
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refresh();
         }
@@ -98,7 +73,7 @@ export class UnitListComponent {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api.deleteUnit(unit.id!).subscribe({
             next: () => {
@@ -109,13 +84,7 @@ export class UnitListComponent {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the unit: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the unit'),
           });
         }
       });

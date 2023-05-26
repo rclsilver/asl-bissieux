@@ -243,7 +243,7 @@ export class CrudTableComponent<T extends {}>
     map(([columnDefs, customColumnDefs, showActions, canSelect]) => {
       return [
         canSelect ? ['_select_'] : [],
-        columnDefs.map((c) => c.name),
+        columnDefs.filter((c) => !c.hidden).map((c) => c.name),
         customColumnDefs.map((c) => c.name),
         showActions ? ['_actions_'] : [],
       ];

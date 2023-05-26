@@ -80,25 +80,11 @@ export class PaymentFormComponent {
           level: NotificationDialogLevel.Info,
         });
       },
-      error: (error) => {
-        /*
-        if (error.fields) {
-          error.fields.forEach((field) =>
-            this.form.controls[field.name].setErrors({ server: field.message })
-          );
-        } else {
-          */
-        this._notifications.showDialog({
-          title: 'Error',
-          message: this.data.payment?.id
-            ? `Unable to update payment: ${error}`
-            : `Unable to create payment: ${error}`,
-          level: NotificationDialogLevel.Error,
-        });
-        /*
-        }
-        */
-      },
+      error: this._api.handleError(
+        this.data.payment?.id
+          ? 'Unable to update payment'
+          : 'Unable to create payment'
+      ),
     });
   }
 }

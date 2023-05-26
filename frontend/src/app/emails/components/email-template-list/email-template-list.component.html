@@ -1,5 +1,3 @@
-<h2>Units</h2>
-
 <app-crud-table
   [columns]="columns"
   [dataSource]="datasource"
@@ -8,4 +6,6 @@
   (edit)="edit($event)"
   [canDelete]="canDelete.bind(this)"
   (delete)="delete($event)"
-></app-crud-table>
+  [rowActions]="rowActions"
+>
+</app-crud-table>

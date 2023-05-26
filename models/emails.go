@@ -5,7 +5,61 @@ import (
 )
 
 func init() {
+	db.RegisterMigration(&EmailTemplate{})
+	db.RegisterMigration(&Attachment{})
 	db.RegisterMigration(&Email{})
+}
+
+type BuiltEmail struct {
+	Subject string `json:"subject"`
+	Message string `json:"message"`
+}
+
+type EmailTemplate struct {
+	db.Model
+
+	Label   string `json:"label" gorm:"notNull"`
+	Subject string `json:"subject" gorm:"notNull"`
+	Message string `json:"message" gorm:"notNull"`
+
+	Attachments []*Attachment `json:"attachments,omitempty"`
+	Emails      []*Email      `json:"emails,omitempty"`
+}
+
+func NewEmailTemplate(label, subject, message string) *EmailTemplate {
+	return &EmailTemplate{
+		Label:   label,
+		Subject: subject,
+		Message: message,
+	}
+}
+
+func (EmailTemplate) TableName() string {
+	return "email_template"
+}
+
+type Attachment struct {
+	db.Model
+
+	Name        string `json:"name" gorm:"notNull"`
+	Content     []byte `json:"-" gorm:"type:bytea;notNull"`
+	ContentType string `json:"content_type" gorm:"notNull"`
+
+	EmailTemplateID string         `json:"template_id" gorm:"notNull"`
+	EmailTemplate   *EmailTemplate `json:"template,omitempty" gorm:"notNull;references:ID"`
+}
+
+func NewAttachment(templateID, name string, content []byte, contentType string) *Attachment {
+	return &Attachment{
+		Name:            name,
+		Content:         content,
+		ContentType:     contentType,
+		EmailTemplateID: templateID,
+	}
+}
+
+func (Attachment) TableName() string {
+	return "attachment"
 }
 
 type EmailState string
@@ -20,25 +74,28 @@ const (
 type Email struct {
 	db.Model
 
-	To string `gorm:"notNull" json:"to"`
+	To      string         `json:"to" gorm:"notNull"`
+	Context map[string]any `json:"context" gorm:"serializer:json;type:jsonb;notNull"`
 
-	Subject string `json:"subject" gorm:"notNull"`
-	Message string `json:"message" gorm:"notNull"`
+	Subject string `json:"subject,omitempty"`
+	Message string `json:"message,omitempty"`
+
+	EmailTemplateID string         `json:"template_id" gorm:"notNull"`
+	EmailTemplate   *EmailTemplate `json:"template,omitempty" gorm:"notNull;references:ID"`
 
 	State EmailState `json:"state" gorm:"notNull;default:WAITING"`
 	Error string     `json:"error,omitempty"`
 }
 
-func NewEmail(to, subject, message string) *Email {
+func NewEmail(template *EmailTemplate, to string, context map[string]any) *Email {
 	return &Email{
-		To:      to,
-		Subject: subject,
-		Message: message,
-		State:   Waiting,
+		EmailTemplateID: template.ID,
+		To:              to,
+		Context:         context,
+		State:           Waiting,
 	}
 }
 
-// TableName give to gorm the table name to use
 func (Email) TableName() string {
 	return "email"
 }

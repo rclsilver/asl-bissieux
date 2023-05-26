@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -8,6 +9,7 @@ import (
 	"github.com/juju/errors"
 
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
 
 func ListBudgets(tx *gorm.DB) ([]*models.BudgetResult, error) {
@@ -153,4 +155,162 @@ func ListPayments(tx *gorm.DB, budgetID, cotisationID string) ([]*models.Payment
 	}
 
 	return result, nil
+}
+
+func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data map[string]any) (*models.BuiltEmail, error) {
+	template, err := GetEmailTemplate(tx, templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	budget, err := GetBudget(tx, budgetID)
+	if err != nil {
+		return nil, err
+	}
+
+	member, err := GetMember(tx, memberID)
+	if err != nil {
+		return nil, err
+	}
+
+	cotisations, err := ListCotisations(tx, budgetID)
+	if err != nil {
+		return nil, err
+	}
+	cotisations = filterCotisations(cotisations, member.ID)
+
+	t, err := buildTemplate(tx, budget, member, cotisations, data)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := BuildEmail(template, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.BuiltEmail{
+		Subject: res.Subject,
+		Message: res.Message,
+	}, nil
+}
+
+func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]any, toDoing, toPaid bool) error {
+	template, err := GetEmailTemplate(tx, templateID)
+	if err != nil {
+		return err
+	}
+
+	budget, err := GetBudget(tx, budgetID)
+	if err != nil {
+		return err
+	}
+
+	cotisations, err := ListCotisations(tx, budgetID)
+	if err != nil {
+		return err
+	}
+
+	members := make(map[*models.Member][]*models.CotisationResult)
+
+	for _, cotisation := range cotisations {
+		if !toPaid && cotisation.Paid == cotisation.Amount {
+			continue
+		}
+
+		if !toDoing && cotisation.Paid >= cotisation.Amount/2 {
+			continue
+		}
+
+		for _, member := range cotisation.Unit.Members {
+			if len(member.Email) == 0 {
+				continue
+			}
+
+			if _, exists := members[member]; exists {
+				members[member] = append(members[member], cotisation)
+			} else {
+				members[member] = []*models.CotisationResult{cotisation}
+			}
+		}
+	}
+
+	for member, cotisations := range members {
+		context, err := buildTemplateData(tx, budget, member, cotisations, data)
+		if err != nil {
+			return err
+		}
+
+		email := models.NewEmail(template, member.Email, context)
+
+		if err := tx.Create(email).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult, data map[string]any) (map[string]any, error) {
+	expenses, err := ListExpenses(tx, budget.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var amount float64
+	for _, c := range cotisations {
+		amount += c.Amount
+	}
+
+	if data == nil {
+		data = make(map[string]any)
+	}
+
+	data["member"] = member
+	data["budget"] = budget
+	data["expenses"] = expenses
+	data["amount"] = amount
+	data["cotisations"] = cotisations
+
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, errors.Annotate(err, "unable to marshal the data")
+	}
+
+	var context map[string]any
+	if err := json.Unmarshal(jsonBytes, &context); err != nil {
+		return nil, errors.Annotate(err, "unable to unmarshal the data")
+	}
+
+	return context, nil
+}
+
+func buildTemplate(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult, data map[string]any) (*templates.Template, error) {
+	context, err := buildTemplateData(tx, budget, member, cotisations, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return templates.NewTemplate(context)
+}
+
+func filterCotisations(cotisations []*models.CotisationResult, memberID string) []*models.CotisationResult {
+	var result []*models.CotisationResult
+
+	for _, c := range cotisations {
+		found := false
+
+		for _, m := range c.Unit.Members {
+			if m.ID == memberID {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			result = append(result, c)
+		}
+	}
+
+	return result
 }

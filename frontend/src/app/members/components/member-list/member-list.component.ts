@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -17,7 +16,6 @@ import { MemberFormComponent } from '../member-form/member-form.component';
 export class MemberListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
 
   readonly columns = [
@@ -92,15 +90,14 @@ export class MemberListComponent {
   }
 
   edit(member?: APISchemas['ModelsMember']) {
-    this._dialog
-      .open(MemberFormComponent, {
-        width: '800px',
+    this._notifications
+      .showForm(MemberFormComponent, {
         data: {
           member,
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refresh();
         }
@@ -115,7 +112,7 @@ export class MemberListComponent {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api.deleteMember(member.id!).subscribe({
             next: () => {
@@ -126,13 +123,7 @@ export class MemberListComponent {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the member: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the member'),
           });
         }
       });

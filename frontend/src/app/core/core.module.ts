@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CoreRouterModule } from './core.routes';
 import { GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { SharedModule } from '../shared/shared.module';
 
 const material = [
   MatCardModule,
@@ -29,6 +30,7 @@ const material = [
     CoreRouterModule,
     GoogleSigninButtonModule,
     ...material,
+    SharedModule,
   ],
   declarations: [PageComponent],
   exports: [PageComponent],

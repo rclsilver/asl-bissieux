@@ -1,0 +1,6 @@
+<h1 mat-dialog-title>{{data.subject}}</h1>
+<div mat-dialog-content class="content" [innerHTML]="data.message"></div>
+<div mat-dialog-actions>
+  <div class="spacer"></div>
+  <button mat-button color="primary" type="button" (click)="close()">Close</button>
+</div>

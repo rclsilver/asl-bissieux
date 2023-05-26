@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatSortModule } from '@angular/material/sort';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -21,6 +22,7 @@ import { CrudTableComponent } from './components/crud-table/crud-table.component
 import { NotificationDialogComponent } from './components/notification-dialog/notification-dialog.component';
 import { MultiSelectComponent } from './components/multi-select/multi-select.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
+import { HorizontalNavComponent } from './components/horizontal-nav/horizontal-nav.component';
 
 const material = [
   MatAutocompleteModule,
@@ -35,6 +37,7 @@ const material = [
   MatProgressSpinnerModule,
   MatSortModule,
   MatTableModule,
+  MatTabsModule,
   MatToolbarModule,
   MatTooltipModule,
 ];
@@ -46,8 +49,9 @@ const material = [
     NotificationDialogComponent,
     MultiSelectComponent,
     SearchInputComponent,
+    HorizontalNavComponent,
   ],
-  exports: [CrudTableComponent, MultiSelectComponent],
+  exports: [CrudTableComponent, MultiSelectComponent, HorizontalNavComponent],
   imports: [CommonModule, ReactiveFormsModule, RouterModule, ...material],
 })
 export class SharedModule {}

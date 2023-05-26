@@ -141,25 +141,11 @@ export class MemberFormComponent {
             .afterClosed()
             .subscribe(() => this._dialogRef.close(true));
         },
-        error: (error) => {
-          /*
-      if (error.fields) {
-        error.fields.forEach((field) =>
-          this.form.controls[field.name].setErrors({ server: field.message })
-        );
-      } else {
-        */
-          this._notifications.showDialog({
-            title: 'Error',
-            message: this.data.member?.id
-              ? `Unable to update member: ${error}`
-              : `Unable to create member: ${error}`,
-            level: NotificationDialogLevel.Error,
-          });
-          /*
-      }
-      */
-        },
+        error: this._api.handleError(
+          this.data.member?.id
+            ? 'Unable to update member'
+            : 'Unable to create member'
+        ),
       });
   }
 }

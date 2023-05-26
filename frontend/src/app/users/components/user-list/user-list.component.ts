@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -17,7 +16,6 @@ import { UserFormComponent } from '../user-form/user-form.component';
 export class UserListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
 
   readonly columns = [
@@ -56,15 +54,14 @@ export class UserListComponent {
   }
 
   edit(user?: APISchemas['AuthUser']) {
-    this._dialog
-      .open(UserFormComponent, {
-        width: '800px',
+    this._notifications
+      .showForm(UserFormComponent, {
         data: {
           user,
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refresh();
         }
@@ -79,7 +76,7 @@ export class UserListComponent {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api.deleteUser(user.id!).subscribe({
             next: () => {
@@ -90,13 +87,7 @@ export class UserListComponent {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the user: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the user'),
           });
         }
       });

@@ -62,25 +62,9 @@ export class UnitFormComponent {
           level: NotificationDialogLevel.Info,
         });
       },
-      error: (error) => {
-        /*
-      if (error.fields) {
-        error.fields.forEach((field) =>
-          this.form.controls[field.name].setErrors({ server: field.message })
-        );
-      } else {
-        */
-        this._notifications.showDialog({
-          title: 'Error',
-          message: this.data.unit?.id
-            ? `Unable to update unit: ${error}`
-            : `Unable to create unit: ${error}`,
-          level: NotificationDialogLevel.Error,
-        });
-        /*
-      }
-      */
-      },
+      error: this._api.handleError(
+        this.data.unit?.id ? 'Unable to update unit' : 'Unable to create unit'
+      ),
     });
   }
 }

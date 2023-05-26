@@ -1,9 +1,5 @@
 import { Component, Inject, OnInit, inject } from '@angular/core';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, map, shareReplay, take } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -22,7 +18,6 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 export class PaymentListComponent implements OnInit {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
 
   readonly columns = [
@@ -67,9 +62,8 @@ export class PaymentListComponent implements OnInit {
   }
 
   edit(payment?: APISchemas['ModelsPayment']) {
-    this._dialog
-      .open(PaymentFormComponent, {
-        width: '480px',
+    this._notifications
+      .showForm(PaymentFormComponent, {
         data: {
           budget: {
             id: this._data.budgetId,
@@ -81,7 +75,7 @@ export class PaymentListComponent implements OnInit {
         },
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.refresh();
         }
@@ -100,7 +94,7 @@ export class PaymentListComponent implements OnInit {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api
             .deletePayment(
@@ -117,13 +111,7 @@ export class PaymentListComponent implements OnInit {
                   level: NotificationDialogLevel.Info,
                 });
               },
-              error: (e) => {
-                this._notifications.showDialog({
-                  title: 'Error',
-                  message: `Unable to delete the payment: ${e}`,
-                  level: NotificationDialogLevel.Error,
-                });
-              },
+              error: this._api.handleError('Unable to delete the payment'),
             });
         }
       });

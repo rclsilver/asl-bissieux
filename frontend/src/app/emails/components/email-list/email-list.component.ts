@@ -26,8 +26,7 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { Column } from 'src/app/shared/models/column.model';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { EmailDataSource } from '../../datasources/ermail.datasource';
-import { EmailViewDialogComponent } from '../email-view-dialog/email-view-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
+import { EmailTemplatePreviewComponent } from '../email-template-preview/email-template-preview.component';
 
 @Component({
   selector: 'app-email-list',
@@ -39,7 +38,6 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
 
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
-  private readonly _dialog = inject(MatDialog);
   private readonly _notifications = inject(NotificationsService);
 
   readonly rowActions$ = combineLatest([
@@ -62,7 +60,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                   class: 'primary',
                 })
                 .afterClosed()
-                .subscribe((result: boolean) => {
+                .subscribe((result) => {
                   if (result) {
                     this._api
                       .sendEmail(row.id!, {
@@ -77,13 +75,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                             level: NotificationDialogLevel.Info,
                           });
                         },
-                        error: (e) => {
-                          this._notifications.showDialog({
-                            title: 'Error',
-                            message: `Unable to send the e-mail: ${e}`,
-                            level: NotificationDialogLevel.Error,
-                          });
-                        },
+                        error: this._api.handleError(
+                          'Unable to send the e-mail'
+                        ),
                       });
                   }
                 }),
@@ -182,7 +176,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((confirm: boolean) => {
+      .subscribe((confirm) => {
         if (confirm) {
           this._api.deleteEmail(email.id!).subscribe({
             next: () => {
@@ -193,23 +187,17 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the e-mail: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the e-mail'),
           });
         }
       });
   }
 
   show(email: APISchemas['ModelsEmail']) {
-    this._dialog.open(EmailViewDialogComponent, {
-      width: '800px',
+    this._notifications.show(EmailTemplatePreviewComponent, {
       data: {
-        email,
+        subject: email.subject,
+        message: email.message,
       },
     });
   }
@@ -222,7 +210,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         class: 'warn',
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.table.selected.selected$.pipe(first()).subscribe((selected) => {
             const calls$ = selected.map((row) =>
@@ -250,7 +238,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         class: 'primary',
       })
       .afterClosed()
-      .subscribe((result: boolean) => {
+      .subscribe((result) => {
         if (result) {
           this.table.selected.selected$
             .pipe(

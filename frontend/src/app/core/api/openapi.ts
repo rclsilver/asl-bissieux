@@ -1,4 +1,9 @@
 export type APISchemas = {
+  AddAttachmentInput: {
+    /* Format: byte */
+    Content?: string;
+    name?: string;
+  };
   AddMemberUnitInput: { unit_id?: string };
   AuthUser: {
     actions?: Array<string>;
@@ -12,6 +17,11 @@ export type APISchemas = {
     username?: string;
   };
   CreateBudgetInput: { label?: string };
+  CreateEmailTemplateInput: {
+    label?: string;
+    message?: string;
+    subject?: string;
+  };
   CreateExpenseInput: {
     /* Format: double */
     amount?: number;
@@ -44,7 +54,17 @@ export type APISchemas = {
     enabled?: boolean;
     username?: string;
   };
-  HandlersPreviewBudgetEmailOut: { message?: string; subject?: string };
+  ModelsAttachment: {
+    content_type?: string;
+    /* Format: date-time */
+    created_at?: string;
+    id?: string;
+    name?: string;
+    template?: APISchemas['ModelsEmailTemplate'];
+    template_id?: string;
+    /* Format: date-time */
+    updated_at?: string;
+  };
   ModelsBudget: {
     /* Format: date-time */
     created_at?: string;
@@ -67,6 +87,7 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsBuiltEmail: { message?: string; subject?: string };
   ModelsCotisation: {
     /* Format: double */
     amount?: number;
@@ -96,6 +117,7 @@ export type APISchemas = {
     updated_at?: string;
   };
   ModelsEmail: {
+    context?: {};
     /* Format: date-time */
     created_at?: string;
     error?: string;
@@ -103,7 +125,21 @@ export type APISchemas = {
     message?: string;
     state?: string;
     subject?: string;
+    template?: APISchemas['ModelsEmailTemplate'];
+    template_id?: string;
     to?: string;
+    /* Format: date-time */
+    updated_at?: string;
+  };
+  ModelsEmailTemplate: {
+    attachments?: Array<APISchemas['ModelsAttachment']>;
+    /* Format: date-time */
+    created_at?: string;
+    emails?: Array<APISchemas['ModelsEmail']>;
+    id?: string;
+    label?: string;
+    message?: string;
+    subject?: string;
     /* Format: date-time */
     updated_at?: string;
   };
@@ -162,15 +198,16 @@ export type APISchemas = {
     updated_at?: string;
   };
   PreviewBudgetEmailInput: {
+    data?: {};
     member_id?: string;
-    message?: string;
-    subject?: string;
+    template_id?: string;
   };
+  PreviewEmailTemplateInput: { data?: {} };
   SendBudgetEmailInput: {
-    message?: string;
+    data?: {};
     send_to_doing?: boolean;
     send_to_paid?: boolean;
-    subject?: string;
+    template_id?: string;
   };
   SendEmailInput: { wait?: boolean };
   ServerAPIError: {
@@ -182,6 +219,11 @@ export type APISchemas = {
   };
   ServerPingOut: { message?: string; status?: string };
   UpdateBudgetInput: { label?: string };
+  UpdateEmailTemplateInput: {
+    label?: string;
+    message?: string;
+    subject?: string;
+  };
   UpdateExpenseInput: {
     /* Format: double */
     amount?: number;
@@ -226,7 +268,10 @@ export type APIEndpoints = {
     requests: { method?: 'get' };
   };
   '/api/auth/users': {
-    responses: { get: Array<APISchemas['AuthUser']>; post: null };
+    responses: {
+      get: Array<APISchemas['AuthUser']>;
+      post: APISchemas['AuthUser'];
+    };
     requests:
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateUserInput'] };
@@ -247,7 +292,10 @@ export type APIEndpoints = {
       | { method: 'delete'; urlParams: { user_id: string } };
   };
   '/api/budget': {
-    responses: { get: Array<APISchemas['ModelsBudgetResult']>; post: null };
+    responses: {
+      get: Array<APISchemas['ModelsBudgetResult']>;
+      post: APISchemas['ModelsBudget'];
+    };
     requests:
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateBudgetInput'] };
@@ -272,7 +320,10 @@ export type APIEndpoints = {
     requests: { method?: 'get'; urlParams: { budget_id: string } };
   };
   '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments': {
-    responses: { get: Array<APISchemas['ModelsPayment']>; post: null };
+    responses: {
+      get: Array<APISchemas['ModelsPayment']>;
+      post: APISchemas['ModelsPayment'];
+    };
     requests:
       | {
           method?: 'get';
@@ -314,7 +365,7 @@ export type APIEndpoints = {
     };
   };
   '/api/budget/{budget_id}/email-preview': {
-    responses: { post: APISchemas['HandlersPreviewBudgetEmailOut'] };
+    responses: { post: APISchemas['ModelsBuiltEmail'] };
     requests: {
       method: 'post';
       urlParams: { budget_id: string };
@@ -322,7 +373,10 @@ export type APIEndpoints = {
     };
   };
   '/api/budget/{budget_id}/expenses': {
-    responses: { get: Array<APISchemas['ModelsExpense']>; post: null };
+    responses: {
+      get: Array<APISchemas['ModelsExpense']>;
+      post: APISchemas['ModelsExpense'];
+    };
     requests:
       | { method?: 'get'; urlParams: { budget_id: string } }
       | {
@@ -352,6 +406,58 @@ export type APIEndpoints = {
     responses: { get: Array<APISchemas['ModelsEmail']> };
     requests: { method?: 'get' };
   };
+  '/api/email/templates': {
+    responses: {
+      get: Array<APISchemas['ModelsEmailTemplate']>;
+      post: APISchemas['ModelsEmailTemplate'];
+    };
+    requests:
+      | { method?: 'get' }
+      | { method: 'post'; body: APISchemas['CreateEmailTemplateInput'] };
+  };
+  '/api/email/templates/{template_id}': {
+    responses: {
+      get: APISchemas['ModelsEmailTemplate'];
+      put: APISchemas['ModelsEmailTemplate'];
+      delete: null;
+    };
+    requests:
+      | { method?: 'get'; urlParams: { template_id: string } }
+      | {
+          method: 'put';
+          urlParams: { template_id: string };
+          body: APISchemas['UpdateEmailTemplateInput'];
+        }
+      | { method: 'delete'; urlParams: { template_id: string } };
+  };
+  '/api/email/templates/{template_id}/attachments': {
+    responses: {
+      get: Array<APISchemas['ModelsAttachment']>;
+      post: APISchemas['ModelsAttachment'];
+    };
+    requests:
+      | { method?: 'get'; urlParams: { template_id: string } }
+      | {
+          method: 'post';
+          urlParams: { template_id: string };
+          body: APISchemas['AddAttachmentInput'];
+        };
+  };
+  '/api/email/templates/{template_id}/attachments/{attachment_id}': {
+    responses: { delete: null };
+    requests: {
+      method: 'delete';
+      urlParams: { attachment_id: string; template_id: string };
+    };
+  };
+  '/api/email/templates/{template_id}/preview': {
+    responses: { post: APISchemas['ModelsBuiltEmail'] };
+    requests: {
+      method: 'post';
+      urlParams: { template_id: string };
+      body: APISchemas['PreviewEmailTemplateInput'];
+    };
+  };
   '/api/email/{email_id}': {
     responses: { get: APISchemas['ModelsEmail']; delete: null };
     requests:
@@ -371,7 +477,10 @@ export type APIEndpoints = {
     requests: { method?: 'get'; urlParams: { email_id: string } };
   };
   '/api/member': {
-    responses: { get: Array<APISchemas['ModelsMember']>; post: null };
+    responses: {
+      get: Array<APISchemas['ModelsMember']>;
+      post: APISchemas['ModelsMember'];
+    };
     requests:
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateMemberInput'] };
@@ -411,7 +520,10 @@ export type APIEndpoints = {
     requests: { method?: 'get' };
   };
   '/api/unit': {
-    responses: { get: Array<APISchemas['ModelsUnit']>; post: null };
+    responses: {
+      get: Array<APISchemas['ModelsUnit']>;
+      post: APISchemas['ModelsUnit'];
+    };
     requests:
       | { method?: 'get' }
       | { method: 'post'; body: APISchemas['CreateUnitInput'] };

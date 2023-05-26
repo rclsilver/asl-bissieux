@@ -1,13 +1,9 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"text/template"
 	"time"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
@@ -624,100 +620,23 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 }
 
 type previewBudgetEmailIn struct {
-	BudgetID string `path:"budget_id"`
-	MemberID string `json:"member_id" binding:"required"`
-	Subject  string `json:"subject" binding:"required"`
-	Message  string `json:"message" binding:"required"`
-}
-
-type previewBudgetEmailOut struct {
-	Subject string `json:"subject"`
-	Message string `json:"message"`
+	BudgetID   string         `path:"budget_id"`
+	MemberID   string         `json:"member_id" binding:"required"`
+	TemplateID string         `json:"template_id" binding:"required"`
+	Data       map[string]any `json:"data" binding:"required"`
 }
 
 // PreviewBudgetEmail build a preview of an budget email
-func PreviewBudgetEmail(c *gin.Context, in *previewBudgetEmailIn) (*previewBudgetEmailOut, error) {
-	db := db.Connection()
-
-	budget, err := controllers.GetBudget(db, in.BudgetID)
+func PreviewBudgetEmail(c *gin.Context, in *previewBudgetEmailIn) (*models.BuiltEmail, error) {
+	email, err := controllers.PreviewBudgetEmail(db.Connection(), in.BudgetID, in.TemplateID, in.MemberID, in.Data)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to build the preview")
 		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
 		return nil, err
 	}
 
-	member, err := controllers.GetMember(db, in.MemberID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("member %q not found", in.MemberID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get member")
-		return nil, err
-	}
-
-	expenses, err := controllers.ListExpenses(db, budget.ID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
-		return nil, err
-	}
-
-	cotisations, err := controllers.ListCotisations(db, budget.ID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
-		return nil, err
-	}
-
-	var memberCotisations []*models.CotisationResult
-
-	for _, cotisation := range cotisations {
-		for _, m := range cotisation.Unit.Members {
-			if len(member.Email) == 0 {
-				continue
-			}
-
-			if m.ID == member.ID {
-				memberCotisations = append(memberCotisations, cotisation)
-			}
-		}
-	}
-
-	subjectTemplate, err := createTemplate(in.Subject)
-	if err != nil {
-		return nil, errors.NewBadRequest(err, "invalid subject template")
-	}
-
-	messageTemplate, err := createTemplate(in.Message)
-	if err != nil {
-		return nil, errors.NewBadRequest(err, "invalid message template")
-	}
-
-	subject, err := executeTemplate(subjectTemplate, budget, expenses, memberCotisations)
-	if err != nil {
-		return nil, errors.Annotate(err, "unable to build the subject")
-	}
-
-	mdMessage, err := executeTemplate(messageTemplate, budget, expenses, memberCotisations)
-	if err != nil {
-		return nil, errors.Annotate(err, "unable to build the message")
-	}
-
-	htmlMessage, err := controllers.ToHTML(mdMessage)
-	if err != nil {
-		return nil, errors.Annotate(err, "unable to build the HTML message")
-	}
-
-	return &previewBudgetEmailOut{
-		Subject: string(subject),
-		Message: string(htmlMessage),
-	}, nil
+	return email, nil
 }
 
 const (
@@ -725,118 +644,140 @@ const (
 )
 
 type sendBudgetEmailIn struct {
-	BudgetID  string `path:"budget_id"`
-	Subject   string `json:"subject" binding:"required"`
-	Message   string `json:"message" binding:"required"`
-	SendPaid  bool   `json:"send_to_paid"`
-	SendDoing bool   `json:"send_to_doing"`
+	BudgetID   string         `path:"budget_id"`
+	TemplateID string         `json:"template_id" binding:"required"`
+	Data       map[string]any `json:"data" binding:"required"`
+	SendPaid   bool           `json:"send_to_paid"`
+	SendDoing  bool           `json:"send_to_doing"`
 }
 
 // SendBudgetEmail send an email to members
 func SendBudgetEmail(c *gin.Context, in *sendBudgetEmailIn) error {
-	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
+	tx := db.Connection().Begin()
+	if tx.Error != nil {
+		logrus.WithContext(c.Request.Context()).WithError(tx.Error).Error("unable to begin transaction")
+		return tx.Error
+	}
+	defer tx.Rollback()
+
+	if err := controllers.SendBudgetEmail(tx, in.BudgetID, in.TemplateID, in.Data, in.SendDoing, in.SendPaid); err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to send the e-mail")
+		}
 		return err
 	}
 
-	db := db.Connection().Begin()
-	if db.Error != nil {
-		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
-		return db.Error
-	}
-	defer db.Rollback()
-
-	budget, err := controllers.GetBudget(db, in.BudgetID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
-		return err
-	}
-
-	expenses, err := controllers.ListExpenses(db, budget.ID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
-		return err
-	}
-
-	cotisations, err := controllers.ListCotisations(db, budget.ID)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
-		}
-		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
-		return err
-	}
-
-	recipients := make(map[string][]*models.CotisationResult)
-
-	for _, cotisation := range cotisations {
-		if !in.SendPaid && cotisation.Paid == cotisation.Amount {
-			continue
-		}
-
-		if !in.SendDoing && cotisation.Paid >= cotisation.Amount/2 {
-			continue
-		}
-
-		for _, member := range cotisation.Unit.Members {
-			if len(member.Email) == 0 {
-				continue
-			}
-
-			if _, exists := recipients[member.Email]; exists {
-				recipients[member.Email] = append(recipients[member.Email], cotisation)
-			} else {
-				recipients[member.Email] = []*models.CotisationResult{cotisation}
-			}
-		}
-	}
-
-	subjectTemplate, err := createTemplate(in.Subject)
-	if err != nil {
-		return errors.NewBadRequest(err, "invalid subject template")
-	}
-
-	messageTemplate, err := createTemplate(in.Message)
-	if err != nil {
-		return errors.NewBadRequest(err, "invalid message template")
-	}
-
-	for recipient, cotisations := range recipients {
-		subject, err := executeTemplate(subjectTemplate, budget, expenses, cotisations)
-		if err != nil {
-			return errors.Annotate(err, "unable to build the subject")
-		}
-
-		mdMessage, err := executeTemplate(messageTemplate, budget, expenses, cotisations)
-		if err != nil {
-			return errors.Annotate(err, "unable to build the message")
-		}
-
-		htmlMessage, err := controllers.ToHTML(mdMessage)
-		if err != nil {
-			return errors.Annotate(err, "unable to build the HTML message")
-		}
-
-		email := models.NewEmail(recipient, string(subject), string(htmlMessage))
-
-		if err := db.Create(email).Error; err != nil {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create email")
-			return err
-		}
-		logrus.WithContext(c.Request.Context()).Infof("email %s to %s (%s) created", email.Subject, recipient, email.ID)
-	}
-
-	if err := db.Commit().Error; err != nil {
+	if err := tx.Commit().Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to commit transaction")
 		return err
 	}
 
 	return nil
+	/*
+		if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
+			return err
+		}
+
+		db := db.Connection().Begin()
+		if db.Error != nil {
+			logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
+			return db.Error
+		}
+		defer db.Rollback()
+
+		budget, err := controllers.GetBudget(db, in.BudgetID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+			}
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
+			return err
+		}
+
+		expenses, err := controllers.ListExpenses(db, budget.ID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+			}
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
+			return err
+		}
+
+		cotisations, err := controllers.ListCotisations(db, budget.ID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
+			}
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
+			return err
+		}
+
+		recipients := make(map[string][]*models.CotisationResult)
+
+		for _, cotisation := range cotisations {
+			if !in.SendPaid && cotisation.Paid == cotisation.Amount {
+				continue
+			}
+
+			if !in.SendDoing && cotisation.Paid >= cotisation.Amount/2 {
+				continue
+			}
+
+			for _, member := range cotisation.Unit.Members {
+				if len(member.Email) == 0 {
+					continue
+				}
+
+				if _, exists := recipients[member.Email]; exists {
+					recipients[member.Email] = append(recipients[member.Email], cotisation)
+				} else {
+					recipients[member.Email] = []*models.CotisationResult{cotisation}
+				}
+			}
+		}
+
+		subjectTemplate, err := createTemplate(in.Subject)
+		if err != nil {
+			return errors.NewBadRequest(err, "invalid subject template")
+		}
+
+		messageTemplate, err := createTemplate(in.Message)
+		if err != nil {
+			return errors.NewBadRequest(err, "invalid message template")
+		}
+
+		for recipient, cotisations := range recipients {
+			subject, err := executeTemplate(subjectTemplate, budget, expenses, cotisations)
+			if err != nil {
+				return errors.Annotate(err, "unable to build the subject")
+			}
+
+			mdMessage, err := executeTemplate(messageTemplate, budget, expenses, cotisations)
+			if err != nil {
+				return errors.Annotate(err, "unable to build the message")
+			}
+
+			htmlMessage, err := controllers.ToHTML(mdMessage)
+			if err != nil {
+				return errors.Annotate(err, "unable to build the HTML message")
+			}
+
+			email := models.NewEmail(recipient, string(subject), string(htmlMessage))
+
+			if err := db.Create(email).Error; err != nil {
+				logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create email")
+				return err
+			}
+			logrus.WithContext(c.Request.Context()).Infof("email %s to %s (%s) created", email.Subject, recipient, email.ID)
+		}
+
+		if err := db.Commit().Error; err != nil {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to commit transaction")
+			return err
+		}
+
+		return nil
+	*/
 }
 
 func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {
@@ -850,44 +791,4 @@ func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {
 	}
 
 	return nil
-}
-
-func createTemplate(format string) (*template.Template, error) {
-	t := template.New("")
-	t.Option("missingkey=error")
-	t.Funcs(sprig.TxtFuncMap())
-
-	if _, err := t.Parse(format); err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-func executeTemplate(t *template.Template, budget *models.BudgetResult, expenses []*models.Expense, cotisations []*models.CotisationResult) ([]byte, error) {
-	var amount float64
-	for _, c := range cotisations {
-		amount += c.Amount
-	}
-
-	jsonBytes, err := json.Marshal(map[string]any{
-		"budget":      budget,
-		"cotisations": cotisations,
-		"amount":      amount,
-	})
-	if err != nil {
-		return nil, errors.Annotate(err, "unable to marshal the data")
-	}
-
-	var data map[string]any
-	if err := json.Unmarshal(jsonBytes, &data); err != nil {
-		return nil, errors.Annotate(err, "unable to unmarshal the data")
-	}
-
-	var content bytes.Buffer
-	if err := t.Execute(&content, data); err != nil {
-		return nil, errors.Annotate(err, "unable to execute the template")
-	}
-
-	return content.Bytes(), nil
 }

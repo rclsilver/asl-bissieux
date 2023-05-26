@@ -2,19 +2,22 @@
 <form [formGroup]="form" (submit)="submit()">
   <div mat-dialog-content class="content">
     <mat-form-field appearance="fill">
-      <mat-label>Subject</mat-label>
-      <input matInput formControlName="subject" [required]="true">
-      <mat-error *ngIf="form.controls['subject'].touched && form.controls['subject'].invalid">
-        <span *ngIf="form.controls['subject'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['subject'].errors!['server']">{{ form.controls['subject'].errors!['server'] }}</span>
+      <mat-label>E-mail template</mat-label>
+      <input matInput type="text" formControlName="template" [matAutocomplete]="emailTemplate" required>
+      <mat-autocomplete #emailTemplate="matAutocomplete" [displayWith]="templateDisplay.bind(this)">
+        <mat-option *ngFor="let template of templates$ | async" [value]="template.id">{{template.label}}</mat-option>
+      </mat-autocomplete>
+      <mat-error *ngIf="form.controls['template'].touched && form.controls['template'].invalid">
+        <span *ngIf="form.controls['template'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['template'].errors!['server']">{{ form.controls['template'].errors!['server'] }}</span>
       </mat-error>
     </mat-form-field>
     <mat-form-field appearance="fill">
-      <mat-label>Message</mat-label>
-      <textarea matInput rows="15" formControlName="message" [required]="true"></textarea>
-      <mat-error *ngIf="form.controls['message'].touched && form.controls['message'].invalid">
-        <span *ngIf="form.controls['message'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['message'].errors!['server']">{{ form.controls['message'].errors!['server'] }}</span>
+      <mat-label>Data</mat-label>
+      <textarea matInput rows="10" formControlName="data" [required]="true"></textarea>
+      <mat-error *ngIf="form.controls['data'].touched && form.controls['data'].invalid">
+        <span *ngIf="form.controls['data'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['data'].errors!['server']">{{ form.controls['data'].errors!['server'] }}</span>
       </mat-error>
     </mat-form-field>
     <mat-form-field appearance="fill" [style.display]="form.controls['previewMode'].value ? 'block' : 'none'">
@@ -23,6 +26,10 @@
       <mat-autocomplete #previewMember="matAutocomplete" [displayWith]="previewMemberDisplay.bind(this)">
         <mat-option *ngFor="let member of members$ | async" [value]="member.id">{{member.first_name}} {{member.last_name}}</mat-option>
       </mat-autocomplete>
+      <mat-error *ngIf="form.controls['previewMember'].touched && form.controls['previewMember'].invalid">
+        <span *ngIf="form.controls['previewMember'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['previewMember'].errors!['server']">{{ form.controls['previewMember'].errors!['server'] }}</span>
+      </mat-error>
     </mat-form-field>
     <mat-checkbox matInput formControlName="to_doing">Send to doing</mat-checkbox>
     <mat-checkbox matInput formControlName="to_paid">Send to paid</mat-checkbox>

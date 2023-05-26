@@ -1,14 +1,22 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
-import { Observable, catchError, filter, map } from 'rxjs';
-import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
+import { catchError, filter, map, throwError } from 'rxjs';
+import {
+  HttpErrorResponse,
+  HttpParams,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
+import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
+import { NotificationsService } from 'src/app/shared/services/notifications.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
-  constructor(private _http: HttpClient) {}
+  private readonly _notifications = inject(NotificationsService);
+  private readonly _http = inject(HttpClient);
 
   getCurrentUser() {
     return this.request('/api/auth/me', {
@@ -370,6 +378,60 @@ export class ApiService {
     });
   }
 
+  listEmailTemplates() {
+    return this.request('/api/email/templates', {
+      method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  getEmailTemplate(templateId: string) {
+    return this.request('/api/email/templates/{template_id}', {
+      method: 'get',
+      urlParams: {
+        template_id: templateId,
+      },
+    });
+  }
+
+  createEmailTemplate(payload: APISchemas['CreateEmailTemplateInput']) {
+    return this.request('/api/email/templates', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  updateEmailTemplate(
+    templateId: string,
+    payload: APISchemas['UpdateEmailTemplateInput']
+  ) {
+    return this.request('/api/email/templates/{template_id}', {
+      method: 'put',
+      urlParams: {
+        template_id: templateId,
+      },
+      body: payload,
+    });
+  }
+
+  deleteEmailTemplate(templateId: string) {
+    return this.request('/api/email/templates/{template_id}', {
+      method: 'delete',
+      urlParams: {
+        template_id: templateId,
+      },
+    });
+  }
+
+  previewEmailTemplate(templateId: string, data: any) {
+    return this.request('/api/email/templates/{template_id}/preview', {
+      method: 'post',
+      urlParams: {
+        template_id: templateId,
+      },
+      body: data,
+    });
+  }
+
   listEmails() {
     return this.request('/api/email', {
       method: 'get',
@@ -402,6 +464,15 @@ export class ApiService {
       },
       body: payload,
     });
+  }
+
+  handleError(message: string) {
+    return (error: APIError) =>
+      this._notifications.showDialog({
+        title: 'Error',
+        message: `${message}: HTTP ${error.status} ${error.statusText}`,
+        level: NotificationDialogLevel.Error,
+      });
   }
 
   private request<
@@ -449,9 +520,10 @@ export class ApiService {
 
     // execute the request and return the response
     return this._http.request<Result>(request).pipe(
-      catchError((err) => {
-        console.error(err);
-        return new Observable<Result>();
+      catchError((err: HttpErrorResponse) => {
+        return throwError(
+          () => new APIError(err.error, err.status, err.statusText)
+        );
       }),
       filter((event) => event instanceof HttpResponse),
       map((event) => (event as HttpResponse<Result>).body)
@@ -460,7 +532,11 @@ export class ApiService {
 }
 
 export class APIError extends Error {
-  constructor(public data: object, public status: number) {
+  constructor(
+    public data: any,
+    public status: number,
+    public statusText: string
+  ) {
     super();
   }
 }

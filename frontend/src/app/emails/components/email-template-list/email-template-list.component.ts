@@ -112,13 +112,7 @@ export class EmailTemplateListComponent {
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: (e) => {
-              this._notifications.showDialog({
-                title: 'Error',
-                message: `Unable to delete the template: ${e}`,
-                level: NotificationDialogLevel.Error,
-              });
-            },
+            error: this._api.handleError('Unable to delete the template'),
           });
         }
       });

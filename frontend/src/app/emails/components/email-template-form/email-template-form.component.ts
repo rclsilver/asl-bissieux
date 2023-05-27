@@ -62,15 +62,11 @@ export class EmailTemplateFormComponent {
           level: NotificationDialogLevel.Info,
         });
       },
-      error: (error) => {
-        this._notifications.showDialog({
-          title: 'Error',
-          message: this.data.template?.id
-            ? `Unable to update template: ${error}`
-            : `Unable to create template: ${error}`,
-          level: NotificationDialogLevel.Error,
-        });
-      },
+      error: this._api.handleError(
+        this.data.template?.id
+          ? 'Unable to update template'
+          : 'Unable to create template'
+      ),
     });
   }
 }

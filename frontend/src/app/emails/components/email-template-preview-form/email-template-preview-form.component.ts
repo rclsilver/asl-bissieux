@@ -49,12 +49,7 @@ export class EmailTemplatePreviewFormComponent {
                 message: result?.message,
               },
             }),
-          error: (error) =>
-            this._notifications.showDialog({
-              title: 'Error',
-              message: `Unable to generate preview: ${error}`,
-              level: NotificationDialogLevel.Error,
-            }),
+          error: this._api.handleError('Unable to generate preview'),
         });
     } catch (error) {
       this._notifications.showDialog({

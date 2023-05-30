@@ -55,6 +55,22 @@ spec:
               value: "{{ .Values.postgresql.timezone | default `UTC` }}"
             - name: APP_AUTH_GOOGLE_CLIENT_ID
               value: "{{ .Values.auth.client_id }}"
+            - name: APP_SMTP_HOST
+              value: "{{ .Values.smtp.host }}"
+            - name: APP_SMTP_PORT
+              value: "{{ .Values.smtp.port }}"
+            - name: APP_SMTP_TLS
+              value: "{{ .Values.smtp.tls }}"
+            - name: APP_SMTP_USERNAME
+              value: "{{ .Values.smtp.username }}"
+            - name: APP_SMTP_PASSWORD
+              value: "{{ .Values.smtp.password }}"
+            - name: APP_SMTP_FROM_NAME
+              value: "{{ .Values.smtp.from.name }}"
+            - name: APP_SMTP_FROM_ADDRESS
+              value: "{{ .Values.smtp.from.address }}"
+            - name: APP_SMTP_TRACKING_URL
+              value: "{{ .Values.smtp.tracking_url }}"
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

@@ -10,6 +10,41 @@ db:
 smtp:
   host: smtp-mock
   port: 2023
+  template: |-
+    <!DOCTYPE html>
+    <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <title>{{.subject}}</title>
+        <!--[if mso]>
+          <noscript>
+            <xml>
+              <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+              </o:OfficeDocumentSettings>
+            </xml>
+          </noscript>
+        <![endif]-->
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+          }
+          .signature {
+            margin-top: 1em;
+          }
+        </style>
+      </head>
+      <body role="presentation">
+        <div class="content">{{.message}}{{.tracker}}</div>
+        <div class="signature">
+          --<br>
+          Les membres du bureau de l'ASL<br>
+          <a href="mailto:{{.from}}">{{.from}}</a>
+        </div>
+      </body>
+    </html>
 
 http:
   listen_address: 0.0.0.0

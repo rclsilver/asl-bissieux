@@ -86,7 +86,7 @@ func (m *Message) ToBytes() ([]byte, error) {
 	boundary := writer.Boundary()
 
 	if withAttachments {
-		buffer.WriteString(fmt.Sprintf("Content-Type: multipart/mixed; boundary=%s\n", boundary))
+		buffer.WriteString(fmt.Sprintf("Content-Type: multipart/mixed; boundary=%q\n", boundary))
 		buffer.WriteString(fmt.Sprintf("--%s\n", boundary))
 	}
 
@@ -98,7 +98,7 @@ func (m *Message) ToBytes() ([]byte, error) {
 			buffer.WriteString(fmt.Sprintf("\n\n--%s\n", boundary))
 			buffer.WriteString(fmt.Sprintf("Content-Type: %s\n", attachment.contentType))
 			buffer.WriteString("Content-Transfer-Encoding: base64\n")
-			buffer.WriteString(fmt.Sprintf("Content-Disposition: attachment; filename=%s\n", attachment.name))
+			buffer.WriteString(fmt.Sprintf("Content-Disposition: attachment; filename=%q\n", attachment.name))
 
 			b := make([]byte, base64.StdEncoding.EncodedLen(len(attachment.content)))
 			base64.StdEncoding.Encode(b, attachment.content)

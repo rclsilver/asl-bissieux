@@ -1,6 +1,11 @@
 package handlers
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
@@ -13,7 +18,7 @@ import (
 type lisEmailTemplatesIn struct{}
 
 func ListEmailTemplates(c *gin.Context, in *lisEmailTemplatesIn) ([]*models.EmailTemplate, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	result, err := controllers.ListEmailTemplates(db)
 	if err != nil {
@@ -29,7 +34,7 @@ type getEmailTemplateIn struct {
 }
 
 func GetEmailTemplate(c *gin.Context, in *getEmailTemplateIn) (*models.EmailTemplate, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	result, err := controllers.GetEmailTemplate(db, in.TemplateID)
 	if err != nil {
@@ -53,7 +58,7 @@ const (
 )
 
 func CreateEmailTemplate(c *gin.Context, in *createEmailTemplateIn) (*models.EmailTemplate, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 
 	row, err := controllers.CreateEmailTemplate(db, in.Label, in.Subject, in.Message)
 	if err != nil {
@@ -77,7 +82,7 @@ const (
 )
 
 func UpdateEmailTemplate(c *gin.Context, in *updateEmailTemplateIn) (*models.EmailTemplate, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 
 	row, err := controllers.UpdateEmailTemplate(db, in.TemplateID, in.Label, in.Subject, in.Message)
 	if err != nil {
@@ -99,7 +104,7 @@ type deleteEmailTemplateIn struct {
 }
 
 func DeleteEmailTemplate(c *gin.Context, in *deleteEmailTemplateIn) error {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	if err := controllers.DeleteEmailTemplate(db, in.TemplateID); err != nil {
 		if !errors.IsNotFound(err) {
@@ -117,7 +122,7 @@ type previewEmailTemplateIn struct {
 }
 
 func PreviewEmailTemplate(c *gin.Context, in *previewEmailTemplateIn) (*models.BuiltEmail, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	preview, err := controllers.PreviewEmailTemplate(db, in.TemplateID, in.Data)
 	if err != nil {
@@ -135,7 +140,7 @@ type listAttachmentsIn struct {
 }
 
 func ListAttachments(c *gin.Context, in *listAttachmentsIn) ([]*models.Attachment, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	result, err := controllers.ListAttachments(db, in.TemplateID)
 	if err != nil {
@@ -153,20 +158,88 @@ const (
 type addAttachmentIn struct {
 	TemplateID string `path:"template_id"`
 
-	Name    string `json:"name" binding:"required"`
-	Content []byte
+	Name        string `context:"name" binding:"required"`
+	Content     []byte `context:"content" binding:"required"`
+	ContentType string `context:"content_type" binding:"required"`
+}
+
+func AddAttachmentMiddleware(c *gin.Context) {
+	file, err := c.FormFile("content")
+	if err != nil {
+		logrus.WithContext(c).WithError(err).Error("unable to get file form field")
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	name, ok := c.Request.MultipartForm.Value["name"]
+	if !ok || len(name) == 0 {
+		logrus.WithContext(c).WithError(err).Error("unable to get name form field")
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	contentType, ok := c.Request.MultipartForm.Value["content_type"]
+	if !ok || len(contentType) == 0 {
+		logrus.WithContext(c).WithError(err).Error("unable to get contentType form field")
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		logrus.WithContext(c).WithError(err).Error("unable to open the file for reading")
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var content bytes.Buffer
+	if _, err := io.Copy(&content, f); err != nil {
+		logrus.WithContext(c).WithError(err).Error("unable to read the file")
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	for k := range c.Request.Form {
+		delete(c.Request.Form, k)
+	}
+
+	c.Set("name", name[0])
+	c.Set("content_type", contentType[0])
+	c.Set("content", content.Bytes())
 }
 
 func AddAttachment(c *gin.Context, in *addAttachmentIn) (*models.Attachment, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
-	result, err := controllers.AddAttachment(db, in.TemplateID, in.Name, in.Content)
+	result, err := controllers.AddAttachment(db, in.TemplateID, in.Name, in.ContentType, in.Content)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to add attachment")
 		return nil, err
 	}
 
 	return result, nil
+}
+
+type downloadAttachmentIn struct {
+	TemplateID   string `path:"template_id"`
+	AttachmentID string `path:"attachment_id"`
+}
+
+func DownloadAttachment(c *gin.Context, in *downloadAttachmentIn) error {
+	attachment, err := controllers.GetAttachment(db.Connection(c), in.TemplateID, in.AttachmentID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get attachment")
+		}
+		return err
+	}
+
+	c.Writer.Header().Set("Content-Type", attachment.ContentType)
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", attachment.Name))
+
+	c.Writer.Write(attachment.Content)
+
+	return nil
 }
 
 const (
@@ -179,7 +252,7 @@ type removeAttachmentIn struct {
 }
 
 func RemoveAttachment(c *gin.Context, in *removeAttachmentIn) error {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	if err := controllers.DeleteAttachment(db, in.TemplateID, in.AttachmentID); err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to remove attachment")
@@ -192,7 +265,7 @@ func RemoveAttachment(c *gin.Context, in *removeAttachmentIn) error {
 type listEmailsIn struct{}
 
 func ListEmails(c *gin.Context, in *listEmailsIn) ([]*models.Email, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	result, err := controllers.ListEmails(db)
 	if err != nil {
@@ -208,7 +281,7 @@ type getEmailIn struct {
 }
 
 func GetEmail(c *gin.Context, in *getEmailIn) (*models.Email, error) {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	result, err := controllers.GetEmail(db, in.EmailID, false)
 	if err != nil {
@@ -231,7 +304,7 @@ type deleteEmailIn struct {
 
 // DeleteEmail delete an email
 func DeleteEmail(c *gin.Context, in *deleteEmailIn) error {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	if err := controllers.DeleteEmail(db, in.EmailID); err != nil {
 		if !errors.IsNotFound(err) {
@@ -254,7 +327,7 @@ type sendEmailIn struct {
 
 // SendEmail send an email
 func SendEmail(c *gin.Context, in *sendEmailIn) error {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	if err := controllers.SendEmail(c, db, in.EmailID, in.Wait); err != nil {
 		if !errors.IsNotFound(err) {
@@ -272,7 +345,7 @@ type trackEmailIn struct {
 
 // SendEmail send an email
 func TrackEmail(c *gin.Context, in *trackEmailIn) error {
-	db := db.Connection().WithContext(c)
+	db := db.Connection(c)
 
 	email, err := controllers.GetEmail(db, in.EmailID, true)
 	if err != nil {

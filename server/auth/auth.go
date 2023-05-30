@@ -135,7 +135,7 @@ type listUsersIn struct{}
 
 // ListUsers returns the list of the users
 func ListUsers(c *gin.Context, in *listUsersIn) ([]*auth.User, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 
 	var result []*auth.User
 	if err := db.Find(&result).Error; err != nil {
@@ -156,7 +156,7 @@ func GetUser(c *gin.Context, in *getUserIn) (*auth.User, error) {
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row auth.User
 
 	if err := db.First(&row, "id = ?", in.UserID).Error; err != nil {
@@ -180,7 +180,7 @@ type createUserIn struct {
 // CreateUser create a user
 func CreateUser(c *gin.Context, in *createUserIn) (*auth.User, error) {
 	row := auth.NewUser(in.Username, in.Enabled, in.Admin, in.Actions)
-	db := db.Connection()
+	db := db.Connection(c)
 
 	if err := db.Create(row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create user")
@@ -203,7 +203,7 @@ func UpdateUser(c *gin.Context, in *updateUserIn) (*auth.User, error) {
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row auth.User
 
 	if err := db.First(&row, "id = ?", in.UserID).Error; err != nil {
@@ -248,7 +248,7 @@ func DeleteUser(c *gin.Context, in *deleteUserIn) error {
 		return err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error

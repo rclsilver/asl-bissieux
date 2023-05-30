@@ -9,6 +9,7 @@ import { EmailTemplateDataSource } from '../../datasources/template.datasource';
 import { EmailTemplateFormComponent } from '../email-template-form/email-template-form.component';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { EmailTemplatePreviewFormComponent } from '../email-template-preview-form/email-template-preview-form.component';
+import { EmailAttachmentListComponent } from '../email-attachment-list/email-attachment-list.component';
 
 @Component({
   selector: 'app-email-template-list',
@@ -21,6 +22,22 @@ export class EmailTemplateListComponent {
   private readonly _notifications = inject(NotificationsService);
 
   readonly rowActions = [
+    new CustomRowAction<APISchemas['ModelsEmailTemplate']>(
+      'folder_open',
+      'Manage the attachments',
+      'Attachments',
+      (row) =>
+        this._notifications
+          .show(EmailAttachmentListComponent, {
+            data: {
+              template: row,
+            },
+          })
+          .afterClosed()
+          .subscribe(() => {
+            this.refresh();
+          })
+    ),
     new CustomRowAction<APISchemas['ModelsEmailTemplate']>(
       'preview',
       'Preview the e-mail',
@@ -72,10 +89,6 @@ export class EmailTemplateListComponent {
 
   canDelete(_: APISchemas['ModelsEmailTemplate']) {
     return this._auth.allowed$('email.DeleteEmailTemplate');
-  }
-
-  show(template: APISchemas['ModelsEmailTemplate']) {
-    console.log(template);
   }
 
   edit(template?: APISchemas['ModelsEmailTemplate']) {

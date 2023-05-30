@@ -3,7 +3,6 @@ package db
 import (
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -23,13 +22,8 @@ type Model struct {
 }
 
 func (b *Model) BeforeCreate(tx *gorm.DB) error {
-	spew.Dump(b)
-
 	if b.ID == "" {
 		b.ID = uuid.New().String()
 	}
-
-	spew.Dump(b)
-
 	return nil
 }

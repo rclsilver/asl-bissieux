@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
-import { catchError, filter, map, throwError } from 'rxjs';
+import { catchError, filter, map, tap, throwError } from 'rxjs';
 import {
   HttpErrorResponse,
   HttpParams,
@@ -422,6 +422,72 @@ export class ApiService {
     });
   }
 
+  listEmailAttachments(templateId: string) {
+    return this.request('/api/email/templates/{template_id}/attachments', {
+      method: 'get',
+      urlParams: {
+        template_id: templateId,
+      },
+    }).pipe(map((r) => r ?? []));
+  }
+
+  createEmailAttachment(templateId: string, name: string, file: File) {
+    const data = new FormData();
+    data.append('name', name);
+    data.append('content_type', file.type);
+    data.append('content', file);
+
+    const uri = this.buildURI(
+      '/api/email/templates/{template_id}/attachments',
+      { template_id: templateId }
+    );
+
+    return this._http
+      .post<APISchemas['ModelsAttachment']>(uri, data)
+      .pipe(
+        catchError((err: HttpErrorResponse) =>
+          throwError(
+            () => new APIError(err.error, err.status, err.statusText, err)
+          )
+        )
+      );
+  }
+
+  getEmailAttachment(templateId: string, attachmentId: string) {
+    const uri = this.buildURI(
+      '/api/email/templates/{template_id}/attachments/{attachment_id}',
+      {
+        template_id: templateId,
+        attachment_id: attachmentId,
+      }
+    );
+
+    return this._http
+      .get(uri, {
+        responseType: 'arraybuffer',
+      })
+      .pipe(
+        catchError((err: HttpErrorResponse) =>
+          throwError(
+            () => new APIError(err.error, err.status, err.statusText, err)
+          )
+        )
+      );
+  }
+
+  deleteEmailAttachment(templateId: string, attachmentId: string) {
+    return this.request(
+      '/api/email/templates/{template_id}/attachments/{attachment_id}',
+      {
+        method: 'delete',
+        urlParams: {
+          template_id: templateId,
+          attachment_id: attachmentId,
+        },
+      }
+    );
+  }
+
   previewEmailTemplate(templateId: string, data: any) {
     return this.request('/api/email/templates/{template_id}/preview', {
       method: 'post',
@@ -475,23 +541,21 @@ export class ApiService {
       });
   }
 
-  private request<
-    Path extends APIPaths,
-    Options extends APIRequests<Path>,
-    Result extends APIResponse<Path, Options['method']>
-  >(path: Path, options?: Options) {
-    options = (options ?? {}) as Options;
-
-    // build the uri from the path and the url params
+  private buildURI(path: string, params: object) {
     let uri: string = path;
-    if ('urlParams' in options) {
-      for (const [name, value] of Object.entries(options.urlParams)) {
-        uri = uri.replace(`{${name}}`, value.toString());
-      }
+
+    for (const [name, value] of Object.entries(params)) {
+      uri = uri.replace(`{${name}}`, value.toString());
     }
 
-    // build the query params
+    return uri;
+  }
+
+  private buildParams<Path extends APIPaths, Options extends APIRequests<Path>>(
+    options: Options
+  ) {
     let params = new HttpParams();
+
     if ('query' in options && options.query) {
       for (const [name, value] of Object.entries(options.query)) {
         params.set(
@@ -503,28 +567,65 @@ export class ApiService {
       }
     }
 
-    // build the request
-    let request = new HttpRequest(
-      (options['method'] ?? 'get').toUpperCase() as
+    return params;
+  }
+
+  private buildRequest<Result>(
+    method: string,
+    uri: string,
+    params?: HttpParams,
+    body?: any,
+    responseType?: 'arraybuffer' | 'blob' | 'json' | 'text'
+  ) {
+    const init = {
+      params: params ?? new HttpParams(),
+      reponseType: responseType ?? 'json',
+    };
+
+    return new HttpRequest<Result>(
+      (method ?? 'get').toUpperCase() as
         | 'DELETE'
         | 'GET'
         | 'HEAD'
         | 'JSONP'
         | 'OPTIONS',
       uri,
-      'body' in options ? options['body'] : undefined,
-      {
-        params,
-      }
+      body,
+      init
+    );
+  }
+
+  private request<
+    Path extends APIPaths,
+    Options extends APIRequests<Path>,
+    Result extends APIResponse<Path, Options['method']>
+  >(path: Path, options?: Options) {
+    options = (options ?? {}) as Options;
+
+    // build the uri from the path and the url params
+    const uri = this.buildURI(
+      path,
+      'urlParams' in options ? options['urlParams'] : {}
+    );
+
+    // build the query params
+    const params = this.buildParams(options);
+
+    // build the request
+    const request = this.buildRequest<Result>(
+      options['method'] ?? 'get',
+      uri,
+      params,
+      'body' in options ? options['body'] : undefined
     );
 
     // execute the request and return the response
     return this._http.request<Result>(request).pipe(
-      catchError((err: HttpErrorResponse) => {
-        return throwError(
-          () => new APIError(err.error, err.status, err.statusText)
-        );
-      }),
+      catchError((err: HttpErrorResponse) =>
+        throwError(
+          () => new APIError(err.error, err.status, err.statusText, err)
+        )
+      ),
       filter((event) => event instanceof HttpResponse),
       map((event) => (event as HttpResponse<Result>).body)
     );
@@ -533,9 +634,10 @@ export class ApiService {
 
 export class APIError extends Error {
   constructor(
-    public data: any,
-    public status: number,
-    public statusText: string
+    public readonly data: any,
+    public readonly status: number,
+    public readonly statusText: string,
+    public readonly origin: Error
   ) {
     super();
   }

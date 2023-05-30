@@ -22,7 +22,7 @@ import (
 func ListEmailTemplates(tx *gorm.DB) ([]*models.EmailTemplate, error) {
 	var result []*models.EmailTemplate
 
-	return result, tx.Find(&result).Error
+	return result, tx.Preload("Attachments").Find(&result).Error
 }
 
 func GetEmailTemplate(tx *gorm.DB, templateID string) (*models.EmailTemplate, error) {
@@ -117,16 +117,16 @@ func ListAttachments(tx *gorm.DB, templateID string) ([]*models.Attachment, erro
 
 	var result []*models.Attachment
 
-	return result, tx.Find(&result, "template_id = ?", template.ID).Error
+	return result, tx.Find(&result, "email_template_id = ?", template.ID).Error
 }
 
-func AddAttachment(tx *gorm.DB, templateID, name string, content []byte) (*models.Attachment, error) {
+func AddAttachment(tx *gorm.DB, templateID, name, contentType string, content []byte) (*models.Attachment, error) {
 	template, err := GetEmailTemplate(tx, templateID)
 	if err != nil {
 		return nil, err
 	}
 
-	row := models.NewAttachment(template.ID, name, content, "text/plain")
+	row := models.NewAttachment(template.ID, name, content, contentType)
 
 	if err := tx.Create(row).Error; err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func GetAttachment(tx *gorm.DB, templateID, attachmentID string) (*models.Attach
 
 	var row models.Attachment
 
-	if err := tx.First(&row, "id = ? AND budget_id = ?", attachmentID, templateID).Error; err != nil {
+	if err := tx.First(&row, "id = ? AND email_template_id = ?", attachmentID, templateID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("attachment %q not found for email template %q", attachmentID, templateID))
 		}
@@ -194,7 +194,7 @@ func GetEmail(tx *gorm.DB, emailID string, lock bool) (*models.Email, error) {
 		tx = tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
 
-	if err := tx.Preload("EmailTemplate").First(&row, "id = ?", emailID).Error; err != nil {
+	if err := tx.Preload("EmailTemplate.Attachments").First(&row, "id = ?", emailID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 		}
@@ -236,7 +236,12 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 			email.Error = err.Error()
 			logrus.WithContext(c).WithError(err).Errorf("unable to build the email %s to %s (%s)", email.Subject, email.To, email.ID)
 		} else {
-			if err := smtp.Send(c, email.To, email.Subject, email.Message, email.ID); err != nil {
+			var attachments []*smtp.Attachment
+			for _, attachment := range email.EmailTemplate.Attachments {
+				attachments = append(attachments, smtp.NewAttachment(attachment.Name, attachment.ContentType, attachment.Content))
+			}
+
+			if err := smtp.Send(c, email.To, email.Subject, email.Message, email.ID, attachments...); err != nil {
 				email.State = models.Error
 				email.Error = err.Error()
 				logrus.WithContext(c).WithError(err).Errorf("email %s to %s (%s) not sent", email.Subject, email.To, email.ID)

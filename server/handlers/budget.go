@@ -19,7 +19,7 @@ type listBudgetsIn struct{}
 
 // ListBudgets returns the list of the budgets
 func ListBudgets(c *gin.Context, in *listBudgetsIn) ([]*models.BudgetResult, error) {
-	result, err := controllers.ListBudgets(db.Connection())
+	result, err := controllers.ListBudgets(db.Connection(c))
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budgets")
 	}
@@ -33,7 +33,7 @@ type getBudgetIn struct {
 
 // GetBudget get a budget
 func GetBudget(c *gin.Context, in *getBudgetIn) (*models.BudgetResult, error) {
-	budget, err := controllers.GetBudget(db.Connection(), in.BudgetID)
+	budget, err := controllers.GetBudget(db.Connection(c), in.BudgetID)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budget")
@@ -54,7 +54,7 @@ const (
 
 // CreateBudget create a budget
 func CreateBudget(c *gin.Context, in *createBudgetIn) (*models.Budget, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 	row := models.NewBudget(in.Label)
 
 	if err := db.Create(row).Error; err != nil {
@@ -82,7 +82,7 @@ func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.BudgetResult, err
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Budget
 
 	if err := db.Where("id = ?", in.BudgetID).First(&row).Error; err != nil {
@@ -130,7 +130,7 @@ func DeleteBudget(c *gin.Context, in *deleteBudgetIn) error {
 		return err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error
@@ -177,7 +177,7 @@ type publishBudgetIn struct {
 
 // PublishBudget publish a budget
 func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, error) {
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
@@ -258,7 +258,7 @@ type listExpensesIn struct {
 
 // ListExpenses returns the list of the expenses of a budget
 func ListExpenses(c *gin.Context, in *listExpensesIn) ([]*models.Expense, error) {
-	result, err := controllers.ListExpenses(db.Connection(), in.BudgetID)
+	result, err := controllers.ListExpenses(db.Connection(c), in.BudgetID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
 	}
@@ -282,7 +282,7 @@ func CreateExpense(c *gin.Context, in *createExpenseIn) (*models.Expense, error)
 		return nil, err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
@@ -340,7 +340,7 @@ func UpdateExpense(c *gin.Context, in *updateExpenseIn) (*models.Expense, error)
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Expense
 
 	if err := db.Preload("Budget").Where("id = ? AND budget_id = ?", in.ExpenseID, in.BudgetID).First(&row).Error; err != nil {
@@ -386,7 +386,7 @@ func DeleteExpense(c *gin.Context, in *deleteExpenseIn) error {
 		return err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 
 	var row models.Expense
 
@@ -417,7 +417,7 @@ type listCotisationsIn struct {
 
 // ListCotisations returns the list of the cotisations of a budget
 func ListCotisations(c *gin.Context, in *listCotisationsIn) ([]*models.CotisationResult, error) {
-	result, err := controllers.ListCotisations(db.Connection(), in.BudgetID)
+	result, err := controllers.ListCotisations(db.Connection(c), in.BudgetID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
 	}
@@ -432,7 +432,7 @@ type listPaymentsIn struct {
 
 // ListPayments returns the list of the payments of a cotisation
 func ListPayments(c *gin.Context, in *listPaymentsIn) ([]*models.Payment, error) {
-	result, err := controllers.ListPayments(db.Connection(), in.BudgetID, in.CotisationID)
+	result, err := controllers.ListPayments(db.Connection(c), in.BudgetID, in.CotisationID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get payments")
 	}
@@ -463,7 +463,7 @@ func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
@@ -529,7 +529,7 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
@@ -588,7 +588,7 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 		return err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error
@@ -628,7 +628,7 @@ type previewBudgetEmailIn struct {
 
 // PreviewBudgetEmail build a preview of an budget email
 func PreviewBudgetEmail(c *gin.Context, in *previewBudgetEmailIn) (*models.BuiltEmail, error) {
-	email, err := controllers.PreviewBudgetEmail(db.Connection(), in.BudgetID, in.TemplateID, in.MemberID, in.Data)
+	email, err := controllers.PreviewBudgetEmail(db.Connection(c), in.BudgetID, in.TemplateID, in.MemberID, in.Data)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to build the preview")
@@ -653,7 +653,7 @@ type sendBudgetEmailIn struct {
 
 // SendBudgetEmail send an email to members
 func SendBudgetEmail(c *gin.Context, in *sendBudgetEmailIn) error {
-	tx := db.Connection().Begin()
+	tx := db.Connection(c).Begin()
 	if tx.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(tx.Error).Error("unable to begin transaction")
 		return tx.Error
@@ -678,7 +678,7 @@ func SendBudgetEmail(c *gin.Context, in *sendBudgetEmailIn) error {
 			return err
 		}
 
-		db := db.Connection().Begin()
+		db := db.Connection(c).Begin()
 		if db.Error != nil {
 			logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 			return db.Error

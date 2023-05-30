@@ -13,7 +13,7 @@ type pingOut struct {
 
 // Ping returns the health status of the application.
 func Ping(c *gin.Context) (*pingOut, error) {
-	conn := db.Connection()
+	conn := db.Connection(c)
 
 	if r := conn.Exec("SELECT 1"); r.Error != nil {
 		return &pingOut{

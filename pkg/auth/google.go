@@ -72,7 +72,7 @@ func (p *googleProvider) Authenticate(r *http.Request) (*User, error) {
 		return nil, errors.NewUnauthorized(err, "unable to verify token")
 	}
 
-	db := db.Connection()
+	db := db.Connection(r.Context())
 
 	var userRow User
 	if err := db.Where("username = ?", userInfos.Email).First(&userRow).Error; err != nil {

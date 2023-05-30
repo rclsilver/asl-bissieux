@@ -17,7 +17,7 @@ type listMembersIn struct{}
 
 // ListMembers returns the list of the members
 func ListMembers(c *gin.Context, in *listMembersIn) ([]*models.Member, error) {
-	result, err := controllers.ListMembers(db.Connection())
+	result, err := controllers.ListMembers(db.Connection(c))
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get members")
 	}
@@ -31,7 +31,7 @@ type getMemberIn struct {
 
 // GetMember get a member
 func GetMember(c *gin.Context, in *getMemberIn) (*models.Member, error) {
-	member, err := controllers.GetMember(db.Connection(), in.MemberID)
+	member, err := controllers.GetMember(db.Connection(c), in.MemberID)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get member")
@@ -58,7 +58,7 @@ const (
 // CreateMember create a member
 func CreateMember(c *gin.Context, in *createMemberIn) (*models.Member, error) {
 	row := models.NewMember(in.FirstName, in.LastName, in.PhoneNumber, in.Email, in.Address)
-	db := db.Connection()
+	db := db.Connection(c)
 
 	if err := db.Create(row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create member")
@@ -85,7 +85,7 @@ func UpdateMember(c *gin.Context, in *updateMemberIn) (*models.Member, error) {
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Member
 
 	if err := db.Where("id = ?", in.MemberID).First(&row).Error; err != nil {
@@ -121,7 +121,7 @@ type deleteMemberIn struct {
 
 // DeleteMember delete a member
 func DeleteMember(c *gin.Context, in *deleteMemberIn) error {
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error
@@ -164,7 +164,7 @@ func AddMemberUnit(c *gin.Context, in *addMemberUnitIn) error {
 		return err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error
@@ -235,7 +235,7 @@ func RemoveMemberUnit(c *gin.Context, in *removeMemberUnitIn) error {
 		return err
 	}
 
-	db := db.Connection().Begin()
+	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error

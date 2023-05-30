@@ -42,6 +42,7 @@ type Attachment struct {
 	db.Model
 
 	Name        string `json:"name" gorm:"notNull"`
+	Size        int    `json:"size" gorm:"notNull"`
 	Content     []byte `json:"-" gorm:"type:bytea;notNull"`
 	ContentType string `json:"content_type" gorm:"notNull"`
 
@@ -52,6 +53,7 @@ type Attachment struct {
 func NewAttachment(templateID, name string, content []byte, contentType string) *Attachment {
 	return &Attachment{
 		Name:            name,
+		Size:            len(content),
 		Content:         content,
 		ContentType:     contentType,
 		EmailTemplateID: templateID,

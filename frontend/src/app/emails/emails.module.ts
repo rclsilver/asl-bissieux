@@ -16,6 +16,8 @@ import { EmailTemplateListComponent } from './components/email-template-list/ema
 import { EmailTemplateFormComponent } from './components/email-template-form/email-template-form.component';
 import { EmailTemplatePreviewFormComponent } from './components/email-template-preview-form/email-template-preview-form.component';
 import { EmailTemplatePreviewComponent } from './components/email-template-preview/email-template-preview.component';
+import { EmailAttachmentListComponent } from './components/email-attachment-list/email-attachment-list.component';
+import { EmailAttachmentFormComponent } from './components/email-attachment-form/email-attachment-form.component';
 
 const material = [
   MatButtonModule,
@@ -35,6 +37,8 @@ const material = [
     EmailTemplateFormComponent,
     EmailTemplatePreviewFormComponent,
     EmailTemplatePreviewComponent,
+    EmailAttachmentListComponent,
+    EmailAttachmentFormComponent,
   ],
   imports: [
     CommonModule,

@@ -16,7 +16,7 @@ type lisUnitsIn struct{}
 
 // ListUnits returns the list of the units
 func ListUnits(c *gin.Context, in *lisUnitsIn) ([]*models.Unit, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 
 	var result []*models.Unit
 	if err := db.Order("number ASC").Preload("Members").Find(&result).Error; err != nil {
@@ -37,7 +37,7 @@ func GetUnit(c *gin.Context, in *getUnitIn) (*models.Unit, error) {
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Unit
 
 	if err := db.Where("id = ?", in.UnitID).Preload("Members").First(&row).Error; err != nil {
@@ -63,7 +63,7 @@ const (
 
 // CreateUnit create an unit
 func CreateUnit(c *gin.Context, in *createUnitIn) (*models.Unit, error) {
-	db := db.Connection()
+	db := db.Connection(c)
 	row := models.NewUnit(in.Number, in.Address, in.Share)
 
 	if err := db.Create(row).Error; err != nil {
@@ -91,7 +91,7 @@ func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Unit
 
 	if err := db.Where("id = ?", in.UnitID).First(&row).Error; err != nil {
@@ -129,7 +129,7 @@ func DeleteUnit(c *gin.Context, in *deleteUnitIn) error {
 		return err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Unit
 
 	if err := db.Where("id = ?", in.UnitID).First(&row).Error; err != nil {
@@ -158,7 +158,7 @@ func ListUnitMembers(c *gin.Context, in *listUnitMembersIn) ([]*models.Member, e
 		return nil, err
 	}
 
-	db := db.Connection()
+	db := db.Connection(c)
 	var row models.Unit
 
 	if err := db.Preload("Members").First(&row, "id = ?", in.UnitID).Error; err != nil {

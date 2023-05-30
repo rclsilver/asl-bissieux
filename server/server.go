@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"reflect"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,31 @@ func (s *httpServer) WithAuthProvider(provider auth.AuthProvider) *httpServer {
 }
 
 func (s *httpServer) Build() error {
+	tonic.SetBindHook(func(c *gin.Context, v interface{}) error {
+		val := reflect.ValueOf(v)
+		typ := reflect.TypeOf(v).Elem()
+
+		for i := 0; i < typ.NumField(); i++ {
+			ft := typ.Field(i)
+
+			name, found := ft.Tag.Lookup("context")
+			if !found {
+				continue
+			}
+
+			cv, exists := c.Get(name)
+			if !exists {
+				return fmt.Errorf("context key %q not found", name)
+			}
+
+			logrus.Infof("Name: %q", name)
+
+			val.Elem().Field(i).Set(reflect.ValueOf(cv))
+		}
+
+		return tonic.DefaultBindingHook(c, v)
+	})
+
 	engine := gin.New()
 
 	corsCfg := cors.DefaultConfig()
@@ -305,7 +331,13 @@ func (s *httpServer) Build() error {
 		emailGroup.POST("templates/:template_id/attachments", []fizz.OperationOption{
 			fizz.Summary("Add an attachment"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
-		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.AddAttachmentAction), tonic.Handler(handlers.AddAttachment, http.StatusCreated))
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.AddAttachmentAction), handlers.AddAttachmentMiddleware, tonic.Handler(handlers.AddAttachment, http.StatusCreated))
+
+		emailGroup.GET("templates/:template_id/attachments/:attachment_id", []fizz.OperationOption{
+			fizz.Summary("Download an attachment"),
+			fizz.Response(fmt.Sprint(http.StatusNotFound), "Not Found", APIError{}, nil, nil),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.DownloadAttachment, http.StatusOK))
 
 		emailGroup.DELETE("templates/:template_id/attachments/:attachment_id", []fizz.OperationOption{
 			fizz.Summary("Delete an attachment"),

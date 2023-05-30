@@ -1,0 +1,19 @@
+<h1 mat-dialog-title>New attachment</h1>
+<form [formGroup]="form" (submit)="submit()">
+  <div mat-dialog-content class="content">
+    <mat-form-field appearance="fill">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" [required]="true">
+      <mat-error *ngIf="form.controls['name'].touched && form.controls['name'].invalid">
+        <span *ngIf="form.controls['name'].errors!['required']">This field is mandatory</span>
+        <span *ngIf="form.controls['name'].errors!['server']">{{ form.controls['name'].errors!['server'] }}</span>
+      </mat-error>
+    </mat-form-field>
+    <app-file-upload (selected)="onFileSelected($event)"></app-file-upload>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
+    <div class="spacer"></div>
+    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched || !file">Submit</button>
+  </div>
+</form>

@@ -9,42 +9,25 @@ import (
 	"net/smtp"
 )
 
-func Send(c context.Context, to string, subject, message, trackingToken string) error {
+func Send(c context.Context, to string, subject, message, trackingToken string, attachments ...*Attachment) error {
 	body, err := getBody(subject, message, trackingToken)
 	if err != nil {
 		return err
 	}
 
-	headers := map[string]string{
-		"From":         fmt.Sprintf("%q <%s>", cfg.From.Name, cfg.From.Address),
-		"Reply-To":     cfg.From.Address,
-		"To":           to,
-		"Subject":      subject,
-		"MIME-Version": "1.0",
-		"Content-Type": `text/html; charset="utf-8"`,
+	msg := newMessage(subject, body)
+	msg.AddTo(to)
+	msg.Attach(attachments...)
+
+	msgBytes, err := msg.ToBytes()
+	if err != nil {
+		return err
 	}
 
-	msg := createMessage(headers, body)
-
-	return sendEmail(c, to, msg)
+	return sendEmail(c, to, msgBytes)
 }
 
-func createMessage(headers map[string]string, message string) string {
-	var result string
-
-	for k, v := range headers {
-		if v != "" {
-			result += k + ": " + v + "\r\n"
-		}
-	}
-
-	result += "\r\n"
-	result += message
-
-	return result
-}
-
-func sendEmail(c context.Context, to string, message string) error {
+func sendEmail(c context.Context, to string, message []byte) error {
 	clt, err := smtp.Dial(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 	if err != nil {
 		return err

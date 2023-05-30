@@ -2,7 +2,8 @@ export type APISchemas = {
   AddAttachmentInput: {
     /* Format: byte */
     Content?: string;
-    name?: string;
+    ContentType?: string;
+    Name?: string;
   };
   AddMemberUnitInput: { unit_id?: string };
   AuthUser: {
@@ -60,6 +61,8 @@ export type APISchemas = {
     created_at?: string;
     id?: string;
     name?: string;
+    /* Format: int32 */
+    size?: number;
     template?: APISchemas['ModelsEmailTemplate'];
     template_id?: string;
     /* Format: date-time */
@@ -444,11 +447,16 @@ export type APIEndpoints = {
         };
   };
   '/api/email/templates/{template_id}/attachments/{attachment_id}': {
-    responses: { delete: null };
-    requests: {
-      method: 'delete';
-      urlParams: { attachment_id: string; template_id: string };
-    };
+    responses: { get: null; delete: null };
+    requests:
+      | {
+          method?: 'get';
+          urlParams: { attachment_id: string; template_id: string };
+        }
+      | {
+          method: 'delete';
+          urlParams: { attachment_id: string; template_id: string };
+        };
   };
   '/api/email/templates/{template_id}/preview': {
     responses: { post: APISchemas['ModelsBuiltEmail'] };

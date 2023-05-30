@@ -23,6 +23,7 @@ import { NotificationDialogComponent } from './components/notification-dialog/no
 import { MultiSelectComponent } from './components/multi-select/multi-select.component';
 import { SearchInputComponent } from './components/search-input/search-input.component';
 import { HorizontalNavComponent } from './components/horizontal-nav/horizontal-nav.component';
+import { FileUploadComponent } from './components/file-upload/file-upload.component';
 
 const material = [
   MatAutocompleteModule,
@@ -50,8 +51,14 @@ const material = [
     MultiSelectComponent,
     SearchInputComponent,
     HorizontalNavComponent,
+    FileUploadComponent,
   ],
-  exports: [CrudTableComponent, MultiSelectComponent, HorizontalNavComponent],
+  exports: [
+    CrudTableComponent,
+    MultiSelectComponent,
+    HorizontalNavComponent,
+    FileUploadComponent,
+  ],
   imports: [CommonModule, ReactiveFormsModule, RouterModule, ...material],
 })
 export class SharedModule {}

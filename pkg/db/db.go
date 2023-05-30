@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,6 @@ func InitDB() error {
 	return nil
 }
 
-func Connection() *gorm.DB {
+func Connection(c context.Context) *gorm.DB {
 	return connection
 }

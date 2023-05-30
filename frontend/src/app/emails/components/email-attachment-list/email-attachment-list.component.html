@@ -1,0 +1,16 @@
+<h1 mat-dialog-title>Attachments</h1>
+<div mat-dialog-content class="content">
+  <app-crud-table
+    [columns]="columns"
+    [dataSource]="datasource"
+    [canCreate]="canCreate$"
+    [canDelete]="canDelete.bind(this)"
+    (edit)="edit($event)"
+    (delete)="delete($event)"
+    [rowActions]="rowActions"
+  ></app-crud-table>
+</div>
+<div mat-dialog-actions>
+  <div class="spacer"></div>
+  <button mat-button color="primary" type="button" (click)="close()">Close</button>
+</div>

@@ -65,7 +65,6 @@ func (m *Message) ToBytes() ([]byte, error) {
 	buffer := bytes.NewBuffer(nil)
 	withAttachments := len(m.attachments) > 0
 
-	// write the headers
 	buffer.WriteString("MIME-Version: 1.0\n")
 	buffer.WriteString(fmt.Sprintf("From: %s\n", m.from))
 	buffer.WriteString(fmt.Sprintf("Reply-To: %s\n", m.replyTo))
@@ -102,7 +101,7 @@ func (m *Message) ToBytes() ([]byte, error) {
 
 			b := make([]byte, base64.StdEncoding.EncodedLen(len(attachment.content)))
 			base64.StdEncoding.Encode(b, attachment.content)
-			buffer.Write(b)
+			buffer.Write(chunkSplit(b, 76, []byte{'\n'}))
 			buffer.WriteString(fmt.Sprintf("\n--%s", boundary))
 		}
 
@@ -110,4 +109,20 @@ func (m *Message) ToBytes() ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+func chunkSplit(data []byte, limit int, end []byte) []byte {
+	var result []byte
+
+	for len(data) >= limit {
+		result = append(result, data[:limit]...)
+		result = append(result, end...)
+		data = data[limit:]
+	}
+
+	if len(data) > 0 {
+		result = append(result, data...)
+	}
+
+	return result
 }

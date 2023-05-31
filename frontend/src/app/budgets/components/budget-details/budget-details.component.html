@@ -23,6 +23,14 @@
         </ng-container>
       </app-crud-table>
     </mat-tab>
+    <mat-tab *ngIf="unitClasses$ | async as unitClasses" label="Map">
+      <div class="map-container">
+        <app-interactive-map
+          [unitClasses]="unitClasses"
+          [showNumbers]="false"
+        ></app-interactive-map>
+      </div>
+    </mat-tab>
     <mat-tab label="Expenses">
       <app-crud-table
         id="expenses"

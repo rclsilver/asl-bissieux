@@ -20,6 +20,8 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { PaymentListComponent } from '../payment-list/payment-list.component';
+import { N } from '@angular/cdk/keycodes';
+import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 
 @Component({
   selector: 'app-budget-details',
@@ -277,6 +279,40 @@ export class BudgetDetailsComponent implements OnInit {
         : null
     ),
     shareReplay(1)
+  );
+
+  /*
+  readonly unitClasses$ = this.budget$.pipe(
+    switchMap((budget) => this._api.listCotisations(budget?.id!)),
+    */
+  readonly unitClasses$ = this.cotisations$.pipe(
+    map((ds) =>
+      ds ? ds : new EmptyDataSource<APISchemas['ModelsCotisationResult']>()
+    ),
+    switchMap((ds) => ds.results$),
+    map(
+      (cotisations) =>
+        cotisations
+          .map((cotisation) => {
+            const id = cotisation.unit?.number ?? 0;
+            const cls =
+              cotisation.amount == cotisation.paid
+                ? 'payment-done'
+                : cotisation.paid ?? 0 >= (cotisation.amount ?? 0) / 2
+                ? 'payment-doing'
+                : 'payment-waiting';
+
+            return {
+              unit: id,
+              class: cls,
+            };
+          })
+          .reduce((res, val) => {
+            return Object.assign(res, {
+              [val.unit]: val.class,
+            });
+          }, {}) as { [unit: number]: string }
+    )
   );
 
   readonly cotisationsRowActions$ = this._budget$.pipe(

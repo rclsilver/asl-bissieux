@@ -37,3 +37,24 @@ h2 .label {
     background-color: red;
   }
 }
+
+:host ::ng-deep {
+  .payment-done * {
+    fill: green;
+  }
+
+  .payment-doing * {
+    fill: orange;
+  }
+
+  .payment-waiting * {
+    fill: red;
+  }
+}
+
+.map-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 1em;
+}

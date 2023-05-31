@@ -24,6 +24,7 @@ import { MultiSelectComponent } from './components/multi-select/multi-select.com
 import { SearchInputComponent } from './components/search-input/search-input.component';
 import { HorizontalNavComponent } from './components/horizontal-nav/horizontal-nav.component';
 import { FileUploadComponent } from './components/file-upload/file-upload.component';
+import { InteractiveMapComponent } from './components/interactive-map/interactive-map.component';
 
 const material = [
   MatAutocompleteModule,
@@ -52,12 +53,14 @@ const material = [
     SearchInputComponent,
     HorizontalNavComponent,
     FileUploadComponent,
+    InteractiveMapComponent,
   ],
   exports: [
     CrudTableComponent,
     MultiSelectComponent,
     HorizontalNavComponent,
     FileUploadComponent,
+    InteractiveMapComponent,
   ],
   imports: [CommonModule, ReactiveFormsModule, RouterModule, ...material],
 })

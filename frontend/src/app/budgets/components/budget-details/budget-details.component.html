@@ -26,8 +26,9 @@
     <mat-tab *ngIf="unitClasses$ | async as unitClasses" label="Map">
       <div class="map-container">
         <app-interactive-map
+          hoverClass="unit-hover"
           [unitClasses]="unitClasses"
-          [showNumbers]="false"
+          [showLabels]="false"
         ></app-interactive-map>
       </div>
     </mat-tab>

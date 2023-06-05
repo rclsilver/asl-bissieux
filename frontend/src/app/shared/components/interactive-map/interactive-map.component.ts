@@ -133,17 +133,11 @@ export class InteractiveMapComponent implements AfterViewInit {
 
   private setShowLabels(v: boolean) {
     this.foreachUnits((_, element) => {
-      element.querySelectorAll('g').forEach((label) => {
-        if (label.id.match(/^label-/)) {
-          if (label) {
-            if (v) {
-              label.classList.remove('hidden');
-            } else {
-              label.classList.add('hidden');
-            }
-          } else {
-            console.log('label not found for ', element);
-          }
+      element.querySelectorAll<SVGGElement>('g[id^=label]').forEach((label) => {
+        if (v) {
+          label.classList.remove('hidden');
+        } else {
+          label.classList.add('hidden');
         }
       });
     });
@@ -151,7 +145,7 @@ export class InteractiveMapComponent implements AfterViewInit {
 
   private foreachUnits(cb: (unitId: number, element: SVGGElement) => void) {
     this.container.nativeElement
-      .querySelectorAll<SVGGElement>('#units g')
+      .querySelectorAll<SVGGElement>('#units [id^=unit-]')
       .forEach((element) => {
         const unitId = +element.id.replaceAll(/^unit-0?/g, '');
 

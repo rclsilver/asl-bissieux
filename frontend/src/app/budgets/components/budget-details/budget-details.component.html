@@ -23,7 +23,7 @@
         </ng-container>
       </app-crud-table>
     </mat-tab>
-    <mat-tab *ngIf="unitClasses$ | async as unitClasses" label="Map">
+    <mat-tab *ngIf="(cotisations$ | async) && (unitClasses$ | async) as unitClasses" label="Map">
       <div class="map-container">
         <app-interactive-map
           hoverClass="unit-hover"

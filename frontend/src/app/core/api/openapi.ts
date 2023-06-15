@@ -3,6 +3,7 @@ export type APISchemas = {
     /* Format: byte */
     Content?: string;
     ContentType?: string;
+    Inline?: boolean;
     Name?: string;
   };
   AddMemberUnitInput: { unit_id?: string };
@@ -60,6 +61,7 @@ export type APISchemas = {
     /* Format: date-time */
     created_at?: string;
     id?: string;
+    inline?: boolean;
     name?: string;
     /* Format: int32 */
     size?: number;

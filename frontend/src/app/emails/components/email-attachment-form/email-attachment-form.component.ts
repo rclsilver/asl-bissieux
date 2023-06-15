@@ -29,6 +29,7 @@ export class EmailAttachmentFormComponent {
   ) {
     this.form = this._builder.group({
       name: ['', [Validators.required]],
+      inline: [false],
     });
   }
 
@@ -36,6 +37,7 @@ export class EmailAttachmentFormComponent {
     if (file) {
       this.form.setValue({
         name: file.name,
+        inline: false,
       });
     }
     this.file = file;
@@ -50,6 +52,7 @@ export class EmailAttachmentFormComponent {
       .createEmailAttachment(
         this.data.template.id!,
         this.form.value.name,
+        this.form.value.inline,
         this.file!
       )
       .subscribe({

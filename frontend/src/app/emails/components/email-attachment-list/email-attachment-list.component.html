@@ -8,7 +8,13 @@
     (edit)="edit($event)"
     (delete)="delete($event)"
     [rowActions]="rowActions"
-  ></app-crud-table>
+  >
+    <ng-container matColumnDef="inline">
+      <td mat-cell *matCellDef="let row">
+        <mat-checkbox [checked]="row.columns.inline.value" disabled></mat-checkbox>
+      </td>
+    </ng-container>
+  </app-crud-table>
 </div>
 <div mat-dialog-actions>
   <div class="spacer"></div>

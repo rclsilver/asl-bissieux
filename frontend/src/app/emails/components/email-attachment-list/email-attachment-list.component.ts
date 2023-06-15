@@ -43,6 +43,10 @@ export class EmailAttachmentListComponent {
       canSort: true,
       canFilter: true,
     }),
+    new Column('inline', {
+      label: 'Inline',
+      canSort: true,
+    }),
     new Column('size', {
       label: 'Size',
       canSort: true,

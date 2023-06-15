@@ -45,14 +45,16 @@ type Attachment struct {
 	Size        int    `json:"size" gorm:"notNull"`
 	Content     []byte `json:"-" gorm:"type:bytea;notNull"`
 	ContentType string `json:"content_type" gorm:"notNull"`
+	Inline      bool   `json:"inline" gorm:"notNull;default:false"`
 
 	EmailTemplateID string         `json:"template_id" gorm:"notNull"`
 	EmailTemplate   *EmailTemplate `json:"template,omitempty" gorm:"notNull;references:ID"`
 }
 
-func NewAttachment(templateID, name string, content []byte, contentType string) *Attachment {
+func NewAttachment(templateID, name string, inline bool, content []byte, contentType string) *Attachment {
 	return &Attachment{
 		Name:            name,
+		Inline:          inline,
 		Size:            len(content),
 		Content:         content,
 		ContentType:     contentType,

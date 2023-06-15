@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
@@ -159,6 +160,7 @@ type addAttachmentIn struct {
 	TemplateID string `path:"template_id"`
 
 	Name        string `context:"name" binding:"required"`
+	Inline      bool   `context:"inline" binding:"required"`
 	Content     []byte `context:"content" binding:"required"`
 	ContentType string `context:"content_type" binding:"required"`
 }
@@ -173,15 +175,31 @@ func AddAttachmentMiddleware(c *gin.Context) {
 
 	name, ok := c.Request.MultipartForm.Value["name"]
 	if !ok || len(name) == 0 {
-		logrus.WithContext(c).WithError(err).Error("unable to get name form field")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		err := fmt.Errorf("unable to get name form field")
+		logrus.WithContext(c).Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	inlineStr, ok := c.Request.MultipartForm.Value["inline"]
+	if !ok || len(inlineStr) == 0 {
+		err := fmt.Errorf("unable to get inline form field")
+		logrus.WithContext(c).Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	inline, err := strconv.ParseBool(inlineStr[0])
+	if err != nil {
+		logrus.WithContext(c).WithError(err).Error("unable to parse inline form field")
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	contentType, ok := c.Request.MultipartForm.Value["content_type"]
 	if !ok || len(contentType) == 0 {
-		logrus.WithContext(c).WithError(err).Error("unable to get contentType form field")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		err := fmt.Errorf("unable to get contentType form field")
+		logrus.WithContext(c).Error(err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -204,6 +222,7 @@ func AddAttachmentMiddleware(c *gin.Context) {
 	}
 
 	c.Set("name", name[0])
+	c.Set("inline", inline)
 	c.Set("content_type", contentType[0])
 	c.Set("content", content.Bytes())
 }
@@ -211,7 +230,7 @@ func AddAttachmentMiddleware(c *gin.Context) {
 func AddAttachment(c *gin.Context, in *addAttachmentIn) (*models.Attachment, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.AddAttachment(db, in.TemplateID, in.Name, in.ContentType, in.Content)
+	result, err := controllers.AddAttachment(db, in.TemplateID, in.Name, in.Inline, in.ContentType, in.Content)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to add attachment")
 		return nil, err

@@ -431,9 +431,15 @@ export class ApiService {
     }).pipe(map((r) => r ?? []));
   }
 
-  createEmailAttachment(templateId: string, name: string, file: File) {
+  createEmailAttachment(
+    templateId: string,
+    name: string,
+    inline: boolean,
+    file: File
+  ) {
     const data = new FormData();
     data.append('name', name);
+    data.append('inline', inline ? 'true' : 'false');
     data.append('content_type', file.type);
     data.append('content', file);
 

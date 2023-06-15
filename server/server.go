@@ -55,8 +55,6 @@ func (s *httpServer) Build() error {
 				return fmt.Errorf("context key %q not found", name)
 			}
 
-			logrus.Infof("Name: %q", name)
-
 			val.Elem().Field(i).Set(reflect.ValueOf(cv))
 		}
 

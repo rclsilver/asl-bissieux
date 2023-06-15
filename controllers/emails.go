@@ -120,13 +120,13 @@ func ListAttachments(tx *gorm.DB, templateID string) ([]*models.Attachment, erro
 	return result, tx.Find(&result, "email_template_id = ?", template.ID).Error
 }
 
-func AddAttachment(tx *gorm.DB, templateID, name, contentType string, content []byte) (*models.Attachment, error) {
+func AddAttachment(tx *gorm.DB, templateID, name string, inline bool, contentType string, content []byte) (*models.Attachment, error) {
 	template, err := GetEmailTemplate(tx, templateID)
 	if err != nil {
 		return nil, err
 	}
 
-	row := models.NewAttachment(template.ID, name, content, contentType)
+	row := models.NewAttachment(template.ID, name, inline, content, contentType)
 
 	if err := tx.Create(row).Error; err != nil {
 		return nil, err
@@ -238,7 +238,7 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 		} else {
 			var attachments []*smtp.Attachment
 			for _, attachment := range email.EmailTemplate.Attachments {
-				attachments = append(attachments, smtp.NewAttachment(attachment.Name, attachment.ContentType, attachment.Content))
+				attachments = append(attachments, smtp.NewAttachment(attachment.Name, attachment.ContentType, attachment.Content, attachment.Inline))
 			}
 
 			if err := smtp.Send(c, email.To, email.Subject, email.Message, email.ID, attachments...); err != nil {

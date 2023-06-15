@@ -9,6 +9,7 @@
         <span *ngIf="form.controls['name'].errors!['server']">{{ form.controls['name'].errors!['server'] }}</span>
       </mat-error>
     </mat-form-field>
+    <mat-checkbox matInput formControlName="inline">Inline</mat-checkbox>
     <app-file-upload (selected)="onFileSelected($event)"></app-file-upload>
   </div>
   <div mat-dialog-actions>

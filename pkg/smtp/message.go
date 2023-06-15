@@ -2,23 +2,28 @@ package smtp
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
-	"mime/multipart"
+	"io"
 	"strings"
+
+	message "github.com/sloonz/go-mime-message"
+	"github.com/sloonz/go-qprintable"
+	"jaytaylor.com/html2text"
 )
 
 type Attachment struct {
 	name        string
 	contentType string
 	content     []byte
+	inline      bool
 }
 
-func NewAttachment(name, contentType string, content []byte) *Attachment {
+func NewAttachment(name, contentType string, content []byte, inline bool) *Attachment {
 	return &Attachment{
 		name:        name,
 		contentType: contentType,
 		content:     content,
+		inline:      inline,
 	}
 }
 
@@ -62,67 +67,77 @@ func (m *Message) Attach(attachments ...*Attachment) {
 }
 
 func (m *Message) ToBytes() ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	withAttachments := len(m.attachments) > 0
+	// build the body (plain + html / alternative)
+	body := newMultipartMessage("alternative", "")
 
-	buffer.WriteString("MIME-Version: 1.0\n")
-	buffer.WriteString(fmt.Sprintf("From: %s\n", m.from))
-	buffer.WriteString(fmt.Sprintf("Reply-To: %s\n", m.replyTo))
-	buffer.WriteString(fmt.Sprintf("To: %s\n", strings.Join(m.to, ",")))
+	// add the text part
+	plain, err := html2text.FromString(m.body)
+	if err != nil {
+		return nil, err
+	}
+	text := newTextMessage(qprintable.UnixTextEncoding, strings.NewReader(plain+body.eol))
+	text.SetHeader("Content-Type", `text/plain; charset="UTF-8"`)
+	body.AddPart(text)
+
+	// add the html part
+	html := newTextMessage(qprintable.UnixTextEncoding, strings.NewReader(m.body+body.eol))
+	html.SetHeader("Content-Type", `text/html; charset="UTF-8"`)
+	body.AddPart(html)
+
+	withAttachments := len(m.attachments) > 0
+	withInlineAttachments := false
+
+	for _, attachment := range m.attachments {
+		if attachment.inline {
+			withInlineAttachments = true
+		}
+	}
+
+	var envelope *multipartMessage
+	var bodyEnvelope *multipartMessage
+
+	if withAttachments {
+		envelope = newMultipartMessage("mixed", "")
+
+		if withInlineAttachments {
+			bodyEnvelope = newMultipartMessage("related", "")
+			bodyEnvelope.AddPart(body)
+			envelope.AddPart(bodyEnvelope)
+		} else {
+			envelope.AddPart(body)
+		}
+
+		for _, attachment := range m.attachments {
+			att := newBinaryMessage(bytes.NewReader(attachment.content))
+			att.SetHeader("Content-Type", fmt.Sprintf("%s; name=%q", attachment.contentType, attachment.name))
+			att.SetHeader("Content-Disposition", fmt.Sprintf("attachment; name=%q", attachment.name))
+			att.SetHeader("X-Attachment-Id", attachment.name)
+			att.SetHeader("Content-ID", "<"+attachment.name+">")
+
+			if attachment.inline {
+				bodyEnvelope.AddPart(att)
+			} else {
+				envelope.AddPart(att)
+			}
+		}
+	} else {
+		envelope = body
+	}
+
+	// set headers
+	envelope.SetHeader("From", m.from)
+	envelope.SetHeader("Reply-To", m.replyTo)
+	envelope.SetHeader("To", strings.Join(m.to, ","))
 
 	if len(m.cc) > 0 {
-		buffer.WriteString(fmt.Sprintf("Cc: %s\n", strings.Join(m.cc, ",")))
+		envelope.SetHeader("Cc", strings.Join(m.cc, ","))
 	}
 
 	if len(m.bcc) > 0 {
-		buffer.WriteString(fmt.Sprintf("Bcc: %s\n", strings.Join(m.bcc, ",")))
+		envelope.SetHeader("Bcc", strings.Join(m.bcc, ","))
 	}
 
-	buffer.WriteString(fmt.Sprintf("Subject: %s\n", m.subject))
-	buffer.WriteString(fmt.Sprintf("Reply-To: %s\n", m.replyTo))
+	envelope.SetHeader("Subject", message.EncodeWord(m.subject))
 
-	writer := multipart.NewWriter(buffer)
-	boundary := writer.Boundary()
-
-	if withAttachments {
-		buffer.WriteString(fmt.Sprintf("Content-Type: multipart/mixed; boundary=%q\n", boundary))
-		buffer.WriteString(fmt.Sprintf("--%s\n", boundary))
-	}
-
-	buffer.WriteString(fmt.Sprintf("Content-Type: %s\n", `text/html; charset="utf-8"`))
-	buffer.WriteString(m.body)
-
-	if withAttachments {
-		for _, attachment := range m.attachments {
-			buffer.WriteString(fmt.Sprintf("\n\n--%s\n", boundary))
-			buffer.WriteString(fmt.Sprintf("Content-Type: %s\n", attachment.contentType))
-			buffer.WriteString("Content-Transfer-Encoding: base64\n")
-			buffer.WriteString(fmt.Sprintf("Content-Disposition: attachment; filename=%q\n", attachment.name))
-
-			b := make([]byte, base64.StdEncoding.EncodedLen(len(attachment.content)))
-			base64.StdEncoding.Encode(b, attachment.content)
-			buffer.Write(chunkSplit(b, 76, []byte{'\n'}))
-			buffer.WriteString(fmt.Sprintf("\n--%s", boundary))
-		}
-
-		buffer.WriteString("--")
-	}
-
-	return buffer.Bytes(), nil
-}
-
-func chunkSplit(data []byte, limit int, end []byte) []byte {
-	var result []byte
-
-	for len(data) >= limit {
-		result = append(result, data[:limit]...)
-		result = append(result, end...)
-		data = data[limit:]
-	}
-
-	if len(data) > 0 {
-		result = append(result, data...)
-	}
-
-	return result
+	return io.ReadAll(envelope)
 }

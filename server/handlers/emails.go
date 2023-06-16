@@ -371,7 +371,7 @@ func TrackEmail(c *gin.Context, in *trackEmailIn) error {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
 		}
-	} else if email.State != models.Read {
+	} else if email.State == models.Sent {
 		if err := controllers.MarkAsRead(c, db, email.ID); err != nil {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
 		}

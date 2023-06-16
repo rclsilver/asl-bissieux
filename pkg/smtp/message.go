@@ -44,7 +44,7 @@ type Message struct {
 func newMessage(subject, body string) *Message {
 	return &Message{
 		from:    fmt.Sprintf("%q <%s>", cfg.From.Name, cfg.From.Address),
-		replyTo: cfg.From.Address,
+		replyTo: fmt.Sprintf("%q <%s>", cfg.ReplyTo.Name, cfg.ReplyTo.Address),
 		subject: subject,
 		body:    body,
 	}

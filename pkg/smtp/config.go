@@ -12,6 +12,10 @@ type smtpConfig struct {
 		Name    string `mapstructure:"name"`
 		Address string `mapstructure:"address"`
 	} `mapstructure:"from"`
+	ReplyTo struct {
+		Name    string `mapstructure:"name"`
+		Address string `mapstructure:"address"`
+	} `mapstructure:"reply_to"`
 	Template    string `mapstructure:"template"`
 	TrackingURL string `mapstructure:"tracking_url"`
 }

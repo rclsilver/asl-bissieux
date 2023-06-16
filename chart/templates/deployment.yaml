@@ -69,6 +69,10 @@ spec:
               value: "{{ .Values.smtp.from.name }}"
             - name: APP_SMTP_FROM_ADDRESS
               value: "{{ .Values.smtp.from.address }}"
+            - name: APP_SMTP_REPLY_TO_NAME
+              value: "{{ .Values.smtp.reply_to.name }}"
+            - name: APP_SMTP_REPLY_TO_ADDRESS
+              value: "{{ .Values.smtp.reply_to.address }}"
             - name: APP_SMTP_TRACKING_URL
               value: "{{ .Values.smtp.tracking_url }}"
           ports:

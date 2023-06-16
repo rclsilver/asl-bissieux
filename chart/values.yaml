@@ -99,4 +99,7 @@ smtp:
   from:
     address: app@example.com
     name: 'My app'
+  reply_to:
+    address: app@example.com
+    name: 'My app'
   tracking_url: http://localhost:4200/api/email/{{.token}}/tracker

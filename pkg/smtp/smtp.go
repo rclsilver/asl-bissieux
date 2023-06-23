@@ -97,7 +97,7 @@ func getBody(subject, message, trackingToken string) (string, error) {
 	if err := t.Execute(&result, map[string]any{
 		"message": template.HTML(message),
 		"tracker": template.HTML(`<img src="` + trackingURL + `" style="display: none" />`),
-		"from":    cfg.From.Address,
+		"from":    cfg.ReplyTo.Address,
 		"subject": subject,
 	}); err != nil {
 		return "", err

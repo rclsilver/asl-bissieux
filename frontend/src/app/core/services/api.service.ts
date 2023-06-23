@@ -538,6 +538,15 @@ export class ApiService {
     });
   }
 
+  emailSetError(emailId: string) {
+    return this.request('/api/email/{email_id}/set-error', {
+      method: 'post',
+      urlParams: {
+        email_id: emailId,
+      },
+    });
+  }
+
   handleError(message: string) {
     return (error: APIError) =>
       this._notifications.showDialog({

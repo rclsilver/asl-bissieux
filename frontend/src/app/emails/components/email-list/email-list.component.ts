@@ -42,8 +42,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
 
   readonly rowActions$ = combineLatest([
     this._auth.allowed$('email.SendEmail'),
+    this._auth.allowed$('email.SetError'),
   ]).pipe(
-    map(([sendEmail]) => {
+    map(([sendEmail, setError]) => {
       const actions: CustomRowAction<APISchemas['ModelsEmail']>[] = [];
 
       if (sendEmail) {
@@ -82,6 +83,42 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                   }
                 }),
             (row) => this._canSend(row)
+          )
+        );
+      }
+
+      if (setError) {
+        actions.push(
+          new CustomRowAction<APISchemas['ModelsEmail']>(
+            'sms_failed',
+            'Set e-mail state to ERROR',
+            'Mark as error',
+            (row) =>
+              this._notifications
+                .showConfirm({
+                  title: 'Mark e-mail as failed',
+                  message: `Are you sure to mark the e-mail to ${row.to} as failed?`,
+                  class: 'primary',
+                })
+                .afterClosed()
+                .subscribe((result) => {
+                  if (result) {
+                    this._api.emailSetError(row.id!).subscribe({
+                      next: () => {
+                        this.refresh();
+                        this._notifications.showDialog({
+                          title: 'E-mail marked as failed',
+                          message: `E-mail to ${row.to} has been marked as failed`,
+                          level: NotificationDialogLevel.Info,
+                        });
+                      },
+                      error: this._api.handleError(
+                        'Unable to change the state of the e-mail'
+                      ),
+                    });
+                  }
+                }),
+            (row) => row.state !== 'ERROR'
           )
         );
       }

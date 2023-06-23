@@ -364,6 +364,11 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.SendEmailAction), tonic.Handler(handlers.SendEmail, http.StatusNoContent))
 
+		emailGroup.POST(":email_id/set-error", []fizz.OperationOption{
+			fizz.Summary("Set email state to ERROR"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.SetErrorEmailAction), tonic.Handler(handlers.SetEmailError, http.StatusNoContent))
+
 		emailGroup.GET(":email_id/tracker", []fizz.OperationOption{
 			fizz.Summary("Track an email"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),

@@ -482,6 +482,10 @@ export type APIEndpoints = {
       body: APISchemas['SendEmailInput'];
     };
   };
+  '/api/email/{email_id}/set-error': {
+    responses: { post: null };
+    requests: { method: 'post'; urlParams: { email_id: string } };
+  };
   '/api/email/{email_id}/tracker': {
     responses: { get: null };
     requests: { method?: 'get'; urlParams: { email_id: string } };

@@ -358,11 +358,39 @@ func SendEmail(c *gin.Context, in *sendEmailIn) error {
 	return nil
 }
 
+const (
+	SetErrorEmailAction = "email.SetError"
+)
+
+type setErrorEmailIn struct {
+	EmailID string `path:"email_id"`
+}
+
+// SetEmailError set mail state to ERROR
+func SetEmailError(c *gin.Context, in *trackEmailIn) error {
+	db := db.Connection(c)
+
+	email, err := controllers.GetEmail(db, in.EmailID, true)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
+		}
+		return err
+	} else if email.State != models.Waiting {
+		if err := controllers.MarkAsError(c, db, email.ID); err != nil {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
+		}
+		return err
+	}
+
+	return nil
+}
+
 type trackEmailIn struct {
 	EmailID string `path:"email_id"`
 }
 
-// SendEmail send an email
+// TrackEmail set an e-mail as read
 func TrackEmail(c *gin.Context, in *trackEmailIn) error {
 	db := db.Connection(c)
 

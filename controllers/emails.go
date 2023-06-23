@@ -275,6 +275,17 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 	return nil
 }
 
+func MarkAsError(c context.Context, tx *gorm.DB, emailID string) error {
+	if err := tx.Model(&models.Email{}).Where("id = ?", emailID).Updates(map[string]any{
+		"state":   models.Error,
+		"subject": nil,
+		"message": nil,
+	}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func MarkAsRead(c context.Context, tx *gorm.DB, emailID string) error {
 	if err := tx.Model(&models.Email{}).Where("id = ?", emailID).Updates(map[string]any{
 		"state": models.Read,

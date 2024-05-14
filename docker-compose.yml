@@ -14,7 +14,7 @@ services:
       retries: 5
       test:
         - CMD-SHELL
-        - pg_isready
+        - pg_isready -U devel
 
   smtp-mock:
     image: 'local/smtp-mock'

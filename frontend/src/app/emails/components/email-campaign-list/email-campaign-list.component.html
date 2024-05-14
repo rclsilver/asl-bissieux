@@ -1,0 +1,7 @@
+<app-crud-table
+  [columns]="columns"
+  [dataSource]="datasource"
+  [canDelete]="canDelete.bind(this)"
+  (delete)="delete($event)"
+>
+</app-crud-table>

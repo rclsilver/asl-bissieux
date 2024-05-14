@@ -281,12 +281,91 @@ func RemoveAttachment(c *gin.Context, in *removeAttachmentIn) error {
 	return nil
 }
 
-type listEmailsIn struct{}
+type listEmailCampaignsIn struct{}
+
+func ListEmailCampaigns(c *gin.Context, in *listEmailCampaignsIn) ([]*models.EmailCampaign, error) {
+	db := db.Connection(c)
+
+	result, err := controllers.ListEmailCampaigns(db)
+	if err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get campaigns")
+		return nil, err
+	}
+
+	return result, nil
+}
+
+type getEmailCampaignIn struct {
+	CampaignID string `path:"campaign_id"`
+}
+
+func GetEmailCampaign(c *gin.Context, in *getEmailCampaignIn) (*models.EmailCampaign, error) {
+	db := db.Connection(c)
+
+	result, err := controllers.GetEmailCampaign(db, in.CampaignID)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email campaign")
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+
+type createEmailCampaignIn struct {
+	Title      string         `json:"title" binding:"required"`
+	TemplateID string         `json:"template" binding:"required"`
+	Data       map[string]any `json:"data" binding:"required"`
+}
+
+const (
+	CreateEmailCampaignAction = "email.CreateEmailCampaign"
+)
+
+func CreateEmailCampaign(c *gin.Context, in *createEmailCampaignIn) (*models.EmailCampaign, error) {
+	db := db.Connection(c)
+
+	row, err := controllers.CreateEmailCampaign(db, in.Title, in.TemplateID, in.Data)
+	if err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create email campaign")
+		return nil, err
+	}
+
+	logrus.WithContext(c.Request.Context()).Infof("email campaign %s (%s) created", row.Title, row.ID)
+
+	return row, nil
+}
+
+const (
+	DeleteEmailCampaignAction = "email.DeleteEmailCampaign"
+)
+
+type deleteEmailCampaignIn struct {
+	CampaignID string `path:"campaign_id"`
+}
+
+func DeleteEmailCampaign(c *gin.Context, in *deleteEmailCampaignIn) error {
+	db := db.Connection(c)
+
+	if err := controllers.DeleteEmailCampaign(db, in.CampaignID); err != nil {
+		if !errors.IsNotFound(err) {
+			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete email campaign")
+		}
+		return err
+	}
+
+	return nil
+}
+
+type listEmailsIn struct {
+	CampaignID string `path:"campaign_id"`
+}
 
 func ListEmails(c *gin.Context, in *listEmailsIn) ([]*models.Email, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.ListEmails(db)
+	result, err := controllers.ListEmails(db, in.CampaignID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get emails")
 		return nil, err

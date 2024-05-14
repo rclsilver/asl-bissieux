@@ -340,6 +340,15 @@ export class CrudTableComponent<T extends {}>
         });
     });
 
+    // load datasource
+    this._dataSource$
+      .pipe(takeUntil(this._destroyed$), skip(1))
+      .subscribe((ds) => {
+        if (ds) {
+          ds.load();
+        }
+      });
+
     this._columnDefs$.pipe(takeUntil(this._destroyed$)).subscribe((columns) => {
       this.sort.active = '';
 

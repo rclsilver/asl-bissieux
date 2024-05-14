@@ -73,7 +73,9 @@ export class Column<ColumnType = any, ValueType = ColumnType> {
     let value = row as any;
 
     for (let name = parts.shift(); name; name = parts.shift()) {
-      value = value[name];
+      if (name !== '') {
+        value = value[name];
+      }
     }
 
     return value;

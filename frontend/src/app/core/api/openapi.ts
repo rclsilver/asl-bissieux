@@ -19,6 +19,7 @@ export type APISchemas = {
     username?: string;
   };
   CreateBudgetInput: { label?: string };
+  CreateEmailCampaignInput: { data?: {}; template?: string; title?: string };
   CreateEmailTemplateInput: {
     label?: string;
     message?: string;
@@ -122,25 +123,36 @@ export type APISchemas = {
     updated_at?: string;
   };
   ModelsEmail: {
-    context?: {};
+    campaign?: APISchemas['ModelsEmailCampaign'];
+    campaign_id?: string;
     /* Format: date-time */
     created_at?: string;
+    data?: {};
     error?: string;
     id?: string;
     message?: string;
     state?: string;
     subject?: string;
+    to?: string;
+    /* Format: date-time */
+    updated_at?: string;
+  };
+  ModelsEmailCampaign: {
+    /* Format: date-time */
+    created_at?: string;
+    data?: {};
+    id?: string;
     template?: APISchemas['ModelsEmailTemplate'];
     template_id?: string;
-    to?: string;
+    title?: string;
     /* Format: date-time */
     updated_at?: string;
   };
   ModelsEmailTemplate: {
     attachments?: Array<APISchemas['ModelsAttachment']>;
+    campaigns?: Array<APISchemas['ModelsEmailCampaign']>;
     /* Format: date-time */
     created_at?: string;
-    emails?: Array<APISchemas['ModelsEmail']>;
     id?: string;
     label?: string;
     message?: string;
@@ -407,9 +419,24 @@ export type APIEndpoints = {
     responses: { post: APISchemas['ModelsBudgetResult'] };
     requests: { method: 'post'; urlParams: { budget_id: string } };
   };
-  '/api/email': {
+  '/api/email/campaigns': {
+    responses: {
+      get: Array<APISchemas['ModelsEmailCampaign']>;
+      post: APISchemas['ModelsEmailCampaign'];
+    };
+    requests:
+      | { method?: 'get' }
+      | { method: 'post'; body: APISchemas['CreateEmailCampaignInput'] };
+  };
+  '/api/email/campaigns/{campaign_id}': {
+    responses: { get: APISchemas['ModelsEmailCampaign']; delete: null };
+    requests:
+      | { method?: 'get'; urlParams: { campaign_id: string } }
+      | { method: 'delete'; urlParams: { campaign_id: string } };
+  };
+  '/api/email/campaigns/{campaign_id}/emails': {
     responses: { get: Array<APISchemas['ModelsEmail']> };
-    requests: { method?: 'get' };
+    requests: { method?: 'get'; urlParams: { campaign_id: string } };
   };
   '/api/email/templates': {
     responses: {

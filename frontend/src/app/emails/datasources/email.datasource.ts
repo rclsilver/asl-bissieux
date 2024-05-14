@@ -1,12 +1,16 @@
-import { inject } from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { DataSource } from 'src/app/shared/datasources';
 
 export class EmailDataSource extends DataSource<APISchemas['ModelsEmail']> {
-  private readonly _api = inject(ApiService);
+  constructor(
+    private readonly _api: ApiService,
+    private readonly _campaignId: string
+  ) {
+    super();
+  }
 
   protected override _fetch() {
-    return this._api.listEmails();
+    return this._api.listEmails(this._campaignId);
   }
 }

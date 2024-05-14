@@ -504,9 +504,43 @@ export class ApiService {
     });
   }
 
-  listEmails() {
-    return this.request('/api/email', {
+  listEmailCampaigns() {
+    return this.request('/api/email/campaigns', {
       method: 'get',
+    }).pipe(map((r) => r ?? []));
+  }
+
+  createEmailCampaign(payload: APISchemas['CreateEmailCampaignInput']) {
+    return this.request('/api/email/campaigns', {
+      method: 'post',
+      body: payload,
+    });
+  }
+
+  getEmailCampaign(campaignId: string) {
+    return this.request('/api/email/campaigns/{campaign_id}', {
+      method: 'get',
+      urlParams: {
+        campaign_id: campaignId,
+      },
+    });
+  }
+
+  deleteEmailCampaign(campaignId: string) {
+    return this.request('/api/email/campaigns/{campaign_id}', {
+      method: 'delete',
+      urlParams: {
+        campaign_id: campaignId,
+      },
+    });
+  }
+
+  listEmails(campaignId: string) {
+    return this.request('/api/email/campaigns/{campaign_id}/emails', {
+      method: 'get',
+      urlParams: {
+        campaign_id: campaignId,
+      },
     }).pipe(map((r) => r ?? []));
   }
 

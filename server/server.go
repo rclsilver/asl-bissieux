@@ -343,7 +343,27 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.RemoveAttachmentAction), tonic.Handler(handlers.RemoveAttachment, http.StatusNoContent))
 
-		emailGroup.GET("", []fizz.OperationOption{
+		emailGroup.GET("campaigns", []fizz.OperationOption{
+			fizz.Summary("Get the email campaigns"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListEmailCampaigns, http.StatusOK))
+
+		emailGroup.POST("campaigns", []fizz.OperationOption{
+			fizz.Summary("Create an email campaign"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateEmailCampaignAction), tonic.Handler(handlers.CreateEmailCampaign, http.StatusCreated))
+
+		emailGroup.DELETE("campaigns/:campaign_id", []fizz.OperationOption{
+			fizz.Summary("Delete a campaign"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteEmailCampaignAction), tonic.Handler(handlers.DeleteEmailCampaign, http.StatusNoContent))
+
+		emailGroup.GET("campaigns/:campaign_id", []fizz.OperationOption{
+			fizz.Summary("Get the campaign details"),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmailCampaign, http.StatusOK))
+
+		emailGroup.GET("campaigns/:campaign_id/emails", []fizz.OperationOption{
 			fizz.Summary("Get the emails"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListEmails, http.StatusOK))

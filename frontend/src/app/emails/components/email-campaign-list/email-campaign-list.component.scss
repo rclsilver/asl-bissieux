@@ -1,0 +1,25 @@
+.fa.error {
+  margin-left: 0.5em;
+}
+
+.waiting {
+  font-style: italic;
+}
+
+.error {
+  font-weight: bold;
+}
+
+.sent {
+  color: rgba(0, 119, 255, 0.849);
+}
+
+.read {
+  color: rgba(36, 128, 0, 0.849);
+  font-weight: bold;
+}
+
+.mat-column-message {
+  width: 0.5rem;
+  text-align: right;
+}

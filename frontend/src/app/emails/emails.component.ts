@@ -9,9 +9,9 @@ import { MenuLink } from '../shared/models/menu-link';
 export class EmailsComponent {
   readonly links: MenuLink[] = [
     {
-      label: 'E-mails',
+      label: 'Campaigns',
       icon: 'list',
-      path: '/emails/sent',
+      path: '/emails/campaigns',
       isAllowed$: of(true),
     },
     {

@@ -235,23 +235,29 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 		}
 	}
 
-	for member, cotisations := range members {
-		context, err := buildTemplateData(tx, budget, member, cotisations, data)
-		if err != nil {
+	if len(members) > 0 {
+		campaign := models.NewEmailCampaign(fmt.Sprintf("%s: %s", budget.Label, template.Label), template, data)
+		if err := tx.Create(campaign).Error; err != nil {
 			return err
 		}
 
-		email := models.NewEmail(template, member.Email, context)
+		for member, cotisations := range members {
+			data, err := buildTemplateData(tx, budget, member, cotisations)
+			if err != nil {
+				return err
+			}
 
-		if err := tx.Create(email).Error; err != nil {
-			return err
+			email := models.NewEmail(campaign, member.Email, data)
+			if err := tx.Create(email).Error; err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult, data map[string]any) (map[string]any, error) {
+func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult) (map[string]any, error) {
 	expenses, err := ListExpenses(tx, budget.ID)
 	if err != nil {
 		return nil, err
@@ -262,10 +268,7 @@ func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.
 		amount += c.Amount
 	}
 
-	if data == nil {
-		data = make(map[string]any)
-	}
-
+	data := make(map[string]any)
 	data["member"] = member
 	data["budget"] = budget
 	data["expenses"] = expenses
@@ -286,9 +289,12 @@ func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.
 }
 
 func buildTemplate(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult, data map[string]any) (*templates.Template, error) {
-	context, err := buildTemplateData(tx, budget, member, cotisations, data)
+	context, err := buildTemplateData(tx, budget, member, cotisations)
 	if err != nil {
 		return nil, err
+	}
+	for k, v := range data {
+		context[k] = v
 	}
 
 	return templates.NewTemplate(context)

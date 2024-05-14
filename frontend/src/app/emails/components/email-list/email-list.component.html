@@ -1,7 +1,9 @@
+<h2 *ngIf="!(campaign$ | async)">E-mails</h2>
+<h2 *ngIf="campaign$ | async as campaign">{{campaign.title}}</h2>
 <app-crud-table
   [canSelect]="true"
   [columns]="columns"
-  [dataSource]="datasource"
+  [dataSource]="emails$ | async"
   [canDelete]="canDelete.bind(this)"
   (delete)="delete($event)"
   [toolbarActions]="toolbarActions$ | async"

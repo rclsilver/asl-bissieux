@@ -12,7 +12,11 @@ import {
   first,
   forkJoin,
   map,
+  take,
   takeUntil,
+  shareReplay,
+  switchMap,
+  of,
 } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -25,8 +29,11 @@ import {
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { Column } from 'src/app/shared/models/column.model';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
-import { EmailDataSource } from '../../datasources/ermail.datasource';
+import { EmailDataSource } from '../../datasources/email.datasource';
 import { EmailTemplatePreviewComponent } from '../email-template-preview/email-template-preview.component';
+import { ActivatedRoute } from '@angular/router';
+import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
+import { DataSource } from 'src/app/shared/datasources';
 
 @Component({
   selector: 'app-email-list',
@@ -39,6 +46,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _notifications = inject(NotificationsService);
+  private readonly _route = inject(ActivatedRoute);
 
   readonly rowActions$ = combineLatest([
     this._auth.allowed$('email.SendEmail'),
@@ -151,9 +159,20 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
       canFilter: true,
     }),
   ];
-  readonly datasource = new EmailDataSource();
+  readonly campaign$ = this._route.paramMap.pipe(
+    switchMap((params) =>
+      params.get('id')
+        ? this._api.getEmailCampaign(params.get('id')!)
+        : of(null)
+    ),
+    shareReplay(1)
+  );
+  private _emails$ = new BehaviorSubject<DataSource<APISchemas['ModelsEmail']>>(
+    new EmptyDataSource<APISchemas['ModelsEmail']>()
+  );
+  readonly emails$ = this._emails$.asObservable();
 
-  @ViewChild(CrudTableComponent, { static: true })
+  @ViewChild(CrudTableComponent, { static: false })
   table!: CrudTableComponent<APISchemas['ModelsEmail']>;
 
   ngAfterViewInit() {
@@ -190,6 +209,14 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
 
         this._toolbarActions$.next(actions);
       });
+
+    this.campaign$.pipe(takeUntil(this._destroyed$)).subscribe((campaign) => {
+      if (campaign) {
+        this._emails$.next(new EmailDataSource(this._api, campaign.id!));
+      } else {
+        this._emails$.next(new EmptyDataSource<APISchemas['ModelsEmail']>());
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -198,7 +225,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   }
 
   refresh() {
-    this.datasource.load();
+    this._emails$.value.load();
   }
 
   canDelete(_: APISchemas['ModelsEmail']) {

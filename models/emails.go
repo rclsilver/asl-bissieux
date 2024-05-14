@@ -7,6 +7,7 @@ import (
 func init() {
 	db.RegisterMigration(&EmailTemplate{})
 	db.RegisterMigration(&Attachment{})
+	db.RegisterMigration(&EmailCampaign{})
 	db.RegisterMigration(&Email{})
 }
 
@@ -22,8 +23,8 @@ type EmailTemplate struct {
 	Subject string `json:"subject" gorm:"notNull"`
 	Message string `json:"message" gorm:"notNull"`
 
-	Attachments []*Attachment `json:"attachments,omitempty"`
-	Emails      []*Email      `json:"emails,omitempty"`
+	Attachments []*Attachment    `json:"attachments,omitempty"`
+	Campaigns   []*EmailCampaign `json:"campaigns,omitempty"`
 }
 
 func NewEmailTemplate(label, subject, message string) *EmailTemplate {
@@ -66,6 +67,31 @@ func (Attachment) TableName() string {
 	return "attachment"
 }
 
+type EmailCampaign struct {
+	db.Model
+
+	Title string `json:"title" gorm:"notNull"`
+
+	EmailTemplateID string         `json:"template_id" gorm:"notNull"`
+	EmailTemplate   *EmailTemplate `json:"template,omitempty" gorm:"notNull;references:ID"`
+
+	Emails []*Email `json:"emails,omitempty"`
+
+	Data map[string]any `json:"data" gorm:"serializer:json;type:jsonb;notNull"`
+}
+
+func NewEmailCampaign(title string, template *EmailTemplate, data map[string]any) *EmailCampaign {
+	return &EmailCampaign{
+		Title:           title,
+		EmailTemplateID: template.ID,
+		Data:            data,
+	}
+}
+
+func (EmailCampaign) TableName() string {
+	return "email_campaign"
+}
+
 type EmailState string
 
 const (
@@ -78,24 +104,24 @@ const (
 type Email struct {
 	db.Model
 
-	To      string         `json:"to" gorm:"notNull"`
-	Context map[string]any `json:"context" gorm:"serializer:json;type:jsonb;notNull"`
+	To   string         `json:"to" gorm:"notNull"`
+	Data map[string]any `json:"data" gorm:"serializer:json;type:jsonb;notNull"`
 
 	Subject string `json:"subject,omitempty"`
 	Message string `json:"message,omitempty"`
 
-	EmailTemplateID string         `json:"template_id" gorm:"notNull"`
-	EmailTemplate   *EmailTemplate `json:"template,omitempty" gorm:"notNull;references:ID"`
+	EmailCampaignID string         `json:"campaign_id" gorm:"notNull"`
+	EmailCampaign   *EmailCampaign `json:"campaign,omitempty" gorm:"notNull;references:ID"`
 
 	State EmailState `json:"state" gorm:"notNull;default:WAITING"`
 	Error string     `json:"error,omitempty"`
 }
 
-func NewEmail(template *EmailTemplate, to string, context map[string]any) *Email {
+func NewEmail(campaign *EmailCampaign, to string, context map[string]any) *Email {
 	return &Email{
-		EmailTemplateID: template.ID,
+		EmailCampaignID: campaign.ID,
 		To:              to,
-		Context:         context,
+		Data:            context,
 		State:           Waiting,
 	}
 }

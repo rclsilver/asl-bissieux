@@ -165,10 +165,59 @@ func DeleteAttachment(tx *gorm.DB, templateID, attachmentID string) error {
 	return tx.Delete(attachment).Error
 }
 
-func ListEmails(tx *gorm.DB) ([]*models.Email, error) {
+func ListEmailCampaigns(tx *gorm.DB) ([]*models.EmailCampaign, error) {
+	var result []*models.EmailCampaign
+
+	return result, tx.Order("created_at ASC").Preload("EmailTemplate").Preload("Emails").Find(&result).Error
+}
+
+func GetEmailCampaign(tx *gorm.DB, campaignID string) (*models.EmailCampaign, error) {
+	if err := validateUUID(campaignID); err != nil {
+		return nil, errors.NewNotFound(nil, fmt.Sprintf("campaign %q not found", campaignID))
+	}
+
+	var row models.EmailCampaign
+
+	if err := tx.Preload("EmailTemplate").First(&row, "id = ?", campaignID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("campaign %q not found", campaignID))
+		}
+		return nil, err
+	}
+
+	return &row, nil
+}
+
+func CreateEmailCampaign(tx *gorm.DB, title, templateID string, data map[string]any) (*models.EmailCampaign, error) {
+	template, err := GetEmailTemplate(tx, templateID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, fmt.Sprintf("email template %q not found", templateID))
+		}
+		return nil, err
+	}
+
+	row := models.NewEmailCampaign(title, template, data)
+
+	if err := tx.Create(row).Error; err != nil {
+		return nil, err
+	}
+
+	return row, nil
+}
+
+func DeleteEmailCampaign(tx *gorm.DB, campaignID string) error {
+	if err := validateUUID(campaignID); err != nil {
+		return errors.NewNotFound(nil, fmt.Sprintf("campaign %q not found", campaignID))
+	}
+
+	return tx.Delete(&models.EmailCampaign{}, "id = ?", campaignID).Error
+}
+
+func ListEmails(tx *gorm.DB, campaignID string) ([]*models.Email, error) {
 	var result []*models.Email
 
-	if err := tx.Order("created_at ASC").Preload("EmailTemplate").Find(&result).Error; err != nil {
+	if err := tx.Order("created_at ASC").Preload("EmailCampaign.EmailTemplate").Find(&result, "email_campaign_id = ?", campaignID).Error; err != nil {
 		return nil, err
 	}
 
@@ -194,7 +243,7 @@ func GetEmail(tx *gorm.DB, emailID string, lock bool) (*models.Email, error) {
 		tx = tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
 
-	if err := tx.Preload("EmailTemplate.Attachments").First(&row, "id = ?", emailID).Error; err != nil {
+	if err := tx.Preload("EmailCampaign.EmailTemplate.Attachments").First(&row, "id = ?", emailID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 		}
@@ -237,7 +286,7 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 			logrus.WithContext(c).WithError(err).Errorf("unable to build the email %s to %s (%s)", email.Subject, email.To, email.ID)
 		} else {
 			var attachments []*smtp.Attachment
-			for _, attachment := range email.EmailTemplate.Attachments {
+			for _, attachment := range email.EmailCampaign.EmailTemplate.Attachments {
 				attachments = append(attachments, smtp.NewAttachment(attachment.Name, attachment.ContentType, attachment.Content, attachment.Inline))
 			}
 
@@ -318,18 +367,23 @@ func BuildEmail(template *models.EmailTemplate, t *templates.Template) (*models.
 }
 
 func buildEmail(email *models.Email) error {
-	t, err := templates.NewTemplate(email.Context)
+	data := email.Data
+	for k, v := range email.EmailCampaign.Data {
+		data[k] = v
+	}
+
+	t, err := templates.NewTemplate(data)
 	if err != nil {
 		return err
 	}
 
-	subject, err := t.Execute(email.EmailTemplate.Subject)
+	subject, err := t.Execute(email.EmailCampaign.EmailTemplate.Subject)
 	if err != nil {
 		return err
 	}
 	email.Subject = string(subject)
 
-	mdMessage, err := t.Execute(email.EmailTemplate.Message)
+	mdMessage, err := t.Execute(email.EmailCampaign.EmailTemplate.Message)
 	if err != nil {
 		return err
 	}

@@ -12,7 +12,7 @@ FROM alpine:3.15.4 as final
 FROM frontend-base as frontend-devel
 WORKDIR /app
 COPY frontend /app/
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl
 
 
 #############################

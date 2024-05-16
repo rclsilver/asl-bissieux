@@ -21,6 +21,7 @@ import {
   map,
   skip,
   switchMap,
+  take,
   takeUntil,
 } from 'rxjs';
 import { DataSource } from '../../datasources';
@@ -402,5 +403,37 @@ export class CrudTableComponent<T extends {}>
 
   refresh() {
     this._dataSource$.value.load();
+  }
+
+  readonly allSelected$ = this._dataSource$.pipe(
+    switchMap((ds) =>
+      combineLatest([this.selected.selected$, ds.results$]).pipe(
+        map(([selected, results]) => selected.length === results.length)
+      )
+    )
+  );
+
+  readonly someSelected$ = combineLatest([
+    this.selected.selected$,
+    this.allSelected$,
+  ]).pipe(
+    map(([selected, allSelected]) => selected.length > 0 && !allSelected)
+  );
+
+  toggleAll() {
+    this.allSelected$
+      .pipe(
+        take(1),
+        map((allSelected) => !allSelected)
+      )
+      .subscribe((r) =>
+        this._dataSource$.value.results$.pipe(take(1)).subscribe((rows) =>
+          rows.forEach((row) => {
+            if (this.selected.isSelected(row.original) !== r) {
+              this.selected.toggle(row.original);
+            }
+          })
+        )
+      );
   }
 }

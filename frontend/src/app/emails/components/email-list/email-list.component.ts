@@ -12,7 +12,6 @@ import {
   first,
   forkJoin,
   map,
-  take,
   takeUntil,
   shareReplay,
   switchMap,
@@ -34,6 +33,7 @@ import { EmailTemplatePreviewComponent } from '../email-template-preview/email-t
 import { ActivatedRoute } from '@angular/router';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 import { DataSource } from 'src/app/shared/datasources';
+import { EmailSendingPopupComponent } from '../email-sending-popup/email-sending-popup.component';
 
 @Component({
   selector: 'app-email-list',
@@ -71,23 +71,15 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                 .afterClosed()
                 .subscribe((result) => {
                   if (result) {
-                    this._api
-                      .sendEmail(row.id!, {
-                        wait: true,
-                      })
-                      .subscribe({
-                        next: () => {
-                          this.refresh();
-                          this._notifications.showDialog({
-                            title: 'E-mail sent',
-                            message: `E-mail to ${row.to} has been successfully sent`,
-                            level: NotificationDialogLevel.Info,
-                          });
+                    this._notifications
+                      .showForm(EmailSendingPopupComponent, {
+                        width: '50%',
+                        data: {
+                          emails: [row],
                         },
-                        error: this._api.handleError(
-                          'Unable to send the e-mail'
-                        ),
-                      });
+                      })
+                      .afterClosed()
+                      .subscribe(() => this.refresh());
                   }
                 }),
             (row) => this._canSend(row)
@@ -310,18 +302,15 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
               map((selected) => selected.filter((row) => this._canSend(row)))
             )
             .subscribe((selected) => {
-              const calls$ = selected.map((row) =>
-                this._api.sendEmail(row.id!, { wait: false })
-              );
-
-              forkJoin(calls$).subscribe(() => {
-                this.refresh();
-                this._notifications.showDialog({
-                  title: 'Bulk send',
-                  message: 'All the selected e-mails have been sent',
-                  level: NotificationDialogLevel.Info,
-                });
-              });
+              this._notifications
+                .showForm(EmailSendingPopupComponent, {
+                  width: '50%',
+                  data: {
+                    emails: selected,
+                  },
+                })
+                .afterClosed()
+                .subscribe(() => this.refresh());
             });
         }
       });

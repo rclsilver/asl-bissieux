@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmailsRouterModule } from './emails.routes';
 import { EmailsComponent } from './emails.component';
 import { EmailListComponent } from './components/email-list/email-list.component';
@@ -20,6 +21,7 @@ import { EmailTemplatePreviewComponent } from './components/email-template-previ
 import { EmailAttachmentListComponent } from './components/email-attachment-list/email-attachment-list.component';
 import { EmailAttachmentFormComponent } from './components/email-attachment-form/email-attachment-form.component';
 import { EmailCampaignListComponent } from './components/email-campaign-list/email-campaign-list.component';
+import { EmailSendingPopupComponent } from './components/email-sending-popup/email-sending-popup.component';
 
 const material = [
   MatButtonModule,
@@ -30,12 +32,14 @@ const material = [
   MatInputModule,
   MatTableModule,
   MatTooltipModule,
+  MatProgressBarModule,
 ];
 
 @NgModule({
   declarations: [
     EmailsComponent,
     EmailListComponent,
+    EmailSendingPopupComponent,
     EmailCampaignListComponent,
     EmailTemplateListComponent,
     EmailTemplateFormComponent,

@@ -5,17 +5,16 @@ import { UsersModule } from './users/users.module';
 import { AppComponent } from './app.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {
-  SocialLoginModule,
-  GoogleLoginProvider,
-  SocialAuthServiceConfig,
-} from '@abacritt/angularx-social-login';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
 import { MatDialogModule } from '@angular/material/dialog';
+import {
+  WithGoogleAuthConfig,
+  WithGoogleAuthModule,
+} from 'ngx-sign-in-with-google';
 
 @NgModule({
   declarations: [AppComponent],
@@ -23,7 +22,7 @@ import { MatDialogModule } from '@angular/material/dialog';
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
-    SocialLoginModule,
+    WithGoogleAuthModule,
     CoreModule,
     AppRoutingModule,
     UsersModule,
@@ -33,20 +32,21 @@ import { MatDialogModule } from '@angular/material/dialog';
     AuthService,
     ApiService,
     {
-      provide: 'SocialAuthServiceConfig',
+      provide: 'WithGoogleAuthConfig',
       useValue: {
-        autoLogin: true,
-        providers: [
-          {
-            id: GoogleLoginProvider.PROVIDER_ID,
-            provider: new GoogleLoginProvider(environment.auth.clientId, {
-              oneTapEnabled: false,
-              prompt: 'none',
-              scopes: ['email', 'profile', 'openid'],
-            }),
-          },
-        ],
-      } as SocialAuthServiceConfig,
+        clientId: environment.auth.clientId,
+        scopes: 'openid profile email',
+        prompt: 'none',
+        enableOneTap: false,
+        buttonConfig: {
+          type: 'standard',
+          theme: 'outline',
+          size: 'medium',
+          text: 'continue_with',
+          logo_alignment: 'left',
+        },
+        interceptUrlPrefixes: [],
+      } as unknown as WithGoogleAuthConfig,
     },
     {
       provide: HTTP_INTERCEPTORS,

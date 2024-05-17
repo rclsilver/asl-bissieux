@@ -4,7 +4,7 @@
   </button>
   <span>ASL Bissieux</span>
   <span class="spacer"></span>
-  <asl-google-signin-button *ngIf="!(authenticated$ | async)" type="standard" size="medium" theme="outline" shape="rectangular"></asl-google-signin-button>
+  <with-google-auth-button *ngIf="!(authenticated$ | async)"></with-google-auth-button>
   <span style="vertical-align:middle" *ngIf="user$ | async as user">{{ user.username }}</span>
   <button mat-icon-button *ngIf="authenticated$ | async" type="button" aria-label="Logout" (click)="logout()">
     <mat-icon>logout</mat-icon>

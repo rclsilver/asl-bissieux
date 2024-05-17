@@ -4,26 +4,22 @@ import {
   Observable,
   map,
   from,
-  takeUntil,
   Subject,
+  takeUntil,
 } from 'rxjs';
 import { ApiService } from './api.service';
 import { APISchemas } from '../api/openapi';
-import {
-  GoogleLoginProvider,
-  SocialAuthService,
-  SocialUser,
-} from '@abacritt/angularx-social-login';
+import { WithGoogleAuthService } from 'ngx-sign-in-with-google';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly _auth = inject(SocialAuthService);
+  private readonly _auth = inject(WithGoogleAuthService);
   private readonly _api = inject(ApiService);
 
   private _user$ = new BehaviorSubject<APISchemas['AuthUser'] | null>(null);
   readonly user$ = this._user$.asObservable();
 
-  private _token$ = new BehaviorSubject<string | null>(null);
+  private _token$ = new BehaviorSubject<string | undefined>(undefined);
   readonly token$ = this._token$.asObservable();
 
   readonly authenticated$ = this.user$.pipe(map((user) => !!user));
@@ -42,33 +38,32 @@ export class AuthService {
   public init() {
     this.unauthenticated$.subscribe(() => {
       this._user$.next(null);
-      this._token$.next(null);
     });
 
-    this._auth.authState.subscribe((state) => {
-      if (state) {
-        this._auth
-          .getAccessToken(GoogleLoginProvider.PROVIDER_ID)
-          .then((token) => {
-            this._token$.next(token);
-
-            this._api
-              .getCurrentUser()
-              .pipe(takeUntil(this.unauthenticated$))
-              .subscribe((user) => this._user$.next(user));
-          });
+    this._token$.subscribe((token) => {
+      if (token) {
+        this._api
+          .getCurrentUser()
+          .pipe(takeUntil(this.unauthenticated$))
+          .subscribe((user) => this._user$.next(user));
       } else {
         this._unauthenticated$.next();
       }
     });
+
+    this._auth.getEventSubject().subscribe(() => {
+      this._token$.next(this._auth.getAccessToken());
+    });
+
+    this._token$.next(this._auth.getAccessToken());
   }
 
   public refresh() {
-    return from(this._auth.refreshAccessToken(GoogleLoginProvider.PROVIDER_ID));
+    return from((async () => this._auth.requestNewAccessToken())());
   }
 
   public logout() {
-    return from(this._auth.signOut(true));
+    return from((async () => this._auth.logout())());
   }
 
   public allowed$(action: string) {

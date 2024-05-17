@@ -11,7 +11,7 @@ $(BINARY): $(SOURCE_FILES) go.mod
 	CGO_ENABLED=0 go build -o $@ $(SOURCE_FILES)
 
 docker:
-	docker build -t $(DOCKER_REPOSITORY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker build --no-cache -t $(DOCKER_REPOSITORY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .
 
 .PHONY: clean
 clean:

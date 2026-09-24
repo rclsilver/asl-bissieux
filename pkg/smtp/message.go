@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/mail"
 	"strings"
 
 	message "github.com/sloonz/go-mime-message"
@@ -43,8 +44,8 @@ type Message struct {
 
 func newMessage(subject, body string) *Message {
 	return &Message{
-		from:    fmt.Sprintf("%q <%s>", cfg.From.Name, cfg.From.Address),
-		replyTo: fmt.Sprintf("%q <%s>", cfg.ReplyTo.Name, cfg.ReplyTo.Address),
+		from:    (&mail.Address{Name: cfg.From.Name, Address: cfg.From.Address}).String(),
+		replyTo: (&mail.Address{Name: cfg.ReplyTo.Name, Address: cfg.ReplyTo.Address}).String(),
 		subject: subject,
 		body:    body,
 	}

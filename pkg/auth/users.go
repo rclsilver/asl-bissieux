@@ -7,10 +7,6 @@ import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
-func init() {
-	db.RegisterMigration(&User{})
-}
-
 // AccessLevel is a type which represents an access level
 type AccessLevel int
 

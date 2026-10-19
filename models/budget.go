@@ -7,12 +7,6 @@ import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
-func init() {
-	db.RegisterMigration(&Budget{})
-	db.RegisterMigration(&Expense{})
-	db.RegisterMigration(&Payment{})
-}
-
 type Budget struct {
 	db.Model
 

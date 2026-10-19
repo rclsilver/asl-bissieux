@@ -4,13 +4,6 @@ import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
-func init() {
-	db.RegisterMigration(&EmailTemplate{})
-	db.RegisterMigration(&Attachment{})
-	db.RegisterMigration(&EmailCampaign{})
-	db.RegisterMigration(&Email{})
-}
-
 type BuiltEmail struct {
 	Subject string `json:"subject"`
 	Message string `json:"message"`

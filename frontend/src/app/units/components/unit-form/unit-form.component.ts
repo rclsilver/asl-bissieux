@@ -27,7 +27,7 @@ export class UnitFormComponent {
   ) {
     this.form = this._builder.group({
       number: [this.data.unit?.number, [Validators.required]],
-      share: [this.data.unit?.share, [Validators.required]],
+      share: [this.data.unit?.share, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
       address: [this.data.unit?.address, [Validators.required]],
     });
 
@@ -41,6 +41,7 @@ export class UnitFormComponent {
   }
 
   submit() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const payload: Partial<APISchemas['ModelsUnit']> = {
       number: this.form.value.number,
       share: this.form.value.share,

@@ -5,6 +5,7 @@ import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { validMoneyInput } from '../../money-input';
 
 @Component({
   selector: 'app-expense-form',
@@ -28,7 +29,7 @@ export class ExpenseFormComponent {
   ) {
     this.form = this._builder.group({
       label: [this.data.expense?.label, [Validators.required]],
-      amount: [this.data.expense?.amount, [Validators.required]],
+      amount: [this.data.expense?.amount, [Validators.required, (control: { value: unknown }) => validMoneyInput(control.value) ? null : { money: true }]],
     });
 
     if (this.data.expense) {
@@ -41,6 +42,7 @@ export class ExpenseFormComponent {
   }
 
   submit() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const payload: Partial<APISchemas['ModelsExpense']> = {
       label: this.form.value.label,
       amount: this.form.value.amount,

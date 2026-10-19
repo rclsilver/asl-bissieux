@@ -319,4 +319,62 @@ func TestMigrationsIntegration(t *testing.T) {
 			t.Fatal("historical payment was lost")
 		}
 	})
+	t.Run("new cent rules preserve historical fractions and reject invalid new writes", func(t *testing.T) {
+		conn := migrationTestDB(t)
+		if err := applyMigrations(ctx, conn, migrations[:2]); err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec(legacyFixture).Error; err != nil {
+			t.Fatal(err)
+		}
+		for _, query := range []string{
+			"UPDATE public.expense SET amount=100.251",
+			"UPDATE public.cotisation SET amount=100.251",
+			"UPDATE public.payment SET amount=25.011",
+			"UPDATE public.unit SET share=-1",
+		} {
+			if err := conn.Exec(query).Error; err != nil {
+				t.Fatal(err)
+			}
+		}
+		before := applicationFingerprint(t, conn)
+		if err := Migrate(ctx, conn); err != nil {
+			t.Fatal(err)
+		}
+		assertUpgradePreservesData(t, conn, before)
+		for _, table := range []string{"expense", "cotisation", "payment"} {
+			for _, amount := range []string{"-1", "0.001", "10000000000", "'NaN'::numeric", "'Infinity'::numeric"} {
+				if err := conn.Exec("UPDATE public." + table + " SET amount=" + amount).Error; err == nil {
+					t.Fatalf("accepted %s amount %s", table, amount)
+				}
+			}
+			// An explicitly unchanged historical value is never rounded.
+			if err := conn.Exec("UPDATE public." + table + " SET amount=amount").Error; err != nil {
+				t.Fatal(err)
+			}
+			if err := conn.Exec("UPDATE public." + table + " SET amount=1.23").Error; err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := conn.Exec("UPDATE public.unit SET share=share").Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec("UPDATE public.unit SET share=-2").Error; err == nil {
+			t.Fatal("accepted negative new shares")
+		}
+		if err := conn.Exec("UPDATE public.unit SET share=0").Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec("UPDATE public.cotisation SET amount=0").Error; err != nil {
+			t.Fatal(err)
+		}
+		for _, table := range []string{"expense", "payment"} {
+			if err := conn.Exec("UPDATE public." + table + " SET amount=0").Error; err == nil {
+				t.Fatalf("accepted zero %s", table)
+			}
+		}
+		if err := conn.Exec(`INSERT INTO public.expense (id,budget_id,label,amount) VALUES ('11000000-0000-4000-8000-000000000003','10000000-0000-4000-8000-000000000002','Invalid new expense',1.001)`).Error; err == nil {
+			t.Fatal("accepted invalid inserted expense")
+		}
+	})
 }

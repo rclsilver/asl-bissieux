@@ -12,6 +12,7 @@ import (
 	"github.com/rclsilver/asl-bissieux/internal/testdb"
 	"github.com/rclsilver/asl-bissieux/models"
 	appauth "github.com/rclsilver/asl-bissieux/pkg/auth"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	serverauth "github.com/rclsilver/asl-bissieux/server/auth"
 )
 
@@ -30,11 +31,11 @@ func TestBudgetPaymentIntegration(t *testing.T) {
 		}
 	}
 	c.Set(serverauth.CurrentUser, user)
-	cotisation := models.NewCotisation(budget.ID, unit.ID, float64(100))
+	cotisation := models.NewCotisation(budget.ID, unit.ID, money.Euros(100))
 	if err := conn.Create(cotisation).Error; err != nil {
 		t.Fatal(err)
 	}
-	input := createPaymentIn{BudgetID: budget.ID, CotisationID: cotisation.ID, Date: time.Now().UTC(), Amount: float64(25), Comment: "initial"}
+	input := createPaymentIn{BudgetID: budget.ID, CotisationID: cotisation.ID, Date: time.Now().UTC(), Amount: money.Euros(25), Comment: "initial"}
 	assertReleased := func(t *testing.T) {
 		t.Helper()
 		if count := pool.Stats().InUse; count != 0 {
@@ -50,13 +51,13 @@ func TestBudgetPaymentIntegration(t *testing.T) {
 		paymentID = payment.ID
 		assertReleased(t)
 		updated := input
-		updated.Amount, updated.Comment = float64(50), "updated"
+		updated.Amount, updated.Comment = money.Euros(50), "updated"
 		if _, err := UpdatePayment(c, &updatePaymentIn{createPaymentIn: updated, PaymentID: paymentID}); err != nil {
 			t.Fatal(err)
 		}
 		assertReleased(t)
 		var persisted models.Payment
-		if err := conn.First(&persisted, "id = ?", paymentID).Error; err != nil || persisted.Amount != 50 || persisted.Comment != "updated" {
+		if err := conn.First(&persisted, "id = ?", paymentID).Error; err != nil || !persisted.Amount.Equal(money.Euros(50)) || persisted.Comment != "updated" {
 			t.Fatalf("update not persisted: %+v, %v", persisted, err)
 		}
 	})
@@ -89,7 +90,7 @@ func TestBudgetPaymentIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 		bad := input
-		bad.Amount = float64(13)
+		bad.Amount = money.Euros(13)
 		if _, err := CreatePayment(c, &bad); err == nil {
 			t.Fatal("expected create error")
 		}
@@ -99,7 +100,7 @@ func TestBudgetPaymentIntegration(t *testing.T) {
 		}
 		assertReleased(t)
 		var persisted models.Payment
-		if err := conn.First(&persisted, "id = ?", paymentID).Error; err != nil || persisted.Amount != 50 {
+		if err := conn.First(&persisted, "id = ?", paymentID).Error; err != nil || !persisted.Amount.Equal(money.Euros(50)) {
 			t.Fatalf("failed update changed payment: %+v, %v", persisted, err)
 		}
 		if err := conn.Exec(`CREATE FUNCTION test_delete_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'simulated delete failure'; END $$`).Error; err != nil {

@@ -585,7 +585,9 @@ export class ApiService {
     return (error: APIError) =>
       this._notifications.showDialog({
         title: 'Error',
-        message: `${message}: HTTP ${error.status} ${error.statusText}`,
+        message: error.status >= 400 && error.status < 500 && typeof error.data?.message === 'string'
+          ? `${message}: ${error.data.message}`
+          : `${message}: HTTP ${error.status} ${error.statusText}`,
         level: NotificationDialogLevel.Error,
       });
   }

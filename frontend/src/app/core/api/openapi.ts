@@ -19,7 +19,11 @@ export type APISchemas = {
     username?: string;
   };
   CreateBudgetInput: { label?: string };
-  CreateEmailCampaignInput: { data?: {}; template?: string; title?: string };
+  CreateEmailCampaignInput: {
+    data?: { [key: string]: unknown };
+    template?: string;
+    title?: string;
+  };
   CreateEmailTemplateInput: {
     label?: string;
     message?: string;
@@ -80,6 +84,20 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsBudgetPreview: {
+    /* Format: double */
+    amount?: number;
+    /* Format: double */
+    annual_per_share?: number;
+    message?: string;
+    /* Format: double */
+    monthly_per_share?: number;
+    /* Format: int32 */
+    months?: number;
+    ready?: boolean;
+    /* Format: int64 */
+    total_shares?: number;
+  };
   ModelsBudgetResult: {
     /* Format: double */
     amount?: number;
@@ -90,6 +108,7 @@ export type APISchemas = {
     label?: string;
     /* Format: double */
     paid?: number;
+    preview?: APISchemas['ModelsBudgetPreview'];
     /* Format: date-time */
     updated_at?: string;
   };
@@ -117,6 +136,10 @@ export type APISchemas = {
     id?: string;
     /* Format: double */
     paid?: number;
+    /* Format: int32 */
+    payment_state?: number;
+    /* Format: double */
+    remaining?: number;
     unit?: APISchemas['ModelsUnit'];
     unit_id?: string;
     /* Format: date-time */
@@ -127,7 +150,7 @@ export type APISchemas = {
     campaign_id?: string;
     /* Format: date-time */
     created_at?: string;
-    data?: {};
+    data?: { [key: string]: unknown };
     error?: string;
     id?: string;
     message?: string;
@@ -140,7 +163,8 @@ export type APISchemas = {
   ModelsEmailCampaign: {
     /* Format: date-time */
     created_at?: string;
-    data?: {};
+    data?: { [key: string]: unknown };
+    emails?: Array<APISchemas['ModelsEmail']>;
     id?: string;
     template?: APISchemas['ModelsEmailTemplate'];
     template_id?: string;
@@ -215,13 +239,13 @@ export type APISchemas = {
     updated_at?: string;
   };
   PreviewBudgetEmailInput: {
-    data?: {};
+    data?: { [key: string]: unknown };
     member_id?: string;
     template_id?: string;
   };
-  PreviewEmailTemplateInput: { data?: {} };
+  PreviewEmailTemplateInput: { data?: { [key: string]: unknown } };
   SendBudgetEmailInput: {
-    data?: {};
+    data?: { [key: string]: unknown };
     send_to_doing?: boolean;
     send_to_paid?: boolean;
     template_id?: string;
@@ -607,9 +631,7 @@ export type APIRequest<T extends APIPaths, M extends APIMethods<T>> = Omit<
 
 type DefaultToGet<T extends string | undefined> = T extends string ? T : 'get';
 
-export type APIResponse<
-  T extends APIPaths,
-  M extends string | undefined
-> = DefaultToGet<M> extends keyof APIEndpoints[T]['responses']
-  ? APIEndpoints[T]['responses'][DefaultToGet<M>]
-  : never;
+export type APIResponse<T extends APIPaths, M extends string | undefined> =
+  DefaultToGet<M> extends keyof APIEndpoints[T]['responses']
+    ? APIEndpoints[T]['responses'][DefaultToGet<M>]
+    : never;

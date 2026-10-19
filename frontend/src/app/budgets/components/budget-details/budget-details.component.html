@@ -1,8 +1,30 @@
 <div *ngIf="budget$ | async as budget">
   <h2>
     <span class="title">{{ budget.label }}</span>
-    <span *ngIf="budget.draft" class="label">draft</span>
+    <span *ngIf="budget.draft" class="label">brouillon</span>
+    <span *ngIf="!budget.draft" class="label">publié</span>
   </h2>
+
+  <p *ngIf="!budget.draft" class="budget-locked">
+    Budget publié : les dépenses et cotisations sont figées. Le libellé et les paiements restent modifiables selon tes droits.
+  </p>
+
+  <section *ngIf="budget.draft && budget.preview as preview" class="budget-preview" aria-labelledby="preview-title">
+    <div class="preview-heading">
+      <h3 id="preview-title">Aperçu par part</h3>
+      <button mat-stroked-button type="button" (click)="refreshBudget()">Actualiser</button>
+    </div>
+    <p>Budget annuel · mensualisation sur {{ preview.months }} mois</p>
+    <dl>
+      <div><dt>Total du budget</dt><dd>{{ formatAmount(preview.amount ?? 0) }}</dd></div>
+      <div><dt>Total des parts</dt><dd>{{ preview.total_shares ?? 0 }}</dd></div>
+      <div><dt>Annuel par part</dt><dd>{{ preview.total_shares ? formatRate(preview.annual_per_share ?? 0) : '—' }}</dd></div>
+      <div><dt>Mensuel par part</dt><dd>{{ preview.total_shares ? formatRate(preview.monthly_per_share ?? 0) : '—' }}</dd></div>
+    </dl>
+    <p *ngIf="!preview.ready" role="status" class="preview-message">{{ preview.message }}</p>
+    <p class="preview-note">Montants indicatifs arrondis à 6 décimales. À la publication, les cotisations sont réparties au centime selon les parts ; les centimes restants vont aux plus grands restes, puis aux numéros de lots croissants en cas d’égalité.</p>
+    <p class="preview-note">Cet aperçu ne publie pas le budget et ne crée aucune cotisation. Il s’actualise après chaque modification de dépense et au retour dans cette fenêtre. Après modification des parts dans un autre écran, utilise « Actualiser ».</p>
+  </section>
 
   <mat-tab-group>
     <mat-tab *ngIf="cotisations$ | async as cotisations" label="Cotisations">
@@ -15,24 +37,38 @@
         <ng-container matColumnDef="state">
           <td mat-cell *matCellDef="let row">
             <ng-container [ngSwitch]="row.columns.state.display">
-              <span *ngSwitchCase="STATE_OK" class="state state-ok"></span>
-              <span *ngSwitchCase="STATE_DOING" class="state state-doing"></span>
-              <span *ngSwitchCase="STATE_KO" class="state state-ko"></span>
+              <span *ngSwitchCase="STATE_OK" class="state state-ok" role="img" aria-label="Soldé" title="Soldé"></span>
+              <span *ngSwitchCase="STATE_DOING" class="state state-doing" role="img" aria-label="Au moins la moitié réglée" title="Au moins la moitié réglée"></span>
+              <span *ngSwitchCase="STATE_KO" class="state state-ko" role="img" aria-label="Moins de la moitié réglée" title="Moins de la moitié réglée"></span>
+              <span *ngSwitchCase="STATE_OVERPAID" class="state state-overpaid" role="img" aria-label="Trop-perçu à rembourser" title="Trop-perçu à rembourser"></span>
             </ng-container>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="remaining">
+          <td mat-cell *matCellDef="let row"
+              [class.refund-amount]="row.columns.remaining.value < 0"
+              [attr.title]="row.columns.remaining.value < 0 ? 'Montant à rembourser' : null">
+            {{ row.columns.remaining.display }}
           </td>
         </ng-container>
       </app-crud-table>
     </mat-tab>
     <mat-tab *ngIf="(cotisations$ | async) && (unitClasses$ | async) as unitClasses" label="Map">
+      <ul class="payment-legend" aria-label="Légende des paiements">
+        <li><span class="state state-ok" aria-hidden="true"></span>Soldé</li>
+        <li><span class="state state-overpaid" aria-hidden="true"></span>Trop-perçu à rembourser</li>
+        <li><span class="state state-doing" aria-hidden="true"></span>Au moins la moitié réglée</li>
+        <li><span class="state state-ko" aria-hidden="true"></span>Moins de la moitié réglée</li>
+      </ul>
       <div class="map-container">
         <app-interactive-map
           hoverClass="unit-hover"
           [unitClasses]="unitClasses"
-          [showLabels]="false"
+          [showLabels]="true"
         ></app-interactive-map>
       </div>
     </mat-tab>
-    <mat-tab label="Expenses">
+    <mat-tab label="Dépenses">
       <app-crud-table
         id="expenses"
         [columns]="expensesColumns"

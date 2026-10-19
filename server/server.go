@@ -16,6 +16,7 @@ import (
 
 	"github.com/rclsilver/asl-bissieux/frontend"
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	_auth "github.com/rclsilver/asl-bissieux/server/auth"
 	"github.com/rclsilver/asl-bissieux/server/handlers"
 	"github.com/rclsilver/asl-bissieux/version"
@@ -74,6 +75,9 @@ func (s *httpServer) Build() error {
 	}
 
 	router := fizz.NewFromEngine(engine)
+	if err := router.Generator().OverrideDataType(reflect.TypeOf(money.Amount{}), "number", "double"); err != nil {
+		return err
+	}
 
 	router.GET("/api/spec.json", nil, router.OpenAPI(infos, "json"))
 
@@ -215,6 +219,8 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateBudgetAction), tonic.Handler(handlers.CreateBudget, http.StatusCreated))
 
 		budgetGroup.POST(":budget_id/publish", []fizz.OperationOption{
+			fizz.Response("400", "Budget already published or inconsistent draft", APIError{}, nil, nil),
+			fizz.Response("403", "Publication is not permitted", APIError{}, nil, nil),
 			fizz.Summary("Publish a budget"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.PublishBudgetAction), tonic.Handler(handlers.PublishBudget, http.StatusOK))
@@ -225,6 +231,7 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateBudgetAction), tonic.Handler(handlers.UpdateBudget, http.StatusOK))
 
 		budgetGroup.DELETE(":budget_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budgets cannot be deleted", APIError{}, nil, nil),
 			fizz.Summary("Delete a budget"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteBudgetAction), tonic.Handler(handlers.DeleteBudget, http.StatusNoContent))
@@ -235,16 +242,19 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListExpenses, http.StatusOK))
 
 		budgetGroup.POST(":budget_id/expenses", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Create an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateExpenseAction), tonic.Handler(handlers.CreateExpense, http.StatusCreated))
 
 		budgetGroup.PUT(":budget_id/expenses/:expense_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Update an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateExpenseAction), tonic.Handler(handlers.UpdateExpense, http.StatusOK))
 
 		budgetGroup.DELETE(":budget_id/expenses/:expense_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Delete an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteExpenseAction), tonic.Handler(handlers.DeleteExpense, http.StatusNoContent))

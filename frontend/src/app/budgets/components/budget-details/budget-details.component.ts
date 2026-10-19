@@ -1,13 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
+  EMPTY,
+  Subject,
+  catchError,
   combineLatest,
   map,
-  of,
   shareReplay,
   switchMap,
   take,
+  takeUntil,
 } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -20,18 +23,30 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
 import { PaymentListComponent } from '../payment-list/payment-list.component';
-import { N } from '@angular/cdk/keycodes';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
+import { PaymentState, paymentState, paymentClass } from '../../payment-state';
 
 @Component({
   selector: 'app-budget-details',
   templateUrl: './budget-details.component.html',
   styleUrls: ['./budget-details.component.scss'],
 })
-export class BudgetDetailsComponent implements OnInit {
-  readonly STATE_OK = 1;
-  readonly STATE_DOING = 2;
-  readonly STATE_KO = 3;
+export class BudgetDetailsComponent implements OnInit, OnDestroy {
+  private readonly _destroy$ = new Subject<void>();
+  private readonly _refresh$ = new BehaviorSubject<void>(undefined);
+  readonly STATE_OK = PaymentState.Done;
+  readonly STATE_DOING = PaymentState.Doing;
+  readonly STATE_KO = PaymentState.Waiting;
+  readonly STATE_OVERPAID = PaymentState.Overpaid;
+
+  formatAmount(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+      .format(amount);
+  }
+
+  formatRate(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(amount) + ' €';
+  }
 
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
@@ -52,7 +67,7 @@ export class BudgetDetailsComponent implements OnInit {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => `${v} €`,
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
   ];
@@ -66,35 +81,14 @@ export class BudgetDetailsComponent implements OnInit {
   );
   readonly canCreateExpense$ = combineLatest([
     this.budget$,
-    this._auth.administrator$,
     this._auth.allowed$('budget.CreateExpense'),
   ]).pipe(
-    map(([budget, administrator, allowed]) => {
-      if (administrator) {
-        return true;
-      }
-
-      if (!budget?.draft) {
-        return false;
-      }
-
-      return allowed;
-    })
+    map(([budget, allowed]) => !!budget?.draft && allowed)
   );
 
   canEditExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.administrator$]).pipe(
-      switchMap(([budget, administrator]) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget?.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.EditExpense');
-      })
+    return combineLatest([this.budget$, this._auth.allowed$('budget.UpdateExpense')]).pipe(
+      map(([budget, allowed]) => !!budget?.draft && allowed)
     );
   }
 
@@ -115,18 +109,8 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   canDeleteExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.administrator$]).pipe(
-      switchMap(([budget, administrator]) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget?.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.DeleteExpense');
-      })
+    return combineLatest([this.budget$, this._auth.allowed$('budget.DeleteExpense')]).pipe(
+      map(([budget, allowed]) => !!budget?.draft && allowed)
     );
   }
 
@@ -158,30 +142,14 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   refreshExpenses() {
-    return this.expenses$.pipe(take(1)).subscribe((ds) => {
-      if (ds) {
-        ds.load();
-      }
-    });
+    this.refreshBudget();
   }
 
   // cotisations
   readonly cotisationsColumns = [
     new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'state',
-      (cotisation) => {
-        const amount = cotisation?.amount ?? 0;
-        const paid = cotisation?.paid ?? 0;
-        const remaining = amount - paid;
-
-        if (!remaining) {
-          return this.STATE_OK;
-        } else if (paid >= amount / 2) {
-          return this.STATE_DOING;
-        } else {
-          return this.STATE_KO;
-        }
-      },
+      paymentState,
       {
         label: '',
         canSort: true,
@@ -254,20 +222,20 @@ export class BudgetDetailsComponent implements OnInit {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => `${v} €`,
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
     new Column('paid', {
       label: 'Paid',
-      render: (v) => `${v} €`,
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
     new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'remaining',
-      (row) => (row?.amount ?? 0) - (row?.paid ?? 0),
+      (row) => row.remaining ?? (row?.amount ?? 0) - (row?.paid ?? 0),
       {
         label: 'Remaining',
-        render: (v) => `${v} €`,
+        render: (v) => this.formatAmount(v),
         canSort: true,
       }
     ),
@@ -295,12 +263,7 @@ export class BudgetDetailsComponent implements OnInit {
         cotisations
           .map((cotisation) => {
             const id = cotisation.unit?.number ?? 0;
-            const cls =
-              cotisation.amount == cotisation.paid
-                ? 'payment-done'
-                : cotisation.paid ?? 0 >= (cotisation.amount ?? 0) / 2
-                ? 'payment-doing'
-                : 'payment-waiting';
+            const cls = paymentClass(cotisation);
 
             return {
               unit: id,
@@ -354,12 +317,26 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadBudget();
+    combineLatest([this._route.paramMap, this._refresh$])
+      .pipe(
+        switchMap(([params]) => this._api.getBudget(params.get('id')!).pipe(
+          catchError((error) => {
+            this._api.handleError('Impossible d’actualiser le budget')(error);
+            return EMPTY;
+          })
+        )),
+        takeUntil(this._destroy$)
+      )
+      .subscribe((budget) => this._budget$.next(budget));
   }
 
-  loadBudget() {
-    this._route.paramMap
-      .pipe(switchMap((params) => this._api.getBudget(params.get('id')!)))
-      .subscribe((budget) => this._budget$.next(budget));
+  @HostListener('window:focus')
+  refreshBudget() {
+    this._refresh$.next();
+  }
+
+  ngOnDestroy(): void {
+    this._destroy$.next();
+    this._destroy$.complete();
   }
 }

@@ -30,7 +30,7 @@ export class PaymentListComponent implements OnInit {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => `${v} €`,
+      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
     }),
     new Column('user.username', {
       label: 'Created by',

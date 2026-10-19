@@ -13,6 +13,7 @@ import (
 	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	"github.com/rclsilver/asl-bissieux/server/auth"
 )
 
@@ -225,31 +226,27 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, e
 	if err := checkBudgetPermission(c, &budget.Budget); err != nil {
 		return nil, errors.NewForbidden(err, "")
 	}
+	if budget.Preview != nil && !budget.Preview.Ready {
+		return nil, errors.NewBadRequest(nil, budget.Preview.Message)
+	}
 
-	// load the units
+	// Freeze the set and shares until commit, including concurrent inserts or
+	// deletions of units. Unit writes never lock budgets, so lock order is stable.
+	if err := db.Exec("LOCK TABLE public.unit IN SHARE MODE").Error; err != nil {
+		return nil, err
+	}
 	var units []*models.Unit
 	if err := db.Find(&units).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get units")
 		return nil, err
 	}
 
-	// shares count
-	var sharesCount float64 = 0
-	for _, u := range units {
-		sharesCount += float64(u.Share)
+	allocations, err := controllers.Allocate(budget.Amount, units)
+	if err != nil {
+		return nil, errors.NewBadRequest(err, err.Error())
 	}
-
-	// create cotisations
-	shareAmount := budget.Amount / sharesCount
-
-	for _, u := range units {
-		amount := shareAmount * float64(u.Share)
-
-		if amount <= 0 {
-			continue
-		}
-
-		cotisation := models.NewCotisation(budget.ID, u.ID, amount)
+	for _, allocation := range allocations {
+		cotisation := models.NewCotisation(budget.ID, allocation.Unit.ID, allocation.Amount)
 
 		if err := db.Save(cotisation).Error; err != nil {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to create cotisation")
@@ -298,7 +295,7 @@ func ListExpenses(c *gin.Context, in *listExpensesIn) ([]*models.Expense, error)
 type createExpenseIn struct {
 	BudgetID string       `path:"budget_id"`
 	Label    string       `json:"label" binding:"required"`
-	Amount   float64 `json:"amount" binding:"required"`
+	Amount   money.Amount `json:"amount" binding:"required"`
 }
 
 const (
@@ -307,6 +304,9 @@ const (
 
 // CreateExpense create an expense
 func CreateExpense(c *gin.Context, in *createExpenseIn) (*models.Expense, error) {
+	if err := in.Amount.ValidateInput(); err != nil {
+		return nil, errors.NewBadRequest(err, err.Error())
+	}
 	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
 		return nil, err
 	}
@@ -361,6 +361,9 @@ const (
 
 // UpdateExpense update an expense
 func UpdateExpense(c *gin.Context, in *updateExpenseIn) (*models.Expense, error) {
+	if err := in.Amount.ValidateInput(); err != nil {
+		return nil, errors.NewBadRequest(err, err.Error())
+	}
 	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
 		return nil, err
 	}
@@ -500,12 +503,15 @@ type createPaymentIn struct {
 	CotisationID string `path:"cotisation_id"`
 
 	Date    time.Time    `json:"date" binding:"required"`
-	Amount  float64 `json:"amount" binding:"required"`
+	Amount  money.Amount `json:"amount" binding:"required"`
 	Comment string       `json:"comment"`
 }
 
 // CreatePayment create a payment
 func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error) {
+	if err := in.Amount.ValidateInput(); err != nil {
+		return nil, errors.NewBadRequest(err, err.Error())
+	}
 	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
 		return nil, err
 	}
@@ -563,6 +569,9 @@ type updatePaymentIn struct {
 
 // UpdatePayment update a payment
 func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error) {
+	if err := in.Amount.ValidateInput(); err != nil {
+		return nil, errors.NewBadRequest(err, err.Error())
+	}
 	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
 		return nil, err
 	}

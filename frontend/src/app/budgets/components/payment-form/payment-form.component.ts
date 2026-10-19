@@ -6,6 +6,7 @@ import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { validMoneyInput } from '../../money-input';
 
 @Component({
   selector: 'app-payment-form',
@@ -29,7 +30,7 @@ export class PaymentFormComponent {
     private readonly _dialogRef: MatDialogRef<PaymentFormComponent>
   ) {
     this.form = this._builder.group({
-      amount: [this.data.payment?.amount, [Validators.required]],
+      amount: [this.data.payment?.amount, [Validators.required, (control: { value: unknown }) => validMoneyInput(control.value) ? null : { money: true }]],
       comment: [this.data.payment?.comment, [Validators.required]],
       date: [
         moment(
@@ -51,6 +52,7 @@ export class PaymentFormComponent {
   }
 
   submit() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const payload: Partial<APISchemas['ModelsPayment']> = {
       amount: this.form.value.amount,
       comment: this.form.value.comment,

@@ -4,6 +4,23 @@ div.loading {
   align-items: center;
 }
 
+.budget-preview {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #172033;
+
+  .preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+  h3 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+  dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; }
+  dt { color: #475569; }
+  dd { margin: 0.35rem 0 0; font-size: 1.3rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .preview-note { font-size: 0.875rem; color: #475569; line-height: 1.5; }
+  .preview-message { color: #92400e; font-weight: 600; }
+}
+
 h2 .label {
   &::before {
     content: " (";
@@ -36,6 +53,17 @@ h2 .label {
   &.state-ko {
     background-color: red;
   }
+
+  &.state-overpaid {
+    background-color: #6d28d9;
+  }
+}
+
+.refund-amount {
+  color: #6d28d9;
+  background-color: #f5f3ff;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 :host ::ng-deep {
@@ -51,6 +79,10 @@ h2 .label {
     fill: red;
   }
 
+  .payment-overpaid * {
+    fill: #6d28d9;
+  }
+
   .unit-hover * {
     opacity: 0.7;
   }
@@ -61,4 +93,19 @@ h2 .label {
   display: flex;
   justify-content: center;
   padding-top: 1em;
+}
+
+.payment-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
 }

@@ -3,7 +3,7 @@ import { APISchemas } from 'src/app/core/api/openapi';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { BudgetDataSource } from '../../datasources/budget.datasource';
 import { Column } from 'src/app/shared/models/column.model';
-import { combineLatest, map, of, switchMap } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { ApiService } from 'src/app/core/services/api.service';
 import { BudgetFormComponent } from '../budget-form/budget-form.component';
@@ -38,7 +38,7 @@ export class BudgetListComponent {
               this._notifications
                 .showConfirm({
                   title: 'Publish the budget',
-                  message: `Confirm publishing the budget ${row.label}? Further modifications will be disabled.`,
+                  message: `Publier le budget ${row.label} ? Les dépenses et cotisations seront figées et le budget ne pourra plus être supprimé. Le libellé et les paiements resteront modifiables selon tes droits.`,
                   class: 'warn',
                 })
                 .afterClosed()
@@ -105,12 +105,12 @@ export class BudgetListComponent {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => `${v} €`,
+      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
       canSort: true,
     }),
     new Column('paid', {
       label: 'Paid',
-      render: (v) => `${v} €`,
+      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
       canSort: true,
     }),
   ];
@@ -122,36 +122,12 @@ export class BudgetListComponent {
     this.datasource.load();
   }
 
-  canEdit(budget: APISchemas['ModelsBudgetResult']) {
-    return this._auth.administrator$.pipe(
-      switchMap((administrator) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.UpdateBudget');
-      })
-    );
+  canEdit(_: APISchemas['ModelsBudgetResult']) {
+    return this._auth.allowed$('budget.UpdateBudget');
   }
 
   canDelete(budget: APISchemas['ModelsBudgetResult']) {
-    return this._auth.administrator$.pipe(
-      switchMap((administrator) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.DeleteBudget');
-      })
-    );
+    return budget.draft ? this._auth.allowed$('budget.DeleteBudget') : of(false);
   }
 
   edit(budget?: APISchemas['ModelsBudgetResult']) {

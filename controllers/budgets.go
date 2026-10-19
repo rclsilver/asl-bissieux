@@ -9,6 +9,7 @@ import (
 	"github.com/juju/errors"
 
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
 
@@ -28,7 +29,7 @@ func ListBudgets(tx *gorm.DB) ([]*models.BudgetResult, error) {
 
 	if err := tx.
 		Model(&models.Budget{}).
-		Select("budget.*, expenses.amount as amount, payments.paid as paid").
+		Select("budget.*, COALESCE(expenses.amount, 0) AS amount, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS expenses ON expenses.budget_id = budget.id", expensesAmounts).
 		Joins("LEFT JOIN (?) AS payments ON payments.budget_id = budget.id", paymentsAmounts).
 		Find(&result).Error; err != nil {
@@ -58,7 +59,7 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 
 	if err := tx.
 		Model(&models.Budget{}).
-		Select("budget.*, expenses.amount as amount, payments.paid as paid").
+		Select("budget.*, COALESCE(expenses.amount, 0) AS amount, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS expenses ON expenses.budget_id = budget.id", expensesAmounts).
 		Joins("LEFT JOIN (?) AS payments ON payments.budget_id = budget.id", paymentsAmounts).
 		First(&row, "budget.id = ?", budgetID).Error; err != nil {
@@ -68,6 +69,24 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 		return nil, err
 	}
 
+	if row.Draft {
+		var units []*models.Unit
+		if err := tx.Find(&units).Error; err != nil {
+			return nil, err
+		}
+		row.Preview = BudgetPreview(row.Amount, units)
+		var expenses []*models.Expense
+		if err := tx.Find(&expenses, "budget_id = ?", row.ID).Error; err != nil {
+			return nil, err
+		}
+		for _, expense := range expenses {
+			if err := expense.Amount.ValidateInput(); err != nil {
+				row.Preview.Ready = false
+				row.Preview.Message = fmt.Sprintf("La dépense %q doit être corrigée avant publication : %s", expense.Label, err.Error())
+				break
+			}
+		}
+	}
 	return &row, nil
 }
 
@@ -123,6 +142,21 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 		Joins("LEFT JOIN (?) AS payments ON payments.cotisation_id = cotisation.id", paymentsAmounts).
 		Find(&result, "cotisation.budget_id = ?", budget.ID).Error; err != nil {
 		return nil, err
+	}
+	for _, row := range result {
+		row.Remaining = money.Of(row.Amount.Sub(row.Paid.Decimal))
+		switch row.Paid.Cmp(row.Amount) {
+		case 1:
+			row.PaymentState = 4
+		case 0:
+			row.PaymentState = 1
+		default:
+			if row.Paid.Add(row.Paid).Cmp(row.Amount) >= 0 {
+				row.PaymentState = 2
+			} else {
+				row.PaymentState = 3
+			}
+		}
 	}
 
 	return result, nil
@@ -214,11 +248,11 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	members := make(map[*models.Member][]*models.CotisationResult)
 
 	for _, cotisation := range cotisations {
-		if !toPaid && cotisation.Paid == cotisation.Amount {
+		if !toPaid && cotisation.Paid.Equal(cotisation.Amount) {
 			continue
 		}
 
-		if !toDoing && cotisation.Paid >= cotisation.Amount/2 {
+		if !toDoing && cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) >= 0 {
 			continue
 		}
 
@@ -263,9 +297,9 @@ func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.
 		return nil, err
 	}
 
-	var amount float64
+	var amount money.Amount
 	for _, c := range cotisations {
-		amount += c.Amount
+		amount = amount.Add(c.Amount)
 	}
 
 	data := make(map[string]any)

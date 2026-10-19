@@ -54,7 +54,7 @@ func GetUnit(c *gin.Context, in *getUnitIn) (*models.Unit, error) {
 type createUnitIn struct {
 	Number  int    `json:"number" binding:"required"`
 	Address string `json:"address" binding:"required"`
-	Share   int    `json:"share" binding:"required"`
+	Share   int    `json:"share" binding:"min=0"`
 }
 
 const (
@@ -106,7 +106,7 @@ func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
 	row.Address = in.Address
 	row.Share = in.Share
 
-	if err := db.Where("id = ?", in.UnitID).Updates(&row).Error; err != nil {
+	if err := db.Model(&models.Unit{}).Where("id = ?", in.UnitID).Updates(map[string]any{"number": in.Number, "address": in.Address, "share": in.Share}).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update unit")
 		return nil, err
 	}

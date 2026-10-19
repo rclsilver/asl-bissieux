@@ -89,6 +89,8 @@ type EmailState string
 
 const (
 	Waiting EmailState = "WAITING"
+	Sending EmailState = "SENDING"
+	Unknown EmailState = "UNKNOWN"
 	Sent    EmailState = "SENT"
 	Error   EmailState = "ERROR"
 	Read    EmailState = "READ"

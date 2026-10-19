@@ -11,7 +11,7 @@
 >
   <ng-container matColumnDef="state">
     <td mat-cell *matCellDef="let email">
-      <span class="{{email.columns.state.value | lowercase}}">{{email.columns.state.value}}</span>
+      <span class="{{email.columns.state.value | lowercase}}">{{stateLabel(email.columns.state.value)}}</span>
       <span *ngIf="email.original.error" class="fa fa-exclamation-circle error" [matTooltip]="email.original.error"></span>
     </td>
   </ng-container>

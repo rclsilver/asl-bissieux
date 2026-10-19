@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:unit": "node --test src/app/budgets/payment-state.test.cjs src/app/budgets/money-input.test.cjs",
+    "test:unit": "node --test src/app/budgets/payment-state.test.cjs src/app/budgets/money-input.test.cjs src/app/emails/email-state.test.cjs",
     "openapi": "node generate-openapi.mjs"
   },
   "private": true,

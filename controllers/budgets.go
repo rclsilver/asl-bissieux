@@ -245,14 +245,18 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 		return err
 	}
 
-	members := make(map[*models.Member][]*models.CotisationResult)
+	type recipient struct {
+		member      *models.Member
+		cotisations []*models.CotisationResult
+	}
+	members := make(map[string]*recipient)
 
 	for _, cotisation := range cotisations {
-		if !toPaid && cotisation.Paid.Equal(cotisation.Amount) {
-			continue
-		}
-
-		if !toDoing && cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) >= 0 {
+		if cotisation.Paid.Cmp(cotisation.Amount) >= 0 {
+			if !toPaid {
+				continue
+			}
+		} else if cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) >= 0 && !toDoing {
 			continue
 		}
 
@@ -261,11 +265,10 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 				continue
 			}
 
-			if _, exists := members[member]; exists {
-				members[member] = append(members[member], cotisation)
-			} else {
-				members[member] = []*models.CotisationResult{cotisation}
+			if _, exists := members[member.ID]; !exists {
+				members[member.ID] = &recipient{member: member}
 			}
+			members[member.ID].cotisations = append(members[member.ID].cotisations, cotisation)
 		}
 	}
 
@@ -275,13 +278,13 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 			return err
 		}
 
-		for member, cotisations := range members {
-			data, err := buildTemplateData(tx, budget, member, cotisations)
+		for _, recipient := range members {
+			data, err := buildTemplateData(tx, budget, recipient.member, recipient.cotisations)
 			if err != nil {
 				return err
 			}
 
-			email := models.NewEmail(campaign, member.Email, data)
+			email := models.NewEmail(campaign, recipient.member.Email, data)
 			if err := tx.Create(email).Error; err != nil {
 				return err
 			}

@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -224,7 +225,7 @@ func ListEmails(tx *gorm.DB, campaignID string) ([]*models.Email, error) {
 	for _, email := range result {
 		if email.State == models.Waiting || email.State == models.Error {
 			if err := buildEmail(email); err != nil {
-				return nil, err
+				email.Error = err.Error()
 			}
 		}
 	}
@@ -264,79 +265,115 @@ func DeleteEmail(tx *gorm.DB, emailID string) error {
 		return errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 	}
 
-	return tx.Delete(&models.Email{}, "id = ?", emailID).Error
+	result := tx.Where("state <> ?", models.Sending).Delete(&models.Email{}, "id = ?", emailID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.BadRequestf("email not found or currently sending")
+	}
+	return nil
 }
 
+// SendEmail must receive an autocommit connection: the claim must be durable
+// before SMTP is contacted, including when the HTTP request finishes early.
 func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error {
-	email, err := GetEmail(tx, emailID, true)
-	if err != nil {
-		return err
+	if err := validateUUID(emailID); err != nil {
+		return errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 	}
-
-	if email.State != models.Waiting && email.State != models.Error {
+	claim := tx.WithContext(c).Model(&models.Email{}).
+		Where("id = ? AND state IN ?", emailID, []models.EmailState{models.Waiting, models.Error}).
+		Updates(map[string]any{"state": models.Sending, "error": ""})
+	if claim.Error != nil {
+		return claim.Error
+	}
+	if claim.RowsAffected != 1 {
+		var email models.Email
+		if err := tx.WithContext(c).First(&email, "id = ?", emailID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
+			}
+			return err
+		}
 		return errors.BadRequestf("cannot send an email which has %s state", email.State)
 	}
-
-	done := make(chan error)
-
+	if wait {
+		return sendClaimedEmail(c, tx, emailID)
+	}
 	go func() {
-		if err := buildEmail(email); err != nil {
-			email.State = models.Error
-			email.Error = err.Error()
-			logrus.WithContext(c).WithError(err).Errorf("unable to build the email %s to %s (%s)", email.Subject, email.To, email.ID)
-		} else {
+		// Never retain a Gin context or the completed HTTP request's lifetime.
+		if err := sendClaimedEmail(context.Background(), tx, emailID); err != nil {
+			logrus.WithError(err).WithField("email_id", emailID).Error("asynchronous email delivery failed")
+		}
+	}()
+	return nil
+}
+
+func sendClaimedEmail(c context.Context, tx *gorm.DB, emailID string) error {
+	ctx, cancel := context.WithTimeout(c, time.Minute)
+	defer cancel()
+	email, sendErr := GetEmail(tx.WithContext(ctx), emailID, false)
+	state := models.Error
+	if sendErr == nil {
+		sendErr = buildEmail(email)
+		if sendErr == nil {
 			var attachments []*smtp.Attachment
 			for _, attachment := range email.EmailCampaign.EmailTemplate.Attachments {
 				attachments = append(attachments, smtp.NewAttachment(attachment.Name, attachment.ContentType, attachment.Content, attachment.Inline))
 			}
-
-			if err := smtp.Send(c, email.To, email.Subject, email.Message, email.ID, attachments...); err != nil {
-				email.State = models.Error
-				email.Error = err.Error()
-				logrus.WithContext(c).WithError(err).Errorf("email %s to %s (%s) not sent", email.Subject, email.To, email.ID)
-			} else {
-				email.State = models.Sent
-				email.Error = ""
-				logrus.WithContext(c).Infof("email %s to %s (%s) sent", email.Subject, email.To, email.ID)
+			sendErr = smtp.Send(ctx, email.To, email.Subject, email.Message, email.ID, attachments...)
+			if sendErr == nil {
+				state = models.Sent
+			} else if smtp.IsDeliveryUncertain(sendErr) {
+				state = models.Unknown
 			}
 		}
-
-		if err := tx.Model(email).Where("id = ?", emailID).Updates(map[string]any{
-			"subject": email.Subject,
-			"message": email.Message,
-			"state":   email.State,
-			"error":   email.Error,
-		}).Error; err != nil {
-			logrus.WithContext(c).WithError(err).Error("unable to update email")
-		}
-
-		if email.Error != "" {
-			done <- fmt.Errorf("%s", email.Error)
-		} else {
-			done <- nil
-		}
-	}()
-
-	if wait {
-		return <-done
 	}
-
-	return nil
+	values := map[string]any{"state": state, "error": ""}
+	if sendErr != nil {
+		values["error"] = sendErr.Error()
+	}
+	if email != nil {
+		values["subject"], values["message"] = email.Subject, email.Message
+	}
+	// Persist the outcome even if the caller disconnected or its deadline expired.
+	saveCtx, saveCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer saveCancel()
+	result := tx.WithContext(saveCtx).Model(&models.Email{}).Where("id = ? AND state = ?", emailID, models.Sending).Updates(values)
+	if result.Error != nil || result.RowsAffected != 1 {
+		err := fmt.Errorf("cannot persist delivery outcome for email %s: %v; check delivery before retrying", emailID, result.Error)
+		// If this also fails (e.g. database outage), SENDING remains a durable
+		// barrier to retries. Recovery requires stopping senders and checking SMTP.
+		values["state"], values["error"] = models.Unknown, "Résultat de l’envoi à vérifier avant tout renvoi."
+		if fallback := tx.WithContext(saveCtx).Model(&models.Email{}).Where("id = ? AND state = ?", emailID, models.Sending).Updates(values); fallback.Error != nil {
+			logrus.WithError(fallback.Error).WithField("email_id", emailID).Error("email remains claimed; offline delivery verification is required")
+		}
+		return err
+	}
+	return sendErr
 }
 
 func MarkAsError(c context.Context, tx *gorm.DB, emailID string) error {
-	if err := tx.Model(&models.Email{}).Where("id = ?", emailID).Updates(map[string]any{
+	if err := validateUUID(emailID); err != nil {
+		return errors.NewNotFound(nil, "email not found")
+	}
+	result := tx.WithContext(c).Model(&models.Email{}).Where("id = ? AND state IN ?", emailID, []models.EmailState{models.Sent, models.Read, models.Unknown}).Updates(map[string]any{
 		"state":   models.Error,
+		"error":   "",
 		"subject": nil,
 		"message": nil,
-	}).Error; err != nil {
-		return err
+	})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return errors.BadRequestf("email cannot be reset while waiting or sending")
 	}
 	return nil
 }
 
 func MarkAsRead(c context.Context, tx *gorm.DB, emailID string) error {
-	if err := tx.Model(&models.Email{}).Where("id = ?", emailID).Updates(map[string]any{
+	if err := tx.WithContext(c).Model(&models.Email{}).Where("id = ? AND state = ?", emailID, models.Sent).Updates(map[string]any{
 		"state": models.Read,
 	}).Error; err != nil {
 		return err
@@ -367,7 +404,13 @@ func BuildEmail(template *models.EmailTemplate, t *templates.Template) (*models.
 }
 
 func buildEmail(email *models.Email) error {
-	data := email.Data
+	if email.EmailCampaign == nil || email.EmailCampaign.EmailTemplate == nil {
+		return fmt.Errorf("email campaign or template no longer exists")
+	}
+	data := make(map[string]any, len(email.Data)+len(email.EmailCampaign.Data))
+	for k, v := range email.Data {
+		data[k] = v
+	}
 	for k, v := range email.EmailCampaign.Data {
 		data[k] = v
 	}

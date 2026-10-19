@@ -34,6 +34,7 @@ import { ActivatedRoute } from '@angular/router';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 import { DataSource } from 'src/app/shared/datasources';
 import { EmailSendingPopupComponent } from '../email-sending-popup/email-sending-popup.component';
+import { canSendEmail, canResetEmail, emailStateLabel } from '../../email-state';
 
 @Component({
   selector: 'app-email-list',
@@ -41,6 +42,7 @@ import { EmailSendingPopupComponent } from '../email-sending-popup/email-sending
   styleUrls: ['./email-list.component.scss'],
 })
 export class EmailListComponent implements AfterViewInit, OnDestroy {
+  readonly stateLabel = emailStateLabel;
   private _destroyed$ = new Subject<void>();
 
   private readonly _api = inject(ApiService);
@@ -91,13 +93,15 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         actions.push(
           new CustomRowAction<APISchemas['ModelsEmail']>(
             'sms_failed',
-            'Set e-mail state to ERROR',
-            'Mark as error',
+            'Autoriser un nouvel envoi après vérification',
+            'Autoriser un renvoi',
             (row) =>
               this._notifications
                 .showConfirm({
-                  title: 'Mark e-mail as failed',
-                  message: `Are you sure to mark the e-mail to ${row.to} as failed?`,
+                  title: 'Autoriser un renvoi',
+                  message: row.state === 'UNKNOWN'
+                    ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, confirmes-tu qu’un nouvel envoi est nécessaire ?`
+                    : `Ce message à ${row.to} a déjà été envoyé. Confirmes-tu qu’un nouvel envoi est nécessaire ?`,
                   class: 'primary',
                 })
                 .afterClosed()
@@ -107,8 +111,8 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                       next: () => {
                         this.refresh();
                         this._notifications.showDialog({
-                          title: 'E-mail marked as failed',
-                          message: `E-mail to ${row.to} has been marked as failed`,
+                          title: 'Renvoi autorisé',
+                          message: `Tu peux maintenant renvoyer le message à ${row.to}.`,
                           level: NotificationDialogLevel.Info,
                         });
                       },
@@ -118,7 +122,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                     });
                   }
                 }),
-            (row) => row.state !== 'ERROR'
+            (row) => canResetEmail(row.state)
           )
         );
       }
@@ -176,7 +180,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
       .pipe(
         takeUntil(this._destroyed$),
         map(([canDelete, canSend, selected]) => [
-          canDelete && selected.length > 0,
+          canDelete && selected.some((row) => row.state !== 'SENDING'),
           canSend && selected.filter((row) => this._canSend(row)).length > 0,
         ])
       )
@@ -220,7 +224,8 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
     this._emails$.value.load();
   }
 
-  canDelete(_: APISchemas['ModelsEmail']) {
+  canDelete(row: APISchemas['ModelsEmail']) {
+    if (row.state === 'SENDING') { return of(false); }
     return this._auth.allowed$('email.DeleteEmail');
   }
 
@@ -269,7 +274,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
       .subscribe((result) => {
         if (result) {
           this.table.selected.selected$.pipe(first()).subscribe((selected) => {
-            const calls$ = selected.map((row) =>
+            const calls$ = selected.filter((row) => row.state !== 'SENDING').map((row) =>
               this._api.deleteEmail(row.id!)
             );
 
@@ -317,6 +322,6 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   }
 
   private _canSend(row: APISchemas['ModelsEmail']) {
-    return ['SENT', 'READ'].indexOf(row.state ?? '') === -1;
+    return canSendEmail(row.state);
   }
 }

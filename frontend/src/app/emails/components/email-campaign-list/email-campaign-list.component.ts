@@ -11,6 +11,7 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { Column, DateRender } from 'src/app/shared/models/column.model';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { EmailCampaignDataSource } from '../../datasources/campaign.datasource';
+import { emailStateLabel } from '../../email-state';
 
 @Component({
   selector: 'app-campaign-email-list',
@@ -57,7 +58,7 @@ export class EmailCampaignListComponent {
 
         return Object.keys(byState)
           .sort((a, b) => (a < b ? -1 : 1))
-          .map((key) => `${byState[key]} ${key}`)
+          .map((key) => `${byState[key]} ${emailStateLabel(key)}`)
           .join(' / ');
       },
     }),

@@ -427,7 +427,7 @@ type sendEmailIn struct {
 func SendEmail(c *gin.Context, in *sendEmailIn) error {
 	db := db.Connection(c)
 
-	if err := controllers.SendEmail(c, db, in.EmailID, in.Wait); err != nil {
+	if err := controllers.SendEmail(c.Request.Context(), db, in.EmailID, in.Wait); err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to send email")
 		}
@@ -446,19 +446,11 @@ type setErrorEmailIn struct {
 }
 
 // SetEmailError set mail state to ERROR
-func SetEmailError(c *gin.Context, in *trackEmailIn) error {
+func SetEmailError(c *gin.Context, in *setErrorEmailIn) error {
 	db := db.Connection(c)
 
-	email, err := controllers.GetEmail(db, in.EmailID, true)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
-		}
-		return err
-	} else if email.State != models.Waiting {
-		if err := controllers.MarkAsError(c, db, email.ID); err != nil {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
-		}
+	if err := controllers.MarkAsError(c.Request.Context(), db, in.EmailID); err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to reset email")
 		return err
 	}
 

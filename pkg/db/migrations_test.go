@@ -274,4 +274,49 @@ func TestMigrationsIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+	t.Run("duplicates require review and soft deleted history is preserved", func(t *testing.T) {
+		conn := migrationTestDB(t)
+		if err := conn.Exec(migrations[0].SQL).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec(legacyFixture).Error; err != nil {
+			t.Fatal(err)
+		}
+		insert := `INSERT INTO public.cotisation (id,budget_id,unit_id,amount) VALUES (?,'10000000-0000-4000-8000-000000000002','20000000-0000-4000-8000-000000000001',100.25)`
+		duplicate := "30000000-0000-4000-8000-000000000002"
+		if err := conn.Exec(insert, duplicate).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := Baseline(ctx, conn); err != nil {
+			t.Fatal(err)
+		}
+		before := applicationFingerprint(t, conn)
+		if err := Migrate(ctx, conn); err == nil {
+			t.Fatal("duplicate cotisations were accepted")
+		}
+		if !reflect.DeepEqual(before, applicationFingerprint(t, conn)) {
+			t.Fatal("duplicates were silently changed")
+		}
+		if err := conn.Exec("UPDATE public.cotisation SET deleted_at=now() WHERE id=?", duplicate).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := Migrate(ctx, conn); err != nil {
+			t.Fatal(err)
+		}
+		third := "30000000-0000-4000-8000-000000000003"
+		if err := conn.Exec(insert, third).Error; err == nil {
+			t.Fatal("unique constraint allowed a duplicate active cotisation")
+		}
+		if err := conn.Exec("UPDATE public.cotisation SET deleted_at=now() WHERE deleted_at IS NULL").Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec(insert, third).Error; err != nil {
+			t.Fatal(err)
+		}
+		var count int64
+		conn.Raw("SELECT count(*) FROM public.payment").Scan(&count)
+		if count != 1 {
+			t.Fatal("historical payment was lost")
+		}
+	})
 }

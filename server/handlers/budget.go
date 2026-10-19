@@ -8,6 +8,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
@@ -94,13 +95,10 @@ func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.BudgetResult, err
 		return nil, err
 	}
 
-	if err := checkBudgetPermission(c, &row); err != nil {
-		return nil, errors.NewForbidden(err, "")
-	}
-
 	row.Label = in.Label
 
-	if err := db.Where("id = ?", in.BudgetID).Updates(&row).Error; err != nil {
+	// A label edit must never write a stale Draft value back over a publication.
+	if err := db.Model(&models.Budget{}).Where("id = ?", in.BudgetID).Update("label", in.Label).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update budget")
 		return nil, err
 	}
@@ -140,7 +138,7 @@ func DeleteBudget(c *gin.Context, in *deleteBudgetIn) error {
 
 	var row models.Budget
 
-	if err := db.Where("id = ?", in.BudgetID).First(&row).Error; err != nil {
+	if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", in.BudgetID).First(&row).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
 		}
@@ -151,14 +149,22 @@ func DeleteBudget(c *gin.Context, in *deleteBudgetIn) error {
 	if err := checkBudgetPermission(c, &row); err != nil {
 		return errors.NewForbidden(err, "")
 	}
+	var cotisations int64
+	if err := db.Model(&models.Cotisation{}).Where("budget_id = ?", row.ID).Count(&cotisations).Error; err != nil {
+		return err
+	}
+	if cotisations > 0 {
+		return errors.NewBadRequest(nil, "Des cotisations existent pour ce budget : sa suppression est interdite.")
+	}
+	if err := db.Where("budget_id = ?", row.ID).Delete(&models.Expense{}).Error; err != nil {
+		return err
+	}
 
 	if err := db.Delete(&row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete budget")
 		return err
 	}
 	logrus.WithContext(c.Request.Context()).Infof("budget %q deleted", row.ID)
-
-	// TODO: delete associations
 
 	if err := db.Commit().Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to commit transaction")
@@ -178,6 +184,9 @@ type publishBudgetIn struct {
 
 // PublishBudget publish a budget
 func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, error) {
+	if err := validateUUID(in.BudgetID, "invalid budget ID"); err != nil {
+		return nil, err
+	}
 	db := db.Connection(c).Begin()
 	if db.Error != nil {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
@@ -185,6 +194,24 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, e
 	}
 	defer db.Rollback()
 
+	// All financial writes lock the parent budget before reading its state.
+	var locked models.Budget
+	if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&locked, "id = ?", in.BudgetID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, "budget not found")
+		}
+		return nil, err
+	}
+	if !locked.Draft {
+		return nil, errors.NewBadRequest(nil, "Ce budget est déjà publié.")
+	}
+	var existing int64
+	if err := db.Model(&models.Cotisation{}).Where("budget_id = ?", locked.ID).Count(&existing).Error; err != nil {
+		return nil, err
+	}
+	if existing > 0 {
+		return nil, errors.NewBadRequest(nil, "Ce budget comporte déjà des cotisations : vérifier sa situation avant publication.")
+	}
 	// load the budget
 	budget, err := controllers.GetBudget(db, in.BudgetID)
 	if err != nil {
@@ -232,7 +259,7 @@ func PublishBudget(c *gin.Context, in *publishBudgetIn) (*models.BudgetResult, e
 
 	// update the budget row
 	budget.Budget.Draft = false
-	if err := db.Save(&budget.Budget).Error; err != nil {
+	if err := db.Model(&models.Budget{}).Where("id = ?", budget.ID).Update("draft", false).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to save budget")
 		return nil, err
 	}
@@ -269,8 +296,8 @@ func ListExpenses(c *gin.Context, in *listExpensesIn) ([]*models.Expense, error)
 }
 
 type createExpenseIn struct {
-	BudgetID string  `path:"budget_id"`
-	Label    string  `json:"label" binding:"required"`
+	BudgetID string       `path:"budget_id"`
+	Label    string       `json:"label" binding:"required"`
 	Amount   float64 `json:"amount" binding:"required"`
 }
 
@@ -293,7 +320,7 @@ func CreateExpense(c *gin.Context, in *createExpenseIn) (*models.Expense, error)
 
 	var budget models.Budget
 
-	if err := db.Where("id = ?", in.BudgetID).First(&budget).Error; err != nil {
+	if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", in.BudgetID).First(&budget).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("budget %q not found", in.BudgetID))
 		}
@@ -342,7 +369,14 @@ func UpdateExpense(c *gin.Context, in *updateExpenseIn) (*models.Expense, error)
 		return nil, err
 	}
 
-	db := db.Connection(c)
+	db := db.Connection(c).Begin()
+	if db.Error != nil {
+		return nil, db.Error
+	}
+	defer db.Rollback()
+	if _, err := lockDraftBudget(c, db, in.BudgetID); err != nil {
+		return nil, err
+	}
 	var row models.Expense
 
 	if err := db.Preload("Budget").Where("id = ? AND budget_id = ?", in.ExpenseID, in.BudgetID).First(&row).Error; err != nil {
@@ -360,11 +394,14 @@ func UpdateExpense(c *gin.Context, in *updateExpenseIn) (*models.Expense, error)
 	row.Label = in.Label
 	row.Amount = in.Amount
 
-	if err := db.Where("id = ?", in.ExpenseID).Updates(&row).Error; err != nil {
+	if err := db.Model(&models.Expense{}).Where("id = ?", in.ExpenseID).Updates(map[string]any{"label": in.Label, "amount": in.Amount}).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update expense")
 		return nil, err
 	}
 	logrus.WithContext(c.Request.Context()).Infof("expense %s updated", row.ID)
+	if err := db.Commit().Error; err != nil {
+		return nil, err
+	}
 
 	return &row, nil
 }
@@ -388,7 +425,14 @@ func DeleteExpense(c *gin.Context, in *deleteExpenseIn) error {
 		return err
 	}
 
-	db := db.Connection(c)
+	db := db.Connection(c).Begin()
+	if db.Error != nil {
+		return db.Error
+	}
+	defer db.Rollback()
+	if _, err := lockDraftBudget(c, db, in.BudgetID); err != nil {
+		return err
+	}
 
 	var row models.Expense
 
@@ -409,6 +453,9 @@ func DeleteExpense(c *gin.Context, in *deleteExpenseIn) error {
 		return err
 	}
 	logrus.WithContext(c.Request.Context()).Infof("expense %q deleted", row.ID)
+	if err := db.Commit().Error; err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -452,9 +499,9 @@ type createPaymentIn struct {
 	BudgetID     string `path:"budget_id"`
 	CotisationID string `path:"cotisation_id"`
 
-	Date    time.Time `json:"date" binding:"required"`
-	Amount  float64   `json:"amount" binding:"required"`
-	Comment string    `json:"comment"`
+	Date    time.Time    `json:"date" binding:"required"`
+	Amount  float64 `json:"amount" binding:"required"`
+	Comment string       `json:"comment"`
 }
 
 // CreatePayment create a payment
@@ -787,15 +834,34 @@ func SendBudgetEmail(c *gin.Context, in *sendBudgetEmailIn) error {
 	*/
 }
 
+// Financial changes require a draft, independently of administrator status.
+// Label edits are instead protected by the UpdateBudget action on the route.
 func checkBudgetPermission(c *gin.Context, budget *models.Budget) error {
 	user, err := auth.GetCurrentUser(c)
 	if err != nil {
 		return errors.NewUnauthorized(err, "not authenticated")
 	}
 
-	if !budget.Draft && !user.Admin {
-		return errors.NewForbidden(nil, "budget cannot be modified")
+	if !user.Enabled {
+		return errors.NewForbidden(nil, "account not active")
+	}
+	if !budget.Draft {
+		return errors.NewForbidden(nil, "Ce budget est publié : ses dépenses sont figées et sa suppression est interdite.")
 	}
 
 	return nil
+}
+
+func lockDraftBudget(c *gin.Context, tx *gorm.DB, budgetID string) (*models.Budget, error) {
+	var budget models.Budget
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&budget, "id = ?", budgetID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFound(nil, "budget not found")
+		}
+		return nil, err
+	}
+	if err := checkBudgetPermission(c, &budget); err != nil {
+		return nil, err
+	}
+	return &budget, nil
 }

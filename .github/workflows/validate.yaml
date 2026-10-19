@@ -1,0 +1,69 @@
+name: Validate
+
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches: [dev, master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.22.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend checks and production build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run test:unit
+          npm test
+          npm run build
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Go tests including isolated PostgreSQL integration tests
+        env:
+          TEST_DATABASE_URL: postgres://test:test@localhost:5432/test?sslmode=disable
+        run: |
+          go test -count=1 ./...
+          go test -race -count=1 ./pkg/auth
+      - name: Check Go module integrity and known vulnerabilities
+        run: |
+          go mod verify
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          govulncheck ./...
+      - name: Build and audit deployable images
+        run: |
+          docker build -t local/asl-bissieux:ci .
+          docker build -t local/asl-smtp:ci smtp-mock
+          docker create --name app-audit local/asl-bissieux:ci
+          docker cp app-audit:/app/asl-bissieux "$RUNNER_TEMP/asl-bissieux"
+          docker rm app-audit
+          docker create --name smtp-audit local/asl-smtp:ci
+          docker cp smtp-audit:/smtpmocksrv "$RUNNER_TEMP/smtpmocksrv"
+          docker rm smtp-audit
+          govulncheck -mode=binary "$RUNNER_TEMP/asl-bissieux"
+          govulncheck -mode=binary "$RUNNER_TEMP/smtpmocksrv"

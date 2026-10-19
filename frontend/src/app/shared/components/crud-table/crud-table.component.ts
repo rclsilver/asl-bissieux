@@ -9,6 +9,7 @@ import {
   QueryList,
   ViewChild,
   ViewChildren,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import {
   BehaviorSubject,
@@ -36,7 +37,10 @@ import { MatSort } from '@angular/material/sort';
 import { SearchInputComponent } from '../search-input/search-input.component';
 
 export class CustomAction {
-  constructor(public readonly icon: string, public readonly tooltip: string) {}
+  constructor(
+    public readonly icon: string,
+    public readonly tooltip: string
+  ) {}
 }
 
 export class CustomToolbarAction extends CustomAction {
@@ -105,6 +109,8 @@ export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
   selector: 'app-crud-table',
   templateUrl: './crud-table.component.html',
   styleUrls: ['./crud-table.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class CrudTableComponent<T extends {}>
   implements OnDestroy, AfterViewInit

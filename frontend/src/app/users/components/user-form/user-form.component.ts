@@ -1,4 +1,10 @@
-import { Component, Inject, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, finalize } from 'rxjs';
@@ -11,6 +17,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class UserFormComponent implements OnInit {
   private readonly _notifications = inject(NotificationsService);

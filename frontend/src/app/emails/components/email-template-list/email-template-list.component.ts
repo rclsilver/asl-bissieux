@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -15,6 +15,8 @@ import { EmailAttachmentListComponent } from '../email-attachment-list/email-att
   selector: 'app-email-template-list',
   templateUrl: './email-template-list.component.html',
   styleUrls: ['./email-template-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailTemplateListComponent {
   private readonly _api = inject(ApiService);

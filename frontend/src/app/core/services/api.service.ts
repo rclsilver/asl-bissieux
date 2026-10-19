@@ -1,12 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
 import { catchError, filter, map, tap, throwError } from 'rxjs';
-import {
-  HttpErrorResponse,
-  HttpParams,
-  HttpRequest,
-  HttpResponse,
-} from '@angular/common/http';
+import { HttpErrorResponse, HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';

@@ -1,30 +1,64 @@
 <h1 mat-dialog-title>
-  <ng-container *ngIf="!data.expense">Create expense</ng-container>
-  <ng-container *ngIf="data.expense">Update expense</ng-container>
+  @if (!data.expense) {
+    Create expense
+  }
+  @if (data.expense) {
+    Update expense
+  }
 </h1>
 <form [formGroup]="form" (submit)="submit()">
   <div mat-dialog-content class="content">
     <mat-form-field appearance="fill">
       <mat-label>Label</mat-label>
-      <input matInput formControlName="label" [required]="true">
-      <mat-error *ngIf="form.controls['label'].touched && form.controls['label'].invalid">
-        <span *ngIf="form.controls['label'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['label'].errors!['server']">{{ form.controls['label'].errors!['server'] }}</span>
-      </mat-error>
+      <input matInput formControlName="label" [required]="true" />
+      @if (form.controls["label"].touched && form.controls["label"].invalid) {
+        <mat-error>
+          @if (form.controls["label"].errors!["required"]) {
+            <span>This field is mandatory</span>
+          }
+          @if (form.controls["label"].errors!["server"]) {
+            <span>{{ form.controls["label"].errors!["server"] }}</span>
+          }
+        </mat-error>
+      }
     </mat-form-field>
     <mat-form-field appearance="fill">
       <mat-label>Amount</mat-label>
-      <input matInput type="number" min="0.01" step="0.01" formControlName="amount" [required]="true">
-      <mat-error *ngIf="form.controls['amount'].touched && form.controls['amount'].invalid">
-        <span *ngIf="form.controls['amount'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['amount'].errors!['money']">Montant positif, avec au plus deux décimales.</span>
-        <span *ngIf="form.controls['amount'].errors!['server']">{{ form.controls['amount'].errors!['server'] }}</span>
-      </mat-error>
+      <input
+        matInput
+        type="number"
+        min="0.01"
+        step="0.01"
+        formControlName="amount"
+        [required]="true"
+      />
+      @if (form.controls["amount"].touched && form.controls["amount"].invalid) {
+        <mat-error>
+          @if (form.controls["amount"].errors!["required"]) {
+            <span>This field is mandatory</span>
+          }
+          @if (form.controls["amount"].errors!["money"]) {
+            <span>Montant positif, avec au plus deux décimales.</span>
+          }
+          @if (form.controls["amount"].errors!["server"]) {
+            <span>{{ form.controls["amount"].errors!["server"] }}</span>
+          }
+        </mat-error>
+      }
     </mat-form-field>
   </div>
   <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
+    <button mat-button color="secondary" type="button" (click)="cancel()">
+      Cancel
+    </button>
     <div class="spacer"></div>
-    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+    <button
+      mat-button
+      color="primary"
+      type="submit"
+      [disabled]="form.invalid || !form.touched"
+    >
+      Submit
+    </button>
   </div>
 </form>

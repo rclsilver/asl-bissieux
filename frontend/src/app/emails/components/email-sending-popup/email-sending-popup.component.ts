@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, Inject, OnDestroy, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Inject,
+  OnDestroy,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -20,6 +27,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-email-sending-popup',
   templateUrl: './email-sending-popup.component.html',
   styleUrls: ['./email-sending-popup.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailSendingPopupComponent implements AfterViewInit, OnDestroy {
   private readonly _api = inject(ApiService);
@@ -62,14 +71,16 @@ export class EmailSendingPopupComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     of(...this.data.emails)
       .pipe(
-        concatMap((email) => this._api.sendEmail(email.id!, { wait: true }).pipe(
-          tap(() => this._sent$.next(this._sent$.value + 1)),
-          catchError(() => {
-            this._errors$.next(this._errors$.value + 1);
-            return of(null);
-          }),
-          finalize(() => this._current$.next(this._current$.value + 1))
-        )),
+        concatMap((email) =>
+          this._api.sendEmail(email.id!, { wait: true }).pipe(
+            tap(() => this._sent$.next(this._sent$.value + 1)),
+            catchError(() => {
+              this._errors$.next(this._errors$.value + 1);
+              return of(null);
+            }),
+            finalize(() => this._current$.next(this._current$.value + 1))
+          )
+        ),
         takeUntil(this._cancel$)
       )
       .subscribe();

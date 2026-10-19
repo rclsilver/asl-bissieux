@@ -1,4 +1,9 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { combineLatest, map } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -17,6 +22,8 @@ import { emailStateLabel } from '../../email-state';
   selector: 'app-campaign-email-list',
   templateUrl: './email-campaign-list.component.html',
   styleUrls: ['./email-campaign-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailCampaignListComponent {
   private readonly _api = inject(ApiService);

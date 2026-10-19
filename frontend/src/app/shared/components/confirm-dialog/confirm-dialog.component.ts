@@ -1,4 +1,9 @@
-import { Component, Inject, ViewChild } from '@angular/core';
+import {
+  Component,
+  Inject,
+  ViewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -12,6 +17,8 @@ export type ConfirmDialogData = {
 @Component({
   templateUrl: './confirm-dialog.component.html',
   styleUrls: ['./confirm-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class ConfirmDialogComponent {
   @ViewChild('force', { static: false }) force?: MatCheckbox;

@@ -1,35 +1,28 @@
 <mat-toolbar id="top-menu" color="primary">
-  <button mat-icon-button type="button" aria-label="Toggle sidenav" (click)="drawer.toggle()" *ngIf="isHandset$ | async">
-    <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
-  </button>
-  <span>ASL Bissieux</span>
-  <span class="spacer"></span>
-  <with-google-auth-button *ngIf="!(authenticated$ | async)"></with-google-auth-button>
-  <span style="vertical-align:middle" *ngIf="user$ | async as user">{{ user.username }}</span>
-  <button mat-icon-button *ngIf="authenticated$ | async" type="button" aria-label="Logout" (click)="logout()">
-    <mat-icon>logout</mat-icon>
-  </button>
+  @if (isHandset$ | async) {
+    <button mat-icon-button type="button" aria-label="Toggle sidenav" (click)="drawer.toggle()"><mat-icon aria-label="Side nav toggle icon">menu</mat-icon></button>
+  }
+  <span>ASL Bissieux</span><span class="spacer"></span>
+  @if (!(authenticated$ | async)) { <with-google-auth-button></with-google-auth-button> }
+  @if (user$ | async; as user) { <span style="vertical-align: middle">{{ user.username }}</span> }
+  @if (authenticated$ | async) {
+    <button mat-icon-button type="button" aria-label="Logout" (click)="logout()"><mat-icon>logout</mat-icon></button>
+  }
 </mat-toolbar>
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(authenticated$ | async) && (isHandset$ | async) === false">
     <mat-nav-list id="left-menu">
-      <ng-container *ngFor="let link of links">
-        <a mat-list-item *ngIf="link.allowed$ | async" [routerLink]="link.path" routerLinkActive="active">
-          <span mat-list-icon class="fa fa-{{ link.icon }}"></span>
-          <span mat-line>{{ link.label }}</span>
-        </a>
-      </ng-container>
+      @for (link of links; track link) {
+        @if (link.allowed$ | async) {
+          <a mat-list-item [routerLink]="link.path" routerLinkActive="active"><span mat-list-icon class="fa fa-{{ link.icon }}"></span><span mat-line>{{ link.label }}</span></a>
+        }
+      }
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content class="main-container">
-    <div *ngIf="authenticated$ | async">
-      <router-outlet></router-outlet>
-    </div>
-    <mat-card *ngIf="!(authenticated$ | async)" class="need-login">
-      <mat-card-title>Restricted area</mat-card-title>
-      <mat-card-content>
-        <p>You need to login to continue.</p>
-      </mat-card-content>
-    </mat-card>
+    @if (authenticated$ | async) { <div><router-outlet></router-outlet></div> }
+    @if (!(authenticated$ | async)) {
+      <mat-card class="need-login"><mat-card-title>Restricted area</mat-card-title><mat-card-content><p>You need to login to continue.</p></mat-card-content></mat-card>
+    }
   </mat-sidenav-content>
 </mat-sidenav-container>

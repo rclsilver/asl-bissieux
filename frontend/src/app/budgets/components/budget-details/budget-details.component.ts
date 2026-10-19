@@ -1,4 +1,11 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
@@ -30,6 +37,8 @@ import { PaymentState, paymentState, paymentClass } from '../../payment-state';
   selector: 'app-budget-details',
   templateUrl: './budget-details.component.html',
   styleUrls: ['./budget-details.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class BudgetDetailsComponent implements OnInit, OnDestroy {
   private readonly _destroy$ = new Subject<void>();
@@ -40,12 +49,19 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   readonly STATE_OVERPAID = PaymentState.Overpaid;
 
   formatAmount(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-      .format(amount);
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount);
   }
 
   formatRate(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(amount) + ' €';
+    return (
+      new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      }).format(amount) + ' €'
+    );
   }
 
   private readonly _auth = inject(AuthService);
@@ -82,14 +98,13 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   readonly canCreateExpense$ = combineLatest([
     this.budget$,
     this._auth.allowed$('budget.CreateExpense'),
-  ]).pipe(
-    map(([budget, allowed]) => !!budget?.draft && allowed)
-  );
+  ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
 
   canEditExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.allowed$('budget.UpdateExpense')]).pipe(
-      map(([budget, allowed]) => !!budget?.draft && allowed)
-    );
+    return combineLatest([
+      this.budget$,
+      this._auth.allowed$('budget.UpdateExpense'),
+    ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
   }
 
   editExpense(expense?: APISchemas['ModelsExpense']) {
@@ -109,9 +124,10 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   }
 
   canDeleteExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.allowed$('budget.DeleteExpense')]).pipe(
-      map(([budget, allowed]) => !!budget?.draft && allowed)
-    );
+    return combineLatest([
+      this.budget$,
+      this._auth.allowed$('budget.DeleteExpense'),
+    ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
   }
 
   deleteExpense(expense: APISchemas['ModelsExpense']) {
@@ -319,12 +335,14 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     combineLatest([this._route.paramMap, this._refresh$])
       .pipe(
-        switchMap(([params]) => this._api.getBudget(params.get('id')!).pipe(
-          catchError((error) => {
-            this._api.handleError('Impossible d’actualiser le budget')(error);
-            return EMPTY;
-          })
-        )),
+        switchMap(([params]) =>
+          this._api.getBudget(params.get('id')!).pipe(
+            catchError((error) => {
+              this._api.handleError('Impossible d’actualiser le budget')(error);
+              return EMPTY;
+            })
+          )
+        ),
         takeUntil(this._destroy$)
       )
       .subscribe((budget) => this._budget$.next(budget));

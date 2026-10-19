@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -11,6 +16,8 @@ import { validMoneyInput } from '../../money-input';
   selector: 'app-expense-form',
   templateUrl: './expense-form.component.html',
   styleUrls: ['./expense-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class ExpenseFormComponent {
   private readonly _notifications = inject(NotificationsService);
@@ -29,7 +36,14 @@ export class ExpenseFormComponent {
   ) {
     this.form = this._builder.group({
       label: [this.data.expense?.label, [Validators.required]],
-      amount: [this.data.expense?.amount, [Validators.required, (control: { value: unknown }) => validMoneyInput(control.value) ? null : { money: true }]],
+      amount: [
+        this.data.expense?.amount,
+        [
+          Validators.required,
+          (control: { value: unknown }) =>
+            validMoneyInput(control.value) ? null : { money: true },
+        ],
+      ],
     });
 
     if (this.data.expense) {
@@ -42,7 +56,10 @@ export class ExpenseFormComponent {
   }
 
   submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const payload: Partial<APISchemas['ModelsExpense']> = {
       label: this.form.value.label,
       amount: this.form.value.amount,

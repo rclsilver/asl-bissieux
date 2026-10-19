@@ -2,10 +2,10 @@
 @use "@angular/material" as mat;
 
 @mixin page-component-theme($theme) {
-  $color-config: mat.get-color-config($theme);
+  $color-config: mat.m2-get-color-config($theme);
   $primary: map.get($color-config, "primary");
 
   #left-menu > a.active {
-    background-color: mat.get-color-from-palette($primary, 0.4);
+    background-color: mat.m2-get-color-from-palette($primary, 0.4);
   }
 }

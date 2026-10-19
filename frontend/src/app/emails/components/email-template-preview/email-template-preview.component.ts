@@ -1,10 +1,12 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-email-template-preview',
   templateUrl: './email-template-preview.component.html',
   styleUrls: ['./email-template-preview.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailTemplatePreviewComponent {
   constructor(

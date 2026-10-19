@@ -1,4 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { BudgetDataSource } from '../../datasources/budget.datasource';
@@ -15,6 +20,8 @@ import { BudgetEmailFormComponent } from '../budget-email-form/budget-email-form
   selector: 'app-budget-list',
   templateUrl: './budget-list.component.html',
   styleUrls: ['./budget-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class BudgetListComponent {
   private readonly _api = inject(ApiService);
@@ -105,12 +112,20 @@ export class BudgetListComponent {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
+      render: (v) =>
+        new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(v),
       canSort: true,
     }),
     new Column('paid', {
       label: 'Paid',
-      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
+      render: (v) =>
+        new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(v),
       canSort: true,
     }),
   ];
@@ -127,7 +142,9 @@ export class BudgetListComponent {
   }
 
   canDelete(budget: APISchemas['ModelsBudgetResult']) {
-    return budget.draft ? this._auth.allowed$('budget.DeleteBudget') : of(false);
+    return budget.draft
+      ? this._auth.allowed$('budget.DeleteBudget')
+      : of(false);
   }
 
   edit(budget?: APISchemas['ModelsBudgetResult']) {

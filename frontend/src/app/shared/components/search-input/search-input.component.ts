@@ -6,6 +6,7 @@ import {
   OnDestroy,
   Output,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { BehaviorSubject, fromEvent, merge, Subject } from 'rxjs';
 import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
@@ -15,6 +16,8 @@ import { Column } from '../../models/column.model';
   selector: 'app-search-input',
   templateUrl: './search-input.component.html',
   styleUrls: ['./search-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class SearchInputComponent implements OnDestroy {
   private _destroyed$ = new Subject<void>();

@@ -4,6 +4,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import {
   BehaviorSubject,
@@ -18,6 +19,8 @@ import {
   selector: 'app-file-upload',
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class FileUploadComponent implements OnInit, OnDestroy {
   private _destroyed$ = new Subject<void>();

@@ -1,4 +1,10 @@
-import { Component, Inject, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, map, shareReplay, take } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -14,6 +20,8 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
   selector: 'app-payment-list',
   templateUrl: './payment-list.component.html',
   styleUrls: ['./payment-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class PaymentListComponent implements OnInit {
   private readonly _auth = inject(AuthService);
@@ -30,7 +38,11 @@ export class PaymentListComponent implements OnInit {
     }),
     new Column('amount', {
       label: 'Amount',
-      render: (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v),
+      render: (v) =>
+        new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(v),
     }),
     new Column('user.username', {
       label: 'Created by',

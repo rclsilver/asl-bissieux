@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -10,6 +15,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-email-attachment-form',
   templateUrl: './email-attachment-form.component.html',
   styleUrls: ['./email-attachment-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailAttachmentFormComponent {
   private readonly _notifications = inject(NotificationsService);

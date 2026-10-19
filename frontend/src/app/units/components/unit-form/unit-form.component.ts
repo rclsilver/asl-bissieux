@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -10,6 +15,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-unit-form',
   templateUrl: './unit-form.component.html',
   styleUrls: ['./unit-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class UnitFormComponent {
   private readonly _notifications = inject(NotificationsService);
@@ -27,7 +34,10 @@ export class UnitFormComponent {
   ) {
     this.form = this._builder.group({
       number: [this.data.unit?.number, [Validators.required]],
-      share: [this.data.unit?.share, [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)]],
+      share: [
+        this.data.unit?.share,
+        [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)],
+      ],
       address: [this.data.unit?.address, [Validators.required]],
     });
 
@@ -41,7 +51,10 @@ export class UnitFormComponent {
   }
 
   submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const payload: Partial<APISchemas['ModelsUnit']> = {
       number: this.form.value.number,
       share: this.form.value.share,

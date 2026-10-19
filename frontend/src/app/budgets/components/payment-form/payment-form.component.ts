@@ -1,7 +1,12 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import * as moment from 'moment';
+import moment from 'moment';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -12,6 +17,8 @@ import { validMoneyInput } from '../../money-input';
   selector: 'app-payment-form',
   templateUrl: './payment-form.component.html',
   styleUrls: ['./payment-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class PaymentFormComponent {
   private readonly _notifications = inject(NotificationsService);
@@ -30,7 +37,14 @@ export class PaymentFormComponent {
     private readonly _dialogRef: MatDialogRef<PaymentFormComponent>
   ) {
     this.form = this._builder.group({
-      amount: [this.data.payment?.amount, [Validators.required, (control: { value: unknown }) => validMoneyInput(control.value) ? null : { money: true }]],
+      amount: [
+        this.data.payment?.amount,
+        [
+          Validators.required,
+          (control: { value: unknown }) =>
+            validMoneyInput(control.value) ? null : { money: true },
+        ],
+      ],
       comment: [this.data.payment?.comment, [Validators.required]],
       date: [
         moment(
@@ -52,7 +66,10 @@ export class PaymentFormComponent {
   }
 
   submit() {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const payload: Partial<APISchemas['ModelsPayment']> = {
       amount: this.form.value.amount,
       comment: this.form.value.comment,

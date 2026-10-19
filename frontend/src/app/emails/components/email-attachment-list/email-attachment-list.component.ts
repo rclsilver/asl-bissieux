@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -14,6 +19,8 @@ import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table
   selector: 'app-email-attachment-list',
   templateUrl: './email-attachment-list.component.html',
   styleUrls: ['./email-attachment-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailAttachmentListComponent {
   private readonly _api = inject(ApiService);

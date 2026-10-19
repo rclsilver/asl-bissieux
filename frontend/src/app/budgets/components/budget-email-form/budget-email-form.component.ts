@@ -1,4 +1,11 @@
-import { Component, Inject, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -20,6 +27,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-budget-email-form',
   templateUrl: './budget-email-form.component.html',
   styleUrls: ['./budget-email-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class BudgetEmailFormComponent implements OnInit, OnDestroy {
   private _destroyed$ = new Subject<void>();

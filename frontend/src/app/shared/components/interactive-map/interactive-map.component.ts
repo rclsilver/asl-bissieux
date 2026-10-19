@@ -6,6 +6,7 @@ import {
   Input,
   Output,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 export type UnitClickEvent = {
@@ -19,6 +20,8 @@ export type UnitClasses = { [unitId: number]: string };
   selector: 'app-interactive-map',
   templateUrl: './interactive-map.component.svg',
   styleUrls: ['./interactive-map.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class InteractiveMapComponent implements AfterViewInit {
   private readonly _svgWidth = 1871;

@@ -4,6 +4,7 @@ import {
   OnDestroy,
   ViewChild,
   inject,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import {
   BehaviorSubject,
@@ -34,12 +35,18 @@ import { ActivatedRoute } from '@angular/router';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 import { DataSource } from 'src/app/shared/datasources';
 import { EmailSendingPopupComponent } from '../email-sending-popup/email-sending-popup.component';
-import { canSendEmail, canResetEmail, emailStateLabel } from '../../email-state';
+import {
+  canSendEmail,
+  canResetEmail,
+  emailStateLabel,
+} from '../../email-state';
 
 @Component({
   selector: 'app-email-list',
   templateUrl: './email-list.component.html',
   styleUrls: ['./email-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailListComponent implements AfterViewInit, OnDestroy {
   readonly stateLabel = emailStateLabel;
@@ -99,9 +106,10 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
               this._notifications
                 .showConfirm({
                   title: 'Autoriser un renvoi',
-                  message: row.state === 'UNKNOWN'
-                    ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, confirmes-tu qu’un nouvel envoi est nécessaire ?`
-                    : `Ce message à ${row.to} a déjà été envoyé. Confirmes-tu qu’un nouvel envoi est nécessaire ?`,
+                  message:
+                    row.state === 'UNKNOWN'
+                      ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, confirmes-tu qu’un nouvel envoi est nécessaire ?`
+                      : `Ce message à ${row.to} a déjà été envoyé. Confirmes-tu qu’un nouvel envoi est nécessaire ?`,
                   class: 'primary',
                 })
                 .afterClosed()
@@ -225,7 +233,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   }
 
   canDelete(row: APISchemas['ModelsEmail']) {
-    if (row.state === 'SENDING') { return of(false); }
+    if (row.state === 'SENDING') {
+      return of(false);
+    }
     return this._auth.allowed$('email.DeleteEmail');
   }
 
@@ -274,9 +284,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
       .subscribe((result) => {
         if (result) {
           this.table.selected.selected$.pipe(first()).subscribe((selected) => {
-            const calls$ = selected.filter((row) => row.state !== 'SENDING').map((row) =>
-              this._api.deleteEmail(row.id!)
-            );
+            const calls$ = selected
+              .filter((row) => row.state !== 'SENDING')
+              .map((row) => this._api.deleteEmail(row.id!));
 
             forkJoin(calls$).subscribe(() => {
               this.refresh();

@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -11,6 +16,8 @@ import { EmailTemplatePreviewComponent } from '../email-template-preview/email-t
   selector: 'app-email-template-preview-form',
   templateUrl: './email-template-preview-form.component.html',
   styleUrls: ['./email-template-preview-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailTemplatePreviewFormComponent {
   private readonly _notifications = inject(NotificationsService);

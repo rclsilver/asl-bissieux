@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { of } from 'rxjs';
 import { MenuLink } from '../shared/models/menu-link';
 
 @Component({
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailsComponent {
   readonly links: MenuLink[] = [

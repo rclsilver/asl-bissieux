@@ -1,4 +1,4 @@
-<ng-container *ngIf="budget$ | async as budget">
+@if (budget$ | async; as budget) {
   <h1 mat-dialog-title>Payments</h1>
   <div mat-dialog-content class="content">
     <app-crud-table
@@ -13,6 +13,8 @@
   </div>
   <div mat-dialog-actions>
     <div class="spacer"></div>
-    <button mat-button color="primary" type="button" (click)="close()">Close</button>
+    <button mat-button color="primary" type="button" (click)="close()">
+      Close
+    </button>
   </div>
-</ng-container>
+}

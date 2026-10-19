@@ -10,8 +10,8 @@ import (
 	"github.com/juju/errors"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"slices"
 	"gorm.io/gorm"
+	"slices"
 
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
@@ -30,7 +30,11 @@ func RequireAuthentication(provider auth.AuthProvider) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		user, err := provider.Authenticate(c.Request)
 		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
+			status := http.StatusUnauthorized
+			if errors.IsForbidden(err) {
+				status = http.StatusForbidden
+			}
+			c.AbortWithError(status, err)
 			return
 		}
 

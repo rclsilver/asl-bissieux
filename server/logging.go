@@ -47,15 +47,20 @@ func withLogging(next http.Handler) http.Handler {
 
 		elapsed := time.Since(start)
 		remote_address := strings.Split(r.RemoteAddr, ":")
+		uri := r.RequestURI
+		// Authorization responses contain one-time codes and state. Never log them.
+		if r.URL.Path == "/api/auth/callback" || r.URL.Path == "/api/auth/login" {
+			uri = r.URL.Path
+		}
 
 		logrus.WithContext(r.Context()).WithFields(logrus.Fields{
 			"duration":       elapsed,
 			"status_code":    recorder.Status,
 			"request_id":     id.String(),
 			"method":         r.Method,
-			"uri":            r.RequestURI,
+			"uri":            uri,
 			"remote_address": remote_address[0],
 			"remote_port":    remote_address[1],
-		}).Infof("%s %s", r.Method, r.RequestURI)
+		}).Infof("%s %s", r.Method, uri)
 	})
 }

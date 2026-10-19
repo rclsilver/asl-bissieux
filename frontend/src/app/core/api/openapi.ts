@@ -7,6 +7,7 @@ export type APISchemas = {
     Name?: string;
   };
   AddMemberUnitInput: { unit_id?: string };
+  AuthPublicAuthConfig: { label?: string; login_url?: string; mode?: string };
   AuthUser: {
     actions?: Array<string>;
     admin?: boolean;
@@ -258,6 +259,7 @@ export type APISchemas = {
      */
     message?: string;
   };
+  ServerLogoutResult: { redirect_url?: string };
   ServerPingOut: { message?: string; status?: string };
   UpdateBudgetInput: { label?: string };
   UpdateEmailTemplateInput: {
@@ -303,6 +305,14 @@ export type APIEndpoints = {
   '/api/auth/actions': {
     responses: { get: Array<string> };
     requests: { method?: 'get' };
+  };
+  '/api/auth/config': {
+    responses: { get: APISchemas['AuthPublicAuthConfig'] };
+    requests: { method?: 'get' };
+  };
+  '/api/auth/logout': {
+    responses: { post: APISchemas['ServerLogoutResult'] };
+    requests: { method: 'post' };
   };
   '/api/auth/me': {
     responses: { get: APISchemas['AuthUser'] };

@@ -80,8 +80,16 @@ tolerations: []
 affinity: {}
 
 auth:
+  provider: 'google'
   client_id: ''
   client_secret: ''
+  oidc:
+    issuer: ''
+    publicURL: ''
+    label: 'Se connecter'
+    sessionDuration: '8h'
+    existingSecret: ''
+    secretKey: 'client-secret'
 
 postgresql:
   hostname: ''

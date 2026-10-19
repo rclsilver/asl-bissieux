@@ -12,11 +12,8 @@ import (
 	"time"
 
 	"github.com/juju/errors"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
 	"github.com/rclsilver/asl-bissieux/pkg/config"
-	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
 const (
@@ -66,8 +63,6 @@ type userInfos struct {
 }
 
 func (p *googleProvider) Authenticate(r *http.Request) (*User, error) {
-	logger := logrus.WithContext(r.Context())
-
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return nil, nil
@@ -83,31 +78,11 @@ func (p *googleProvider) Authenticate(r *http.Request) (*User, error) {
 		return nil, errors.NewUnauthorized(err, "unable to verify token")
 	}
 
-	db := db.Connection(r.Context())
-
-	var userRow User
-	if err := db.Where("username = ?", userInfos.Email).First(&userRow).Error; err != nil {
-		if err != gorm.ErrRecordNotFound {
-			logger.WithError(err).Error("error while fetching user")
-			return nil, errors.NewUnauthorized(err, "unable to fetch user")
-		}
-
-		if !cfg.CreateUser {
-			logger.WithError(err).Error("error while creating user")
-			return nil, errors.NewUserNotFound(nil, "user not found")
-		}
-
-		userRow.Username = userInfos.Email
-
-		if err := db.Create(&userRow).Error; err != nil {
-			logger.WithError(err).Error("error while creating user")
-			return nil, errors.NewUnauthorized(err, "unable to create user")
-		}
-
-		logger.Infof("created new user %s", userRow.Username)
+	user, err := resolveLegacyGoogleIdentity(r.Context(), userInfos.UserID, userInfos.Email)
+	if err != nil {
+		return nil, errors.NewUnauthorized(nil, "unable to resolve account identity")
 	}
-
-	return &userRow, nil
+	return user, nil
 }
 
 func (p *googleProvider) getUserInfos(ctx context.Context, accessToken string) (*userInfos, error) {

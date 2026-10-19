@@ -1,14 +1,40 @@
 volumes:
   go-bin:
   go-pkg:
+  frontend-node-modules:
+  postgresql-data:
+  keycloak-data:
 
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:79c623a22abacf3fe6c00a5fb30f5b7843d717b234033b80995891c06116d244
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_HOSTNAME: 'http://localhost:9080'
+      KC_HTTP_PORT: '9080'
+      KC_HEALTH_ENABLED: 'true'
+      KC_HTTP_MANAGEMENT_PORT: '19090'
+      KC_BOOTSTRAP_ADMIN_USERNAME: 'local-admin'
+      KC_BOOTSTRAP_ADMIN_PASSWORD: 'asl-keycloak-dev'
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./dev/keycloak-realm.json:/opt/keycloak/data/import/asl-dev-realm.json:ro
+    ports:
+      - '127.0.0.1:9080:9080'
+    healthcheck:
+      start_period: 90s
+      interval: 10s
+      retries: 10
+      test: ['CMD', 'bash', '-ec', 'exec 3<>/dev/tcp/localhost/19090; printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; read -r status <&3; [[ "$$status" == *" 200 "* ]]']
+
   postgresql:
     image: 'postgres:14'
     environment:
       POSTGRES_USER: 'devel'
       POSTGRES_PASSWORD: 'devel'
       POSTGRES_DB: 'devel'
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
     healthcheck:
       interval: 10s
       retries: 5
@@ -35,19 +61,31 @@ services:
     command:
       - server
       - -v
+    environment:
+      APP_AUTH_GOOGLE_CLIENT_ID: '174839262039-tg9jv57eod93r2a578hlkcjvq6p4g0hn.apps.googleusercontent.com'
+      APP_AUTH_PROVIDER: 'oidc'
+      APP_AUTH_OIDC_ISSUER: 'http://localhost:9080/realms/asl-dev'
+      APP_AUTH_OIDC_BACKCHANNEL_URL: 'http://keycloak:9080'
+      APP_AUTH_OIDC_CLIENT_ID: 'asl-bissieux'
+      APP_AUTH_OIDC_PUBLIC_URL: 'http://localhost:4200'
+      APP_AUTH_OIDC_LABEL: 'Keycloak local'
+      APP_AUTH_OIDC_ALLOW_INSECURE_HTTP: 'true'
     working_dir: /go/src/github.com/rclsilver/asl-bissieux
     volumes:
       - go-bin:/go/bin
       - go-pkg:/go/pkg
-      - ${PWD}:/go/src/github.com/rclsilver/asl-bissieux
+      - .:/go/src/github.com/rclsilver/asl-bissieux
     ports:
-      - 8080
+      - '127.0.0.1:8080:8080'
     depends_on:
+      keycloak:
+        condition: service_healthy
       postgresql:
         condition: service_healthy
       smtp-mock:
         condition: service_healthy
     healthcheck:
+      start_period: 120s
       interval: 10s
       retries: 5
       test:
@@ -63,12 +101,14 @@ services:
       context: .
       target: frontend-devel
     volumes:
-    - ./frontend:/app
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
     working_dir: /app
-    command: su node -c 'npm install && npm install --only=dev && npm start'
+    command: npm start
     ports:
-      - 4200
+      - '127.0.0.1:4200:4200'
     healthcheck:
+      start_period: 120s
       interval: 10s
       retries: 5
       test:
@@ -80,7 +120,7 @@ services:
     environment:
       URL: http://localhost:8080/api/spec.json
     ports:
-      - 8080
+      - '127.0.0.1:8081:8080'
     depends_on:
       server:
         condition: service_healthy

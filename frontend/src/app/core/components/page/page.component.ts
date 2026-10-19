@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-page',
@@ -21,6 +20,9 @@ export class PageComponent {
   readonly user$ = this._auth.user$;
   readonly active$ = this._auth.active$;
   readonly administrator$ = this._auth.administrator$;
+  readonly configuration$ = this._auth.configuration$;
+  readonly loading$ = this._auth.loading$;
+  readonly message$ = this._auth.message$;
 
   readonly links: {
     label: string;
@@ -32,25 +34,25 @@ export class PageComponent {
       label: 'Budgets',
       path: '/budgets',
       icon: 'euro-sign',
-      allowed$: this.authenticated$,
+      allowed$: this.active$,
     },
     {
       label: 'Units',
       path: '/units',
       icon: 'map',
-      allowed$: this.authenticated$,
+      allowed$: this.active$,
     },
     {
       label: 'Members',
       path: '/members',
       icon: 'users',
-      allowed$: this.authenticated$,
+      allowed$: this.active$,
     },
     {
       label: 'E-mails',
       path: '/emails',
       icon: 'mail-bulk',
-      allowed$: this.authenticated$,
+      allowed$: this.active$,
     },
     {
       label: 'Users',
@@ -62,19 +64,18 @@ export class PageComponent {
 
   constructor(
     private _breakpoints: BreakpointObserver,
-    private _auth: AuthService,
-    private _router: Router
+    private _auth: AuthService
   ) {}
 
   ngOnInit(): void {
-    this._auth.authenticated$.subscribe((authenticated) => {
-      this._router.navigate(['/']);
-    });
-
     this._auth.init();
   }
 
   logout() {
-    return this._auth.logout().subscribe(() => {});
+    return this._auth.logout().subscribe({ error: () => {} });
+  }
+
+  login() {
+    this._auth.login();
   }
 }

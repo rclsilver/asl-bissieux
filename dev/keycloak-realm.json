@@ -1,0 +1,58 @@
+{
+  "id": "asl-dev",
+  "realm": "asl-dev",
+  "enabled": true,
+  "displayName": "ASL Bissieux — développement",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "sslRequired": "none",
+  "clients": [{
+    "clientId": "asl-bissieux",
+    "name": "ASL Bissieux local",
+    "protocol": "openid-connect",
+    "publicClient": true,
+    "standardFlowEnabled": true,
+    "implicitFlowEnabled": false,
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": false,
+    "redirectUris": ["http://localhost:4200/api/auth/callback", "http://localhost:8080/api/auth/callback"],
+    "webOrigins": [],
+    "attributes": {
+      "pkce.code.challenge.method": "S256",
+      "post.logout.redirect.uris": "http://localhost:4200/##http://localhost:8080/"
+    },
+    "defaultClientScopes": ["web-origins", "acr", "profile", "email", "roles", "basic"]
+  }],
+  "users": [
+    {
+      "id": "90000000-0000-4000-8000-000000000001",
+      "username": "admin@example.invalid",
+      "email": "admin@example.invalid",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Local",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asl-admin-dev", "temporary": false}]
+    },
+    {
+      "id": "90000000-0000-4000-8000-000000000002",
+      "username": "reader@example.invalid",
+      "email": "reader@example.invalid",
+      "emailVerified": true,
+      "firstName": "Lecture",
+      "lastName": "Locale",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asl-reader-dev", "temporary": false}]
+    },
+    {
+      "id": "90000000-0000-4000-8000-000000000003",
+      "username": "pending@example.invalid",
+      "email": "pending@example.invalid",
+      "emailVerified": true,
+      "firstName": "Compte",
+      "lastName": "En attente",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asl-pending-dev", "temporary": false}]
+    }
+  ]
+}

@@ -55,6 +55,24 @@ spec:
               value: "{{ .Values.postgresql.timezone | default `UTC` }}"
             - name: APP_AUTH_GOOGLE_CLIENT_ID
               value: "{{ .Values.auth.client_id }}"
+            - name: APP_AUTH_PROVIDER
+              value: {{ .Values.auth.provider | default "google" | quote }}
+            {{- if eq (.Values.auth.provider | default "google") "oidc" }}
+            - name: APP_AUTH_OIDC_ISSUER
+              value: {{ required "auth.oidc.issuer is required for OIDC" .Values.auth.oidc.issuer | quote }}
+            - name: APP_AUTH_OIDC_CLIENT_ID
+              value: {{ required "auth.client_id is required for OIDC" .Values.auth.client_id | quote }}
+            - name: APP_AUTH_OIDC_PUBLIC_URL
+              value: {{ required "auth.oidc.publicURL is required for OIDC" .Values.auth.oidc.publicURL | quote }}
+            - name: APP_AUTH_OIDC_LABEL
+              value: {{ .Values.auth.oidc.label | quote }}
+            - name: APP_AUTH_OIDC_SESSION_DURATION
+              value: {{ .Values.auth.oidc.sessionDuration | quote }}
+            {{- if .Values.auth.oidc.existingSecret }}
+            - name: APP_AUTH_OIDC_CLIENT_SECRET_FILE
+              value: /run/secrets/asl-oidc/client-secret
+            {{- end }}
+            {{- end }}
             - name: APP_SMTP_HOST
               value: "{{ .Values.smtp.host }}"
             - name: APP_SMTP_PORT
@@ -79,6 +97,12 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
+          volumeMounts:
+            - name: oidc-client-secret
+              mountPath: /run/secrets/asl-oidc
+              readOnly: true
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /api/mon/ping
@@ -92,6 +116,16 @@ spec:
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
+      volumes:
+        - name: oidc-client-secret
+          secret:
+            secretName: {{ .Values.auth.oidc.existingSecret | quote }}
+            defaultMode: 0444
+            items:
+              - key: {{ .Values.auth.oidc.secretKey | quote }}
+                path: client-secret
       {{- end }}
       {{- with .Values.affinity }}
       affinity:

@@ -13,6 +13,14 @@ export class ApiService {
   private readonly _notifications = inject(NotificationsService);
   private readonly _http = inject(HttpClient);
 
+  getAuthConfig() {
+    return this.request('/api/auth/config', { method: 'get' });
+  }
+
+  logoutSession() {
+    return this.request('/api/auth/logout', { method: 'post' });
+  }
+
   getCurrentUser() {
     return this.request('/api/auth/me', {
       method: 'get',

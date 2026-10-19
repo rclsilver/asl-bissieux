@@ -8,11 +8,11 @@ DOCKER_TAG ?= latest
 all: $(BINARY)
 
 $(BINARY): $(SOURCE_FILES) go.mod
-	CGO_ENABLED=0 go build -o $@ $(SOURCE_FILES)
+	CGO_ENABLED=0 go build -mod=readonly -trimpath -buildvcs=false -o $@ $(SOURCE_FILES)
 
 docker:
 	docker build --no-cache -t $(DOCKER_REPOSITORY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .
 
-.PHONY: clean
+.PHONY: clean $(BINARY)
 clean:
 	rm -f $(BINARY)

@@ -311,7 +311,7 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 		}
 
 		if email.Error != "" {
-			done <- fmt.Errorf(email.Error)
+			done <- fmt.Errorf("%s", email.Error)
 		} else {
 			done <- nil
 		}

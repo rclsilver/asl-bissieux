@@ -103,7 +103,7 @@ func UpdateBudget(c *gin.Context, in *updateBudgetIn) (*models.BudgetResult, err
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update budget")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("budget %s updated", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("budget %s updated", row.ID)
 
 	budget, err := controllers.GetBudget(db, in.BudgetID)
 	if err != nil {
@@ -362,7 +362,7 @@ func UpdateExpense(c *gin.Context, in *updateExpenseIn) (*models.Expense, error)
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update expense")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("expense %s updated", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("expense %s updated", row.ID)
 
 	return &row, nil
 }

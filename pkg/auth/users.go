@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/lib/pq"
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )

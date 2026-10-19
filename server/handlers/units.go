@@ -110,7 +110,7 @@ func UpdateUnit(c *gin.Context, in *updateUnitIn) (*models.Unit, error) {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update unit")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("unit %s updated", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("unit %s updated", row.ID)
 
 	return &row, nil
 }

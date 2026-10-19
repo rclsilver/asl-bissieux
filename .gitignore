@@ -27,3 +27,4 @@ go.work
 # local configuration
 docker-compose.override.yml
 asl-bissieux.override.yaml
+/frontend/dist/

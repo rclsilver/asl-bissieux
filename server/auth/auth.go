@@ -10,7 +10,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
+	"slices"
 	"gorm.io/gorm"
 
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
@@ -225,7 +225,7 @@ func UpdateUser(c *gin.Context, in *updateUserIn) (*auth.User, error) {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update user")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("user %s (%s) updated", row.Username, row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("user %s (%s) updated", row.Username, row.ID)
 
 	if err := db.First(&row, "id = ?", in.UserID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

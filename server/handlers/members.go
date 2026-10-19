@@ -106,7 +106,7 @@ func UpdateMember(c *gin.Context, in *updateMemberIn) (*models.Member, error) {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update member")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("member %s updated", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("member %s updated", row.ID)
 
 	return &row, nil
 }

@@ -435,7 +435,7 @@ func (s *httpServer) Build() error {
 func (s *httpServer) Serve() error {
 	if s.apiRouter == nil {
 		if err := s.Build(); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -444,14 +444,14 @@ func (s *httpServer) Serve() error {
 	if err != nil {
 		return err
 	}
-	frontend := http.FileServer(http.FS(dist))
-	http.Handle("/", frontend)
+	mux := http.NewServeMux()
+	mux.Handle("/", frontendHandler(dist))
 
 	// API
-	http.Handle("/api/", withLogging(s.apiRouter))
+	mux.Handle("/api/", withLogging(s.apiRouter))
 
 	logrus.Debugf("starting server on %s:%d", cfg.ListenAddress, cfg.ListenPort)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), mux)
 }
 
 func errHook(ctx *gin.Context, e error) (int, interface{}) {

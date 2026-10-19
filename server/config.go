@@ -3,8 +3,8 @@ package server
 import "github.com/rclsilver/asl-bissieux/pkg/config"
 
 type httpConfig struct {
-	ListenAddress string
-	ListenPort    int
+	ListenAddress string `mapstructure:"listen_address"`
+	ListenPort    int    `mapstructure:"listen_port"`
 }
 
 func (c *httpConfig) SetDefaults() {

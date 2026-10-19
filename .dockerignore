@@ -4,3 +4,7 @@ docker-compose.yml
 frontend/.angular
 frontend/node_modules
 frontend/dist
+.git
+**/*.override.yaml
+docker-compose.override.yml
+asl-bissieux

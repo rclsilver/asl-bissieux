@@ -22,6 +22,7 @@ func ListBudgets(c *gin.Context, in *listBudgetsIn) ([]*models.BudgetResult, err
 	result, err := controllers.ListBudgets(db.Connection(c))
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get budgets")
+		return nil, err
 	}
 
 	return result, nil
@@ -261,6 +262,7 @@ func ListExpenses(c *gin.Context, in *listExpensesIn) ([]*models.Expense, error)
 	result, err := controllers.ListExpenses(db.Connection(c), in.BudgetID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get expenses")
+		return nil, err
 	}
 
 	return result, nil
@@ -420,6 +422,7 @@ func ListCotisations(c *gin.Context, in *listCotisationsIn) ([]*models.Cotisatio
 	result, err := controllers.ListCotisations(db.Connection(c), in.BudgetID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get cotisations")
+		return nil, err
 	}
 
 	return result, nil
@@ -435,6 +438,7 @@ func ListPayments(c *gin.Context, in *listPaymentsIn) ([]*models.Payment, error)
 	result, err := controllers.ListPayments(db.Connection(c), in.BudgetID, in.CotisationID)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get payments")
+		return nil, err
 	}
 
 	return result, nil
@@ -468,6 +472,7 @@ func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error)
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
 	}
+	defer db.Rollback()
 
 	var cotisation models.Cotisation
 	if err := db.Preload("Payments").Preload("Unit").Where("id = ? AND budget_id = ?", in.CotisationID, in.BudgetID).First(&cotisation).Error; err != nil {
@@ -534,6 +539,7 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return nil, db.Error
 	}
+	defer db.Rollback()
 
 	var payment models.Payment
 	if err := db.
@@ -550,7 +556,7 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 	payment.Amount = in.Amount
 	payment.Comment = in.Comment
 
-	if err := db.Save(payment).Error; err != nil {
+	if err := db.Save(&payment).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to save payment")
 		return nil, err
 	}
@@ -593,6 +599,7 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 		logrus.WithContext(c.Request.Context()).WithError(db.Error).Error("unable to begin transaction")
 		return db.Error
 	}
+	defer db.Rollback()
 
 	var payment models.Payment
 	if err := db.

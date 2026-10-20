@@ -2,23 +2,23 @@ import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
   withInterceptorsFromDi,
-} from '@angular/common/http';
+} from "@angular/common/http";
 import {
   HttpTestingController,
   provideHttpClientTesting,
-} from '@angular/common/http/testing';
-import { provideZoneChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
-import { WithGoogleAuthService } from 'ngx-sign-in-with-google';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CoreModule } from '../../core.module';
-import { AuthInterceptor } from '../../interceptors/auth-interceptor';
-import { AUTH_NAVIGATE } from '../../services/auth.service';
-import { PageComponent } from './page.component';
+} from "@angular/common/http/testing";
+import { provideZoneChangeDetection } from "@angular/core";
+import { TestBed } from "@angular/core/testing";
+import { NoopAnimationsModule } from "@angular/platform-browser/animations";
+import { provideRouter } from "@angular/router";
+import { WithGoogleAuthService } from "ngx-sign-in-with-google";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CoreModule } from "../../core.module";
+import { AuthInterceptor } from "../../interceptors/auth-interceptor";
+import { AUTH_NAVIGATE } from "../../services/auth.service";
+import { PageComponent } from "./page.component";
 
-describe('OIDC sign-in page', () => {
+describe("OIDC sign-in page", () => {
   let http: HttpTestingController;
   let navigate: ReturnType<typeof vi.fn>;
 
@@ -36,7 +36,7 @@ describe('OIDC sign-in page', () => {
         {
           provide: WithGoogleAuthService,
           useFactory: () => {
-            throw new Error('Unexpected legacy Google widget');
+            throw new Error("Unexpected legacy Google widget");
           },
         },
       ],
@@ -45,59 +45,124 @@ describe('OIDC sign-in page', () => {
   });
   afterEach(() => http.verify());
 
-  it('shows an enabled sign-in button after an unauthenticated session check', async () => {
+  it("shows an enabled sign-in button after an unauthenticated session check", async () => {
     const fixture = TestBed.createComponent(PageComponent);
     fixture.detectChanges();
+    http.expectOne("/api/auth/config").flush({
+      mode: "oidc",
+      login_url: "/api/auth/login",
+      label: "Keycloak local",
+    });
     http
-      .expectOne('/api/auth/config')
-      .flush({
-        mode: 'oidc',
-        login_url: '/api/auth/login',
-        label: 'Keycloak local',
-      });
-    http
-      .expectOne('/api/auth/me')
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+      .expectOne("/api/auth/me")
+      .flush({}, { status: 401, statusText: "Unauthorized" });
     fixture.detectChanges();
     await fixture.whenStable();
     const buttons = Array.from(
-      fixture.nativeElement.querySelectorAll('button')
+      fixture.nativeElement.querySelectorAll("button"),
     ) as HTMLButtonElement[];
     const login = buttons.find(
-      (button) => button.textContent?.trim() === 'Se connecter'
+      (button) =>
+        button.textContent?.trim() === "Continuer avec Keycloak local",
     );
     expect(login).toBeDefined();
+    expect(login!.closest(".auth-panel")).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector("#top-menu .sign-in"),
+    ).toBeNull();
     expect(login!.disabled).toBe(false);
     expect(
-      fixture.nativeElement.querySelector('with-google-auth-button')
+      fixture.nativeElement.querySelector("with-google-auth-button"),
     ).toBeNull();
     login!.click();
-    expect(new URL(navigate.mock.calls[0][0]).pathname).toBe('/api/auth/login');
+    expect(new URL(navigate.mock.calls[0][0]).pathname).toBe("/api/auth/login");
   });
 
-  it('shows the pending activation message without business navigation for an inactive account', async () => {
+  it("shows the pending activation message without business navigation for an inactive account", async () => {
     const fixture = TestBed.createComponent(PageComponent);
     fixture.detectChanges();
     http
-      .expectOne('/api/auth/config')
-      .flush({ mode: 'oidc', login_url: '/api/auth/login' });
-    http
-      .expectOne('/api/auth/me')
-      .flush({
-        username: 'pending@example.invalid',
-        enabled: false,
-        admin: false,
-      });
+      .expectOne("/api/auth/config")
+      .flush({ mode: "oidc", login_url: "/api/auth/login" });
+    http.expectOne("/api/auth/me").flush({
+      username: "pending@example.invalid",
+      enabled: false,
+      admin: false,
+    });
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain(
-      'Compte en attente d’activation'
+      "Compte en attente d’activation",
     );
-    expect(fixture.nativeElement.querySelectorAll('#left-menu a').length).toBe(
-      0
+    expect(fixture.nativeElement.querySelectorAll("#left-menu a").length).toBe(
+      0,
     );
     expect(
-      fixture.nativeElement.querySelector('button[aria-label="Logout"]')
+      fixture.nativeElement.querySelector('button[aria-label="Logout"]'),
     ).not.toBeNull();
+  });
+  it("names Google while retaining the server-side OIDC sign-in path", async () => {
+    const fixture = TestBed.createComponent(PageComponent);
+    fixture.detectChanges();
+    http
+      .expectOne("/api/auth/config")
+      .flush({ mode: "oidc", label: "Google", login_url: "/api/auth/login" });
+    http
+      .expectOne("/api/auth/me")
+      .flush({}, { status: 401, statusText: "Unauthorized" });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const login = fixture.nativeElement.querySelector(
+      ".auth-panel .sign-in",
+    ) as HTMLButtonElement;
+    expect(login.textContent).toContain("Continuer avec Google");
+    expect(
+      fixture.nativeElement.querySelector("with-google-auth-button"),
+    ).toBeNull();
+    login.click();
+    expect(new URL(navigate.mock.calls[0][0]).pathname).toBe("/api/auth/login");
+  });
+
+  it("waits for session verification before offering sign-in", async () => {
+    const fixture = TestBed.createComponent(PageComponent);
+    fixture.detectChanges();
+    http
+      .expectOne("/api/auth/config")
+      .flush({ mode: "oidc", label: "Google", login_url: "/api/auth/login" });
+    const me = http.expectOne("/api/auth/me");
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[role="status"]').textContent,
+    ).toContain("Vérification");
+    expect(fixture.nativeElement.querySelector(".sign-in")).toBeNull();
+    me.flush({}, { status: 401, statusText: "Unauthorized" });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector(".sign-in")).not.toBeNull();
+  });
+
+  it("offers recovery instead of a dead sign-in action when configuration is unavailable", async () => {
+    const fixture = TestBed.createComponent(PageComponent);
+    fixture.detectChanges();
+    http
+      .expectOne("/api/auth/config")
+      .flush({}, { status: 503, statusText: "Unavailable" });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector("h1").textContent).toContain(
+      "Connexion indisponible",
+    );
+    expect(
+      fixture.nativeElement.querySelector('[role="alert"]').textContent,
+    ).toContain("Recharge");
+    expect(fixture.nativeElement.querySelector(".sign-in")).toBeNull();
+    const recovery = Array.from(
+      fixture.nativeElement.querySelectorAll("button"),
+    ) as HTMLButtonElement[];
+    expect(
+      recovery.some((button) =>
+        button.textContent?.includes("Recharger la page"),
+      ),
+    ).toBe(true);
   });
 });

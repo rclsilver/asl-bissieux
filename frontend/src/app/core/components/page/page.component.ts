@@ -1,19 +1,19 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, map, shareReplay } from 'rxjs';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { AuthService } from '../../services/auth.service';
+import { Component, ChangeDetectionStrategy } from "@angular/core";
+import { Observable, map, shareReplay } from "rxjs";
+import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
-  selector: 'app-page',
-  templateUrl: './page.component.html',
-  styleUrls: ['./page.component.scss'],
+  selector: "app-page",
+  templateUrl: "./page.component.html",
+  styleUrls: ["./page.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class PageComponent {
   readonly isHandset$ = this._breakpoints.observe(Breakpoints.Handset).pipe(
     map((result) => result.matches),
-    shareReplay()
+    shareReplay(),
   );
 
   readonly authenticated$ = this._auth.authenticated$;
@@ -31,40 +31,40 @@ export class PageComponent {
     allowed$: Observable<boolean>;
   }[] = [
     {
-      label: 'Budgets',
-      path: '/budgets',
-      icon: 'euro-sign',
+      label: "Budgets",
+      path: "/budgets",
+      icon: "euro-sign",
       allowed$: this.active$,
     },
     {
-      label: 'Units',
-      path: '/units',
-      icon: 'map',
+      label: "Units",
+      path: "/units",
+      icon: "map",
       allowed$: this.active$,
     },
     {
-      label: 'Members',
-      path: '/members',
-      icon: 'users',
+      label: "Members",
+      path: "/members",
+      icon: "users",
       allowed$: this.active$,
     },
     {
-      label: 'E-mails',
-      path: '/emails',
-      icon: 'mail-bulk',
+      label: "E-mails",
+      path: "/emails",
+      icon: "mail-bulk",
       allowed$: this.active$,
     },
     {
-      label: 'Users',
-      path: '/users',
-      icon: 'key',
+      label: "Users",
+      path: "/users",
+      icon: "key",
       allowed$: this.administrator$,
     },
   ];
 
   constructor(
     private _breakpoints: BreakpointObserver,
-    private _auth: AuthService
+    private _auth: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -73,6 +73,17 @@ export class PageComponent {
 
   logout() {
     return this._auth.logout().subscribe({ error: () => {} });
+  }
+
+  loginLabel(label?: string): string {
+    const provider = label?.trim();
+    return provider && provider !== "Se connecter"
+      ? `Continuer avec ${provider}`
+      : "Se connecter";
+  }
+
+  reloadPage() {
+    window.location.reload();
   }
 
   login() {

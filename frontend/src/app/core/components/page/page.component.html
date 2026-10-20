@@ -6,27 +6,11 @@
       aria-label="Toggle sidenav"
       (click)="drawer.toggle()"
     >
-      <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      <mat-icon aria-hidden="true">menu</mat-icon>
     </button>
   }
   <span>ASL Bissieux</span>
   <span class="spacer"></span>
-  @if (!(authenticated$ | async)) {
-    @if (configuration$ | async; as configuration) {
-      @if (configuration.mode === 'google') {
-        <with-google-auth-button></with-google-auth-button>
-      } @else {
-        <button
-          mat-button
-          type="button"
-          (click)="login()"
-          [disabled]="loading$ | async"
-        >
-          Se connecter
-        </button>
-      }
-    }
-  }
   @if (user$ | async; as user) {
     <span style="vertical-align: middle">{{ user.username }}</span>
   }
@@ -37,7 +21,7 @@
       aria-label="Logout"
       (click)="logout()"
     >
-      <mat-icon>logout</mat-icon>
+      <mat-icon aria-hidden="true">logout</mat-icon>
     </button>
   }
 </mat-toolbar>
@@ -62,33 +46,93 @@
   </mat-sidenav>
   <mat-sidenav-content class="main-container">
     @if (active$ | async) {
-      <div>
-        <router-outlet></router-outlet>
-      </div>
-    }
-    @if (message$ | async; as message) {
-      <p role="status" class="auth-message">{{ message }}</p>
-    }
-    @if ((authenticated$ | async) && !(active$ | async)) {
-      <mat-card class="need-login">
-        <mat-card-title>Compte en attente d’activation</mat-card-title>
-        <mat-card-content
-          >Tu es connecté, mais un administrateur doit activer ton
-          accès.</mat-card-content
+      @if (message$ | async; as message) {
+        <p role="alert" class="auth-message">{{ message }}</p>
+      }
+      <router-outlet></router-outlet>
+    } @else {
+      <div class="auth-layout">
+        <mat-card
+          appearance="outlined"
+          class="auth-panel"
+          aria-labelledby="auth-title"
         >
-      </mat-card>
-    }
-    @if (!(authenticated$ | async)) {
-      <mat-card class="need-login">
-        <mat-card-title>Accès réservé</mat-card-title>
-        <mat-card-content>
-          @if (loading$ | async) {
-            <p>Vérification de la connexion…</p>
-          } @else {
-            <p>Connecte-toi pour accéder à l’application.</p>
-          }
-        </mat-card-content>
-      </mat-card>
+          <mat-card-content>
+            @if (loading$ | async) {
+              <h1 id="auth-title">Connexion à l’ASL</h1>
+              <p role="status" aria-live="polite">
+                Vérification de la connexion…
+              </p>
+            } @else if (authenticated$ | async) {
+              <h1 id="auth-title">Compte en attente d’activation</h1>
+              <p>
+                Tu es connecté, mais un administrateur doit activer ton accès à
+                l’ASL.
+              </p>
+              <p>Tu peux te déconnecter pour utiliser un autre compte.</p>
+              @if (message$ | async; as message) {
+                <p role="alert" class="auth-message">{{ message }}</p>
+              }
+              <button mat-stroked-button type="button" (click)="logout()">
+                Se déconnecter
+              </button>
+            } @else {
+              @if (configuration$ | async; as configuration) {
+                <h1 id="auth-title">Connexion à l’ASL</h1>
+                <p>
+                  Connecte-toi pour retrouver les budgets, les lots et les
+                  membres de l’association.
+                </p>
+                @if (message$ | async; as message) {
+                  <p role="alert" class="auth-message">{{ message }}</p>
+                }
+                <div class="sign-in-action">
+                  @if (configuration.mode === "google") {
+                    <with-google-auth-button></with-google-auth-button>
+                  } @else if (configuration.login_url) {
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      class="sign-in"
+                      (click)="login()"
+                    >
+                      {{ loginLabel(configuration.label) }}
+                    </button>
+                  } @else {
+                    <p role="alert">
+                      La connexion est indisponible. Recharge la page pour
+                      réessayer.
+                    </p>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="reloadPage()"
+                    >
+                      Recharger la page
+                    </button>
+                  }
+                </div>
+                <p class="auth-help">
+                  L’accès à l’application doit être activé par un
+                  administrateur.
+                </p>
+              } @else {
+                <h1 id="auth-title">Connexion indisponible</h1>
+                <p role="alert">
+                  {{
+                    (message$ | async) ||
+                      "Impossible de charger la connexion. Recharge la page pour réessayer."
+                  }}
+                </p>
+                <button mat-stroked-button type="button" (click)="reloadPage()">
+                  Recharger la page
+                </button>
+              }
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
     }
   </mat-sidenav-content>
 </mat-sidenav-container>

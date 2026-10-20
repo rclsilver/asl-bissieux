@@ -42,3 +42,67 @@ mat-sidenav {
   margin-top: 1em;
   text-align: center;
 }
+
+.auth-layout {
+  min-height: calc(100dvh - 64px - 2rem);
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding-block: 1.5rem;
+  box-sizing: border-box;
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 30rem;
+  box-sizing: border-box;
+
+  mat-card-content {
+    padding: 2rem;
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    font-size: 1.75rem;
+    line-height: 1.25;
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    line-height: 1.5;
+    margin: 0 0 1rem;
+  }
+
+  button {
+    min-height: 44px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+.sign-in-action {
+  margin-block: 1.5rem;
+
+  .sign-in {
+    width: 100%;
+  }
+}
+
+.auth-panel .auth-help {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.auth-message {
+  padding: 0.75rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .auth-panel mat-card-content {
+    padding: 1.5rem;
+  }
+}

@@ -82,6 +82,10 @@ func DescribeFields(formats ...string) FieldDescription {
 	found := map[string]bool{}
 	automatic := map[string]bool{"member": true, "budget": true, "amount": true, "cotisations": true, "expenses": true}
 	add := func(path []string, complex bool) {
+		if len(path) > 0 && (path[0] == "" || strings.TrimSpace(path[0]) != path[0]) {
+			result.Advanced = true
+			return
+		}
 		if len(path) > 0 && !automatic[path[0]] {
 			found[path[0]] = found[path[0]] || complex || len(path) > 1
 		}

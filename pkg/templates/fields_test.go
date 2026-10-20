@@ -28,6 +28,7 @@ func TestDescribeFields(t *testing.T) {
 		{"named local dollar", "{{define \"part\"}}{{$.first_name}}{{end}}{{template \"part\" .member}}", []CustomField{}, false},
 		{"numeric index", "{{index .days 0}}", []CustomField{{"days", true}}, true},
 		{"computed Sprig key", "{{dig \"date_limite\" \"default\" .}}", []CustomField{}, true},
+		{"literal key with outer spaces", "{{index . \" date_limite \"}}", []CustomField{}, true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

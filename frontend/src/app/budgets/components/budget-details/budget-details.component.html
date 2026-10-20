@@ -39,7 +39,7 @@
               {{
                 preview.total_shares
                   ? formatRate(preview.annual_per_share ?? 0)
-                  : "—"
+                  : '—'
               }}
             </dd>
           </div>
@@ -49,7 +49,7 @@
               {{
                 preview.total_shares
                   ? formatRate(preview.monthly_per_share ?? 0)
-                  : "—"
+                  : '—'
               }}
             </dd>
           </div>
@@ -76,6 +76,7 @@
         <mat-tab label="Cotisations">
           <app-crud-table
             id="cotisations"
+            tableLabel="Cotisations du budget"
             [columns]="cotisationsColumns"
             [dataSource]="cotisations"
             [rowActions]="cotisationsRowActions$ | async"
@@ -166,6 +167,8 @@
       <mat-tab label="Dépenses">
         <app-crud-table
           id="expenses"
+          tableLabel="Dépenses du budget"
+          createLabel="Ajouter une dépense"
           [columns]="expensesColumns"
           [dataSource]="expenses$ | async"
           [canCreate]="canCreateExpense$"

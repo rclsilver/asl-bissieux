@@ -4,22 +4,28 @@
       mat-icon-button
       type="button"
       (click)="show()"
-      matTooltip="Filter data"
+      matTooltip="Rechercher dans la liste"
+      aria-label="Rechercher dans la liste"
     >
       <mat-icon>search</mat-icon>
     </button>
   }
   @if (!(this.folded$ | async)) {
     <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ label$ | async }}</mat-label>
-      <input matInput #input />
+      <mat-label>Rechercher</mat-label>
+      <input
+        matInput
+        #input
+        [attr.aria-label]="'Rechercher : ' + (label$ | async)"
+      />
       <mat-icon matPrefix>search</mat-icon>
       <button
         mat-icon-button
         matSuffix
         type="button"
         (click)="clear($event)"
-        matTooltip="Clear filters"
+        matTooltip="Effacer la recherche"
+        aria-label="Effacer la recherche"
       >
         <mat-icon>clear</mat-icon>
       </button>

@@ -1,7 +1,10 @@
 <h2>Members</h2>
 
 <app-crud-table
+  tableLabel="Membres"
+  createLabel="Ajouter un membre"
   [columns]="columns"
+  [rowLabel]="rowLabel"
   [dataSource]="datasource"
   [canCreate]="canCreate$"
   [canEdit]="canEdit.bind(this)"

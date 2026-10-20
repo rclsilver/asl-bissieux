@@ -197,16 +197,16 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
 
         if (canDelete) {
           actions.push({
-            icon: 'trash',
-            tooltip: 'Bulk delete',
+            icon: 'delete',
+            tooltip: 'Supprimer les e-mails sélectionnés',
             func: this.bulkDelete.bind(this),
           });
         }
 
         if (canSend) {
           actions.push({
-            icon: 'envelope',
-            tooltip: 'Bulk send',
+            icon: 'mail',
+            tooltip: 'Envoyer les e-mails sélectionnés',
             func: this.bulkSend.bind(this),
           });
         }

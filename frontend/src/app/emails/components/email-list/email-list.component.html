@@ -5,6 +5,7 @@
   <h2>{{ campaign.title }}</h2>
 }
 <app-crud-table
+  tableLabel="E-mails"
   [canSelect]="true"
   [columns]="columns"
   [dataSource]="emails$ | async"

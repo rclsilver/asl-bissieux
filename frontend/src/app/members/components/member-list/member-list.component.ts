@@ -75,6 +75,8 @@ export class MemberListComponent {
       },
     }),
   ];
+  readonly rowLabel = (member: APISchemas['ModelsMember']) =>
+    [member.first_name, member.last_name].filter(Boolean).join(' ');
   readonly datasource = new MemberDataSource();
 
   readonly canCreate$ = this._auth.allowed$('member.CreateMember');

@@ -221,6 +221,22 @@ export class CrudTableComponent<T extends {}>
     }
   }
 
+  @Input() createLabel = 'Ajouter';
+  @Input() tableLabel = 'Tableau de données';
+  @Input() rowLabel?: (row: T) => string;
+
+  describeRow(row: CrudTableRow<T>): string {
+    const label = this.rowLabel?.(row.original);
+    if (label) return label;
+    const column = this.columns.find(
+      (column) => !column.hidden && column.label.trim()
+    );
+    const value = column && row.columns[column.name]?.display;
+    return value === undefined || value === null || value === ''
+      ? 'cette ligne'
+      : String(value);
+  }
+
   @Input() canRefresh = true;
 
   @Input() toolbarActions: CustomToolbarAction[] | null = null;

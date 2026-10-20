@@ -2,6 +2,8 @@
   <h1 mat-dialog-title>Payments</h1>
   <div mat-dialog-content class="content">
     <app-crud-table
+      tableLabel="Paiements"
+      createLabel="Ajouter un paiement"
       [columns]="columns"
       [dataSource]="payments$ | async"
       [canCreate]="canCreate$"

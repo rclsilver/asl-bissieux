@@ -100,3 +100,28 @@ a {
     text-decoration: underline;
   }
 }
+
+.create-action {
+  block-size: auto;
+  min-block-size: 44px;
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.selection-count {
+  font-size: 0.875rem;
+  white-space: normal;
+}
+
+.no-result {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+
+  p {
+    margin: 0;
+  }
+}

@@ -1,4 +1,14 @@
 <mat-toolbar>
+  @if (selected.selected$ | async; as selection) {
+    @if (selection.length) {
+      <span class="selection-count" role="status"
+        >{{ selection.length }}
+        {{
+          selection.length === 1 ? 'ligne sélectionnée' : 'lignes sélectionnées'
+        }}</span
+      >
+    }
+  }
   <div class="spacer"></div>
 
   @for (action of toolbarActions; track action) {
@@ -8,8 +18,9 @@
         type="button"
         (click)="action.func()"
         [matTooltip]="action.tooltip"
+        [attr.aria-label]="action.tooltip"
       >
-        <span class="fa fa-{{ action.icon }}"></span>
+        <mat-icon aria-hidden="true">{{ action.icon }}</mat-icon>
       </button>
     }
     @if (action.loading$ && (action.loading$ | async)) {
@@ -17,6 +28,7 @@
         mode="indeterminate"
         diameter="20"
         [matTooltip]="action.loadingTooltip || ''"
+        [attr.aria-label]="action.loadingTooltip || action.tooltip"
       >
       </mat-progress-spinner>
     }
@@ -30,20 +42,24 @@
       type="button"
       (click)="refresh()"
       [disabled]="loading$ | async"
-      matTooltip="Refresh data"
+      matTooltip="Actualiser la liste"
+      aria-label="Actualiser la liste"
     >
       <mat-icon>refresh</mat-icon>
     </button>
   }
 
   <button
-    mat-icon-button
+    mat-flat-button
+    color="primary"
+    class="create-action"
     type="button"
     (click)="onEdit()"
-    matTooltip="Create a new resource"
+    [matTooltip]="createLabel"
     [disabled]="!(canCreate$ | async)"
   >
-    <mat-icon>add</mat-icon>
+    <mat-icon aria-hidden="true">add</mat-icon>
+    {{ createLabel }}
   </button>
 </mat-toolbar>
 
@@ -51,7 +67,7 @@
   <div
     class="table-scroll"
     role="region"
-    aria-label="Tableau de données"
+    [attr.aria-label]="tableLabel"
     tabindex="0"
   >
     <table
@@ -59,6 +75,7 @@
       matSort
       matSortDisableClear
       [class.invisible]="!(loaded$ | async)"
+      [attr.aria-label]="tableLabel"
     >
       <!-- Allow to add custom column definitions -->
       <ng-content></ng-content>
@@ -95,6 +112,7 @@
       <ng-container matColumnDef="_select_">
         <th mat-header-cell *matHeaderCellDef>
           <mat-checkbox
+            aria-label="Sélectionner toutes les lignes affichées"
             (click)="$event.stopPropagation()"
             (change)="toggleAll()"
             [checked]="allSelected$ | async"
@@ -103,6 +121,7 @@
         </th>
         <td mat-cell *matCellDef="let row">
           <mat-checkbox
+            [aria-label]="'Sélectionner ' + describeRow(row)"
             [value]="row"
             (click)="$event.stopPropagation()"
             (change)="$event ? selected.toggle(row.original) : null"
@@ -113,10 +132,16 @@
 
       <!-- Action column definition -->
       <ng-container matColumnDef="_actions_">
-        <th mat-header-cell *matHeaderCellDef></th>
+        <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
         <td mat-cell *matCellDef="let row">
           @if ((showActions$ | async) || (rowActions && rowActions!.length)) {
-            <button mat-icon-button [matMenuTriggerFor]="menu">
+            <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="menu"
+              [attr.aria-label]="'Actions pour ' + describeRow(row)"
+              matTooltip="Actions de la ligne"
+            >
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
@@ -126,7 +151,7 @@
                 (click)="onEdit(row.original)"
               >
                 <mat-icon>edit</mat-icon>
-                <span>Edit</span>
+                <span>Modifier</span>
               </button>
               <button
                 [disabled]="!(canDeleteRow(row.original) | async)"
@@ -134,7 +159,7 @@
                 (click)="onDelete(row.original)"
               >
                 <mat-icon>delete</mat-icon>
-                <span>Delete</span>
+                <span>Supprimer</span>
               </button>
               @for (action of rowActions; track action) {
                 @if (action.show(row.original)) {
@@ -164,14 +189,31 @@
         <tr *matNoDataRow>
           <td [attr.colspan]="columnsCount$ | async">
             <div class="no-result">
-              @if (!(error$ | async)) {
-                <span>No result found</span>
-              }
-              @if (error$ | async; as error) {
-                <span class="error">
-                  Error while loading data: {{ error!.message }} (HTTP
-                  {{ error!.origin.status }} {{ error!.origin.statusText }})
-                </span>
+              @if (error$ | async) {
+                <p class="error" role="alert">
+                  Impossible de charger la liste.
+                </p>
+                @if (canRefresh) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="refresh()"
+                    [disabled]="loading$ | async"
+                  >
+                    Réessayer
+                  </button>
+                }
+              } @else if (search.pattern) {
+                <p role="status">Aucun résultat pour cette recherche.</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="search.clear($event)"
+                >
+                  Effacer la recherche
+                </button>
+              } @else {
+                <p role="status">Aucune donnée à afficher.</p>
               }
             </div>
           </td>
@@ -192,7 +234,7 @@
 
 @if (!(loaded$ | async)) {
   <div class="loader">
-    <p>Fetching data from server...</p>
+    <p role="status">Chargement de la liste…</p>
     <mat-progress-spinner
       mode="indeterminate"
       diameter="32"

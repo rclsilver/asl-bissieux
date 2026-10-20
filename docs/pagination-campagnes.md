@@ -1,6 +1,6 @@
 # Pagination de la liste des campagnes
 
-La liste des campagnes utilise des résumés paginés. L’historique des messages à l’intérieur d’une campagne conserve son contrat actuel ; sa pagination est un lot distinct.
+La liste des campagnes utilise des résumés paginés. L’historique des messages utilise également une pagination, décrite dans [pagination-emails.md](pagination-emails.md).
 
 ## Contrat HTTP
 

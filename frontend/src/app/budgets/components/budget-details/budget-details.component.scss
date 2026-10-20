@@ -12,23 +12,55 @@ div.loading {
   background: #f8fafc;
   color: #172033;
 
-  .preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
-  h3 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-  dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; }
-  dt { color: #475569; }
-  dd { margin: 0.35rem 0 0; font-size: 1.3rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .preview-note { font-size: 0.875rem; color: #475569; line-height: 1.5; }
-  .preview-message { color: #92400e; font-weight: 600; }
+  .preview-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+    gap: 1.25rem;
+  }
+  dt {
+    color: #475569;
+  }
+  dd {
+    margin: 0.35rem 0 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .preview-note {
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.5;
+  }
+  .preview-message {
+    color: #92400e;
+    font-weight: 600;
+  }
 }
 
 h2 .label {
   &::before {
-    content: " (";
+    content: ' (';
   }
 
   &::after {
-    content: ")";
+    content: ')';
   }
+}
+h2,
+p {
+  overflow-wrap: anywhere;
 }
 
 .mat-column-state {
@@ -67,24 +99,32 @@ h2 .label {
 }
 
 :host ::ng-deep {
-  .payment-done * {
+  .payment-done > polygon {
     fill: green;
   }
 
-  .payment-doing * {
+  .payment-doing > polygon {
     fill: orange;
   }
 
-  .payment-waiting * {
+  .payment-waiting > polygon {
     fill: red;
   }
 
-  .payment-overpaid * {
+  .payment-overpaid > polygon {
     fill: #6d28d9;
   }
 
   .unit-hover * {
     opacity: 0.7;
+  }
+  .payment-done g[id^='label'] *,
+  .payment-overpaid g[id^='label'] * {
+    fill: white;
+  }
+  .payment-doing g[id^='label'] *,
+  .payment-waiting g[id^='label'] * {
+    fill: black;
   }
 }
 
@@ -93,6 +133,11 @@ h2 .label {
   display: flex;
   justify-content: center;
   padding-top: 1em;
+  overflow: auto;
+  app-interactive-map {
+    inline-size: min(100%, 1000px);
+    min-inline-size: 0;
+  }
 }
 
 .payment-legend {

@@ -41,6 +41,7 @@ import { PaymentState, paymentState, paymentClass } from '../../payment-state';
   standalone: false,
 })
 export class BudgetDetailsComponent implements OnInit, OnDestroy {
+  selectedMapUnit: number | null = null;
   private readonly _destroy$ = new Subject<void>();
   private readonly _refresh$ = new BehaviorSubject<void>(undefined);
   readonly STATE_OK = PaymentState.Done;

@@ -155,13 +155,29 @@
               moitié réglée
             </li>
           </ul>
+          <p>
+            Choisis un lot sur la carte pour ouvrir ses membres dans l’annuaire.
+          </p>
           <div class="map-container">
             <app-interactive-map
               hoverClass="unit-hover"
               [unitClasses]="unitClasses"
               [showLabels]="true"
+              [selectedUnit]="selectedMapUnit"
+              (unitClick)="selectedMapUnit = $event.unitId"
             ></app-interactive-map>
           </div>
+          @if (selectedMapUnit !== null) {
+            <p role="status">
+              Lot {{ selectedMapUnit }} sélectionné.
+              <a
+                mat-button
+                [routerLink]="['/members']"
+                [queryParams]="{ view: 'map', lot: selectedMapUnit }"
+                >Consulter les membres du lot {{ selectedMapUnit }}</a
+              >
+            </p>
+          }
         </mat-tab>
       }
       <mat-tab label="Dépenses">

@@ -44,3 +44,5 @@ La prévisualisation générique d’un modèle (`email/templates/:id/preview`) 
 ## Préparation et envoi
 
 L’API `budget/:id/email` crée une campagne et ses e-mails en base. Elle ne transmet aucun message au serveur SMTP. L’envoi effectif se fait ensuite depuis la campagne. Les aperçus ne créent ni campagne ni e-mail.
+
+Avant de créer la campagne, le serveur vérifie le rendu du sujet et du corps pour chaque destinataire retenu. Un aperçu réussi pour un membre ne suffit pas : une donnée absente ou une structure différente chez un autre membre bloque la préparation avant toute création. Ce contrôle travaille sur une copie des données pour que les fonctions Sprig modifiant des objets n’altèrent pas les contextes enregistrés.

@@ -271,6 +271,7 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	type recipient struct {
 		member      *models.Member
 		cotisations []*models.CotisationResult
+		data        map[string]any
 	}
 	members := make(map[string]*recipient)
 
@@ -292,18 +293,26 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	}
 
 	if len(members) > 0 {
+		// Validate every context before creating any campaign or email. A
+		// representative preview alone cannot cover all multi-lot shapes.
+		for _, recipient := range members {
+			context, err := buildTemplateData(tx, budget, recipient.member, recipient.cotisations)
+			if err != nil {
+				return err
+			}
+			if err := validateBudgetEmailTemplate(template, context, data); err != nil {
+				return err
+			}
+			recipient.data = context
+		}
+
 		campaign := models.NewEmailCampaign(fmt.Sprintf("%s: %s", budget.Label, template.Label), template, data)
 		if err := tx.Create(campaign).Error; err != nil {
 			return err
 		}
 
 		for _, recipient := range members {
-			data, err := buildTemplateData(tx, budget, recipient.member, recipient.cotisations)
-			if err != nil {
-				return err
-			}
-
-			email := models.NewEmail(campaign, recipient.member.Email, data)
+			email := models.NewEmail(campaign, recipient.member.Email, recipient.data)
 			if err := tx.Create(email).Error; err != nil {
 				return err
 			}
@@ -318,6 +327,32 @@ func includeBudgetEmailCotisation(cotisation *models.CotisationResult, toDoing, 
 		return toPaid
 	}
 	return cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) < 0 || toDoing
+}
+
+func validateBudgetEmailTemplate(template *models.EmailTemplate, data, extra map[string]any) error {
+	merged := make(map[string]any, len(data)+len(extra))
+	for key, value := range data {
+		merged[key] = value
+	}
+	for key, value := range extra {
+		merged[key] = value
+	}
+	// Sprig allows map mutation. Validate an independent deep copy so the
+	// check cannot alter persisted contexts or a later recipient's values.
+	encoded, err := json.Marshal(merged)
+	if err != nil {
+		return err
+	}
+	var context map[string]any
+	if err := json.Unmarshal(encoded, &context); err != nil {
+		return err
+	}
+	t, err := templates.NewTemplate(context)
+	if err != nil {
+		return err
+	}
+	_, err = BuildEmail(template, t)
+	return err
 }
 
 func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult) (map[string]any, error) {

@@ -5,14 +5,14 @@
   <p class="dialog-message">{{ data.message }}</p>
   @if (data.force) {
     <p>
-      <mat-checkbox #force>Force this action</mat-checkbox>
+      <mat-checkbox #force>Forcer cette action</mat-checkbox>
     </p>
   }
 </div>
 <div mat-dialog-actions>
-  <button mat-flat-button color="accent" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="accent" (click)="cancel()">Annuler</button>
   <div class="spacer"></div>
   <button mat-flat-button color="{{ class }}" (click)="confirm()">
-    Confirm
+    {{ data.confirmLabel || 'Confirmer' }}
   </button>
 </div>

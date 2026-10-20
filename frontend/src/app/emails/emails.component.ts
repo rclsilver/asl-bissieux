@@ -11,13 +11,13 @@ import { MenuLink } from '../shared/models/menu-link';
 export class EmailsComponent {
   readonly links: MenuLink[] = [
     {
-      label: 'Campaigns',
+      label: 'Campagnes',
       icon: 'list',
       path: '/emails/campaigns',
       isAllowed$: of(true),
     },
     {
-      label: 'Templates',
+      label: 'Modèles',
       icon: 'cog',
       path: '/emails/templates',
       isAllowed$: of(true),

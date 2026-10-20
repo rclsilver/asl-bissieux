@@ -66,7 +66,7 @@ describe('Manage payments dialog', () => {
       ]);
     TestBed.tick();
     const dialog = document.querySelector('mat-dialog-container');
-    expect(dialog?.textContent).toContain('Payments');
+    expect(dialog?.textContent).toContain('Paiements');
     expect(dialog?.textContent).toContain('Virement de test');
     expect(dialog?.textContent).toContain('2026-10-19');
     expect(dialog?.textContent).toContain('24,01');

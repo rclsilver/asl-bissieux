@@ -22,29 +22,29 @@ export class MemberListComponent {
 
   readonly columns = [
     new Column('first_name', {
-      label: 'First name',
+      label: 'Prénom',
       canSort: true,
       canFilter: true,
     }),
     new Column('last_name', {
-      label: 'Last name',
+      label: 'Nom',
       canSort: true,
       canFilter: true,
     }),
     new Column('address', {
-      label: 'Address',
+      label: 'Adresse',
       canFilter: true,
     }),
     new Column('phone_number', {
-      label: 'Phone number',
+      label: 'Téléphone',
       canFilter: true,
     }),
     new Column('email', {
-      label: 'E-mail address',
+      label: 'E-mail',
       canFilter: true,
     }),
     new Column<APISchemas['ModelsUnit'][]>('units', {
-      label: 'Unit(s)',
+      label: 'Lots',
       render: (units) => (units ?? []).map((unit) => unit.number).join(', '),
       canSort: true,
       sortFunc: (a, b) => {
@@ -111,8 +111,9 @@ export class MemberListComponent {
   delete(member: APISchemas['ModelsMember']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a member',
-        message: `Are you sure to delete the member ${member.first_name} ${member.last_name}?`,
+        title: 'Supprimer un membre',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer le membre ${member.first_name} ${member.last_name} ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -123,11 +124,11 @@ export class MemberListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The member ${member.first_name} ${member.last_name} has been deleted`,
+                message: `Le membre ${member.first_name} ${member.last_name} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the member'),
+            error: this._api.handleError('Impossible de supprimer le membre'),
           });
         }
       });

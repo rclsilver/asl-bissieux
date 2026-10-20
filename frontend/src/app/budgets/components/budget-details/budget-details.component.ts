@@ -77,12 +77,12 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   // expenses
   readonly expensesColumns = [
     new Column('label', {
-      label: 'Label',
+      label: 'Libellé',
       canSort: true,
       canFilter: true,
     }),
     new Column('amount', {
-      label: 'Amount',
+      label: 'Montant',
       render: (v) => this.formatAmount(v),
       canSort: true,
     }),
@@ -172,7 +172,7 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
       }
     ),
     new Column('unit.number', {
-      label: 'Unit',
+      label: 'Lot',
       canSort: true,
       defaultSort: true,
       canFilter: true,
@@ -188,7 +188,7 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
           last_name: member.last_name!,
         })),
       {
-        label: 'Members',
+        label: 'Membres',
         canSort: true,
         canFilter: true,
         filterFunc: (members, pattern) => {
@@ -229,20 +229,20 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
       }
     ),
     new Column('unit.address', {
-      label: 'Address',
+      label: 'Adresse',
       canFilter: true,
     }),
     new Column('unit.share', {
-      label: 'Share',
+      label: 'Parts',
       canSort: true,
     }),
     new Column('amount', {
-      label: 'Amount',
+      label: 'Montant',
       render: (v) => this.formatAmount(v),
       canSort: true,
     }),
     new Column('paid', {
-      label: 'Paid',
+      label: 'Réglé',
       render: (v) => this.formatAmount(v),
       canSort: true,
     }),
@@ -250,7 +250,7 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
       'remaining',
       (row) => row.remaining ?? (row?.amount ?? 0) - (row?.paid ?? 0),
       {
-        label: 'Remaining',
+        label: 'Solde',
         render: (v) => this.formatAmount(v),
         canSort: true,
       }
@@ -302,8 +302,8 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'list',
-            'Manage the payments',
-            'Manage payments',
+            'Gérer les paiements',
+            'Gérer les paiements',
             (row) =>
               this._notifications
                 .showForm(PaymentListComponent, {

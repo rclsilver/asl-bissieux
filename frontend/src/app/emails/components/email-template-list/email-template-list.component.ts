@@ -26,8 +26,8 @@ export class EmailTemplateListComponent {
   readonly rowActions = [
     new CustomRowAction<APISchemas['ModelsEmailTemplate']>(
       'folder_open',
-      'Manage the attachments',
-      'Attachments',
+      'Gérer les pièces jointes',
+      'Pièces jointes',
       (row) =>
         this._notifications
           .show(EmailAttachmentListComponent, {
@@ -42,8 +42,8 @@ export class EmailTemplateListComponent {
     ),
     new CustomRowAction<APISchemas['ModelsEmailTemplate']>(
       'preview',
-      'Preview the e-mail',
-      'Preview',
+      'Prévisualiser l’e-mail',
+      'Prévisualiser',
       (row) =>
         this._notifications.showForm(EmailTemplatePreviewFormComponent, {
           data: {
@@ -55,12 +55,12 @@ export class EmailTemplateListComponent {
 
   readonly columns = [
     new Column('label', {
-      label: 'Label',
+      label: 'Libellé',
       canSort: true,
       canFilter: true,
     }),
     new Column('subject', {
-      label: 'Subject',
+      label: 'Objet',
       canSort: true,
       canFilter: true,
     }),
@@ -68,7 +68,7 @@ export class EmailTemplateListComponent {
       'attachments',
       (row) => row.attachments?.length ?? 0,
       {
-        label: 'Attachments',
+        label: 'Pièces jointes',
         canSort: true,
       }
     ),
@@ -111,8 +111,9 @@ export class EmailTemplateListComponent {
   delete(template: APISchemas['ModelsEmailTemplate']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a template',
-        message: `Are you sure to delete the template ${template.label}?`,
+        title: 'Supprimer un modèle',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer le modèle « ${template.label} » ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -123,11 +124,11 @@ export class EmailTemplateListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The template ${template.label} has been deleted`,
+                message: `Le modèle « ${template.label} » a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the template'),
+            error: this._api.handleError('Impossible de supprimer le modèle'),
           });
         }
       });

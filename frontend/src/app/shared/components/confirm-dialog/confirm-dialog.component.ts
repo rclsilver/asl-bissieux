@@ -10,6 +10,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 export type ConfirmDialogData = {
   class?: 'primary' | 'warn';
   title: string;
+  confirmLabel?: string;
   message: string;
   force?: boolean;
 };

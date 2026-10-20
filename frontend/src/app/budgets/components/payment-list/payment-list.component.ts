@@ -34,10 +34,10 @@ export class PaymentListComponent implements OnInit {
       render: DateRender(),
     }),
     new Column('comment', {
-      label: 'Comment',
+      label: 'Commentaire',
     }),
     new Column('amount', {
-      label: 'Amount',
+      label: 'Montant',
       render: (v) =>
         new Intl.NumberFormat('fr-FR', {
           style: 'currency',
@@ -45,7 +45,7 @@ export class PaymentListComponent implements OnInit {
         }).format(v),
     }),
     new Column('user.username', {
-      label: 'Created by',
+      label: 'Enregistré par',
     }),
   ];
 
@@ -101,8 +101,9 @@ export class PaymentListComponent implements OnInit {
   delete(payment: APISchemas['ModelsPayment']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a payment',
-        message: 'Are you sure to delete the payment?',
+        title: 'Supprimer un paiement',
+        confirmLabel: 'Supprimer',
+        message: 'Supprimer ce paiement ?',
         class: 'warn',
       })
       .afterClosed()
@@ -119,11 +120,13 @@ export class PaymentListComponent implements OnInit {
                 this.refresh();
                 this._notifications.showDialog({
                   title: 'Info',
-                  message: 'The payment has been deleted',
+                  message: 'Le paiement a été supprimé.',
                   level: NotificationDialogLevel.Info,
                 });
               },
-              error: this._api.handleError('Unable to delete the payment'),
+              error: this._api.handleError(
+                'Impossible de supprimer le paiement'
+              ),
             });
         }
       });

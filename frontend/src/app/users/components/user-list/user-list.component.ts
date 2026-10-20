@@ -22,20 +22,20 @@ export class UserListComponent {
 
   readonly columns = [
     new Column('username', {
-      label: 'Username',
+      label: 'Compte',
       canSort: true,
       canFilter: true,
     }),
     new Column('enabled', {
-      label: 'Enabled',
+      label: 'Accès actif',
       canSort: true,
     }),
     new Column('admin', {
-      label: 'Administrator',
+      label: 'Administrateur',
       canSort: true,
     }),
     new Column<string[] | undefined>('actions', {
-      label: 'Action(s)',
+      label: 'Autorisations',
       render: (actions) => (actions ?? []).length + '',
     }),
   ];
@@ -73,8 +73,9 @@ export class UserListComponent {
   delete(user: APISchemas['AuthUser']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a user',
-        message: `Are you sure to delete the user ${user.username}?`,
+        title: 'Supprimer un utilisateur',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer l’utilisateur ${user.username} ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -85,11 +86,13 @@ export class UserListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The user ${user.username} has been deleted`,
+                message: `L’utilisateur ${user.username} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the user'),
+            error: this._api.handleError(
+              'Impossible de supprimer l’utilisateur'
+            ),
           });
         }
       });

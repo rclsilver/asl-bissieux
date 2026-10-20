@@ -68,13 +68,14 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         actions.push(
           new CustomRowAction<APISchemas['ModelsEmail']>(
             'mail',
-            'Send e-mail',
-            'Send',
+            'Envoyer l’e-mail',
+            'Envoyer',
             (row) =>
               this._notifications
                 .showConfirm({
-                  title: 'Send an e-mail',
-                  message: `Are you sure to send the e-mail to ${row.to}?`,
+                  title: 'Envoyer un e-mail',
+                  confirmLabel: 'Envoyer',
+                  message: `Envoyer l’e-mail à ${row.to} ?`,
                   class: 'primary',
                 })
                 .afterClosed()
@@ -106,6 +107,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
               this._notifications
                 .showConfirm({
                   title: 'Autoriser un renvoi',
+                  confirmLabel: 'Autoriser le renvoi',
                   message:
                     row.state === 'UNKNOWN'
                       ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, confirmes-tu qu’un nouvel envoi est nécessaire ?`
@@ -125,7 +127,7 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
                         });
                       },
                       error: this._api.handleError(
-                        'Unable to change the state of the e-mail'
+                        'Impossible de modifier l’état de l’e-mail'
                       ),
                     });
                   }
@@ -144,17 +146,17 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
 
   readonly columns = [
     new Column('subject', {
-      label: 'Subject',
+      label: 'Objet',
       canSort: true,
       canFilter: true,
     }),
     new Column('to', {
-      label: 'Recipient',
+      label: 'Destinataire',
       canSort: true,
       canFilter: true,
     }),
     new Column('state', {
-      label: 'State',
+      label: 'État',
       canSort: true,
       canFilter: true,
     }),
@@ -242,8 +244,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   delete(email: APISchemas['ModelsEmail']) {
     this._notifications
       .showConfirm({
-        title: 'Delete an e-mail',
-        message: `Are you sure to delete the e-mail to ${email.to}?`,
+        title: 'Supprimer un e-mail',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer l’e-mail destiné à ${email.to} ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -254,11 +257,11 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The e-mail ${email.id} has been deleted`,
+                message: `L’e-mail destiné à ${email.to} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the e-mail'),
+            error: this._api.handleError('Impossible de supprimer l’e-mail'),
           });
         }
       });
@@ -276,8 +279,10 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   bulkDelete() {
     this._notifications
       .showConfirm({
-        title: 'Bulk delete',
-        message: 'Are you sure to want to delete all the selected e-mails?',
+        title: 'Supprimer la sélection',
+        confirmLabel: 'Supprimer',
+        message:
+          'Supprimer les e-mails sélectionnés ? Les messages en cours d’envoi seront conservés.',
         class: 'warn',
       })
       .afterClosed()
@@ -291,8 +296,9 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
             forkJoin(calls$).subscribe(() => {
               this.refresh();
               this._notifications.showDialog({
-                title: 'Bulk delete',
-                message: 'All the selected e-mails have been deleted',
+                title: 'Supprimer la sélection',
+                message:
+                  'Les e-mails sélectionnés hors envoi en cours ont été supprimés.',
                 level: NotificationDialogLevel.Info,
               });
             });
@@ -304,8 +310,10 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   bulkSend() {
     this._notifications
       .showConfirm({
-        title: 'Bulk send',
-        message: 'Are you sure to want to send all the selected e-mails?',
+        title: 'Envoyer la sélection',
+        confirmLabel: 'Envoyer',
+        message:
+          'Confirmer l’envoi des e-mails sélectionnés ? Seuls les messages dont l’état autorise l’envoi seront pris en compte.',
         class: 'primary',
       })
       .afterClosed()

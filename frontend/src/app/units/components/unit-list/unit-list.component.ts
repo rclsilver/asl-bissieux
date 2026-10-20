@@ -22,17 +22,17 @@ export class UnitListComponent {
 
   readonly columns = [
     new Column('number', {
-      label: 'Number',
+      label: 'Numéro',
       canSort: true,
       defaultSort: true,
       canFilter: true,
     }),
     new Column('share', {
-      label: 'Share',
+      label: 'Parts',
       canSort: true,
     }),
     new Column('address', {
-      label: 'Address',
+      label: 'Adresse',
       canFilter: true,
     }),
   ];
@@ -70,8 +70,9 @@ export class UnitListComponent {
   delete(unit: APISchemas['ModelsUnit']) {
     this._notifications
       .showConfirm({
-        title: 'Delete an unit',
-        message: `Are you sure to delete the unit ${unit.number}?`,
+        title: 'Supprimer un lot',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer le lot ${unit.number} ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -82,11 +83,11 @@ export class UnitListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The unit ${unit.number} has been deleted`,
+                message: `Le lot ${unit.number} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the unit'),
+            error: this._api.handleError('Impossible de supprimer le lot'),
           });
         }
       });

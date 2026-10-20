@@ -32,7 +32,7 @@ export class EmailCampaignListComponent {
 
   readonly columns = [
     new Column('title', {
-      label: 'Title',
+      label: 'Titre',
       canSort: true,
       canFilter: true,
       routeTo: (v) => {
@@ -45,7 +45,7 @@ export class EmailCampaignListComponent {
       render: DateRender(),
     }),
     new Column<APISchemas['ModelsEmail'][] | undefined>('emails', {
-      label: 'Emails',
+      label: 'E-mails',
       render: (emails) => {
         var byState = (emails ?? [])
           .map((email) => ({
@@ -86,8 +86,9 @@ export class EmailCampaignListComponent {
   delete(campaign: APISchemas['ModelsEmailCampaign']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a campaign',
-        message: `Are you sure to delete the campaign ${campaign.title}?`,
+        title: 'Supprimer une campagne',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer la campagne « ${campaign.title} » ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -98,11 +99,11 @@ export class EmailCampaignListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The campaign ${campaign.title} has been deleted`,
+                message: `La campagne « ${campaign.title} » a été supprimée.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the campaign'),
+            error: this._api.handleError('Impossible de supprimer la campagne'),
           });
         }
       });

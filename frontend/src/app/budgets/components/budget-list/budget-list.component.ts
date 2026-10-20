@@ -39,12 +39,13 @@ export class BudgetListComponent {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'cloud',
-            'Publish the budget',
-            'Publish',
+            'Publier le budget',
+            'Publier',
             (row) =>
               this._notifications
                 .showConfirm({
-                  title: 'Publish the budget',
+                  title: 'Publier le budget',
+                  confirmLabel: 'Publier',
                   message: `Publier le budget ${row.label} ? Les dépenses et cotisations seront figées et le budget ne pourra plus être supprimé. Le libellé et les paiements resteront modifiables selon tes droits.`,
                   class: 'warn',
                 })
@@ -56,12 +57,12 @@ export class BudgetListComponent {
                         this.refresh();
                         this._notifications.showDialog({
                           title: 'Info',
-                          message: `The budget ${row.label} has been published`,
+                          message: `Le budget « ${row.label} » a été publié.`,
                           level: NotificationDialogLevel.Info,
                         });
                       },
                       error: this._api.handleError(
-                        'Unable to publish the budget'
+                        'Impossible de publier le budget'
                       ),
                     });
                   }
@@ -77,8 +78,8 @@ export class BudgetListComponent {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'mail',
-            'Send e-mail',
-            'E-mail',
+            'Préparer les e-mails',
+            'Préparer les e-mails',
             (row) =>
               this._notifications.showForm(BudgetEmailFormComponent, {
                 data: {
@@ -99,7 +100,7 @@ export class BudgetListComponent {
 
   readonly columns = [
     new Column('label', {
-      label: 'Label',
+      label: 'Libellé',
       routeTo: (v) => {
         return `/budgets/${v.id}`;
       },
@@ -107,11 +108,11 @@ export class BudgetListComponent {
       canFilter: true,
     }),
     new Column('draft', {
-      label: 'Draft',
+      label: 'Brouillon',
       canSort: true,
     }),
     new Column('amount', {
-      label: 'Amount',
+      label: 'Montant',
       render: (v) =>
         new Intl.NumberFormat('fr-FR', {
           style: 'currency',
@@ -120,7 +121,7 @@ export class BudgetListComponent {
       canSort: true,
     }),
     new Column('paid', {
-      label: 'Paid',
+      label: 'Réglé',
       render: (v) =>
         new Intl.NumberFormat('fr-FR', {
           style: 'currency',
@@ -165,8 +166,9 @@ export class BudgetListComponent {
   delete(budget: APISchemas['ModelsBudgetResult']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a budget',
-        message: `Are you sure to delete the budget ${budget.label}?`,
+        title: 'Supprimer un budget',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer le budget « ${budget.label} » ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -177,11 +179,11 @@ export class BudgetListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The budget ${budget.label} has been deleted`,
+                message: `Le budget « ${budget.label} » a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the budget'),
+            error: this._api.handleError('Impossible de supprimer le budget'),
           });
         }
       });

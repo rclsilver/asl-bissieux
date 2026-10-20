@@ -85,7 +85,9 @@ export class BudgetListComponent {
                 data: {
                   budget: row,
                 },
-                width: '480px',
+                width: '760px',
+                maxWidth: 'calc(100vw - 2rem)',
+                maxHeight: 'calc(100dvh - 2rem)',
               }),
             (row) => {
               return !row.draft;

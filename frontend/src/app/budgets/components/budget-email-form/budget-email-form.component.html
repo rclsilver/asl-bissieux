@@ -1,123 +1,166 @@
-<h1 mat-dialog-title>Send an e-mail</h1>
-<form [formGroup]="form" (submit)="submit()">
+<h1 mat-dialog-title>Préparer les e-mails du budget</h1>
+<form [formGroup]="form" (ngSubmit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>E-mail template</mat-label>
-      <input
-        matInput
-        type="text"
-        formControlName="template"
-        [matAutocomplete]="emailTemplate"
-        required
-      />
-      <mat-autocomplete
-        #emailTemplate="matAutocomplete"
-        [displayWith]="templateDisplay.bind(this)"
-      >
-        @for (template of templates$ | async; track template) {
-          <mat-option [value]="template.id">{{ template.label }}</mat-option>
-        }
-      </mat-autocomplete>
-      @if (
-        form.controls["template"].touched && form.controls["template"].invalid
-      ) {
-        <mat-error>
-          @if (form.controls["template"].errors!["required"]) {
-            <span>This field is mandatory</span>
-          }
-          @if (form.controls["template"].errors!["server"]) {
-            <span>{{ form.controls["template"].errors!["server"] }}</span>
-          }
-        </mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Data</mat-label>
-      <textarea
-        matInput
-        rows="10"
-        formControlName="data"
-        [required]="true"
-      ></textarea>
-      @if (form.controls["data"].touched && form.controls["data"].invalid) {
-        <mat-error>
-          @if (form.controls["data"].errors!["required"]) {
-            <span>This field is mandatory</span>
-          }
-          @if (form.controls["data"].errors!["server"]) {
-            <span>{{ form.controls["data"].errors!["server"] }}</span>
-          }
-        </mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field
-      appearance="fill"
-      [style.display]="form.controls['previewMode'].value ? 'block' : 'none'"
-    >
-      <mat-label>Member</mat-label>
-      <input
-        matInput
-        type="text"
-        formControlName="previewMember"
-        [matAutocomplete]="previewMember"
-        [required]="form.controls['previewMode'].value"
-      />
-      <mat-autocomplete
-        #previewMember="matAutocomplete"
-        [displayWith]="previewMemberDisplay.bind(this)"
-      >
-        @for (member of members$ | async; track member) {
-          <mat-option [value]="member.id"
-            >{{ member.first_name }} {{ member.last_name }}</mat-option
-          >
-        }
-      </mat-autocomplete>
-      @if (
-        form.controls["previewMember"].touched &&
-        form.controls["previewMember"].invalid
-      ) {
-        <mat-error>
-          @if (form.controls["previewMember"].errors!["required"]) {
-            <span>This field is mandatory</span>
-          }
-          @if (form.controls["previewMember"].errors!["server"]) {
-            <span>{{ form.controls["previewMember"].errors!["server"] }}</span>
-          }
-        </mat-error>
-      }
-    </mat-form-field>
-    <mat-checkbox matInput formControlName="to_doing"
-      >Send to doing</mat-checkbox
-    >
-    <mat-checkbox matInput formControlName="to_paid">Send to paid</mat-checkbox>
-  </div>
-  <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">
-      Cancel
-    </button>
-    <div class="spacer"></div>
-    <mat-slide-toggle formControlName="previewMode"
-      >Preview mode</mat-slide-toggle
-    >
-    @if (form.controls["previewMode"].value) {
-      <button
-        mat-button
-        color="primary"
-        type="button"
-        [disabled]="form.invalid || !form.touched"
-        (click)="preview()"
-      >
-        Preview
+    <p class="budget-name">{{ data.budget.label }}</p>
+    <p>
+      Les e-mails seront créés dans une campagne. Leur envoi se fera ensuite
+      depuis la liste des campagnes.
+    </p>
+    @if (loading) {
+      <p role="status">Chargement des modèles et des destinataires…</p>
+    }
+    @if (loadError) {
+      <p role="alert" class="error-message">{{ loadError }}</p>
+      <button mat-stroked-button type="button" (click)="load()">
+        Réessayer
       </button>
     }
-    @if (!form.controls["previewMode"].value) {
+    @if (ready) {
+      <section>
+        <h2>Message</h2>
+        <mat-form-field class="full-width"
+          ><mat-label>Modèle d’e-mail</mat-label
+          ><mat-select formControlName="template" required>
+            @for (template of templates; track template.id) {
+              <mat-option [value]="template.id">{{
+                template.label
+              }}</mat-option>
+            }
+          </mat-select>
+          @if (
+            form.controls.template.touched && form.controls.template.invalid
+          ) {
+            <mat-error>Choisis un modèle dans la liste.</mat-error>
+          }
+        </mat-form-field>
+        @if (!templates.length) {
+          <p role="status">
+            Aucun modèle disponible. Crée un modèle dans E-mails > Modèles, puis
+            rouvre cette fenêtre.
+          </p>
+        }
+      </section>
+      <section>
+        <h2>Destinataires</h2>
+        <button
+          mat-button
+          type="button"
+          (click)="load()"
+          [disabled]="previewing || creating || form.controls.data.invalid"
+        >
+          Actualiser les destinataires
+        </button>
+        <p>Les lots réglés à moins de la moitié sont inclus.</p>
+        <div class="recipient-options">
+          <mat-checkbox formControlName="to_doing"
+            >Inclure les lots réglés au moins à moitié, mais non
+            soldés</mat-checkbox
+          >
+          <mat-checkbox formControlName="to_paid"
+            >Inclure les lots soldés ou avec un trop-perçu</mat-checkbox
+          >
+        </div>
+        <p role="status" class="recipient-count">
+          {{ recipients.length }}
+          {{ recipients.length === 1 ? 'destinataire' : 'destinataires' }} avec
+          une adresse e-mail. Un message par membre, avec ses lots inclus.
+        </p>
+        @if (missingEmailCount) {
+          <p>
+            {{ missingEmailCount }}
+            {{
+              missingEmailCount === 1
+                ? 'membre sans adresse e-mail ne sera pas inclus'
+                : 'membres sans adresse e-mail ne seront pas inclus'
+            }}. Complète leur adresse dans Membres si nécessaire.
+          </p>
+        }
+        @if (!recipients.length) {
+          <p>
+            Aucun destinataire pour ces critères. Modifie les critères ou
+            vérifie les adresses e-mail des membres.
+          </p>
+        }
+      </section>
+      <section>
+        <h2>Personnalisation</h2>
+        <p>
+          Le membre, le budget et ses cotisations sont renseignés
+          automatiquement. Ajoute seulement les valeurs supplémentaires
+          demandées par ton modèle.
+        </p>
+        <app-template-data-editor
+          formControlName="data"
+        ></app-template-data-editor>
+      </section>
+      <section>
+        <h2>Aperçu</h2>
+        <mat-form-field class="full-width"
+          ><mat-label>Destinataire de l’aperçu</mat-label
+          ><mat-select formControlName="previewMember" required>
+            @for (recipient of recipients; track recipient.member.id) {
+              <mat-option [value]="recipient.member.id"
+                >{{ recipient.name }} — {{ recipient.member.email }}</mat-option
+              >
+            }
+          </mat-select></mat-form-field
+        >
+        @if (selectedRecipient; as recipient) {
+          <p>Lots inclus : {{ recipient.lots.join(', ') }}.</p>
+        }
+        <p>Prévisualise un destinataire avant de créer les e-mails.</p>
+        @if (previewing) {
+          <p role="status">Calcul de l’aperçu…</p>
+        }
+        @if (previewResult) {
+          <div class="preview-block">
+            @if (!previewCurrent && !previewing) {
+              <p role="status">
+                Cet aperçu n’est plus à jour. Relance-le après tes
+                modifications.
+              </p>
+            }
+            <h3>{{ previewResult.subject }}</h3>
+            <p>
+              Destinataire : {{ previewRecipient?.name }} —
+              {{ previewRecipient?.member?.email }}
+            </p>
+            <div
+              class="preview-message"
+              tabindex="0"
+              role="region"
+              aria-label="Corps de l’aperçu du message"
+              [innerHTML]="previewResult.message"
+            ></div>
+          </div>
+        }
+      </section>
+    }
+    @if (error) {
+      <p role="alert" class="error-message">{{ error }}</p>
+    }
+  </div>
+  <div mat-dialog-actions class="form-actions">
+    <button mat-button type="button" (click)="cancel()" [disabled]="creating">
+      Annuler
+    </button>
+    <span class="spacer"></span>
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="preview()"
+      [disabled]="!canPreview"
+    >
+      {{ previewing ? 'Calcul de l’aperçu…' : 'Prévisualiser' }}
+    </button>
+    @if (allowedToCreate) {
       <button
-        mat-button
+        mat-flat-button
         color="primary"
         type="submit"
-        [disabled]="form.invalid || !form.touched"
+        [disabled]="!canPrepare"
       >
-        Submit
+        {{ creating ? 'Création…' : 'Créer les e-mails' }}
       </button>
     }
   </div>

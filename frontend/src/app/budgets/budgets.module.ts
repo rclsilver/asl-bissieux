@@ -21,6 +21,7 @@ import { ExpenseFormComponent } from './components/expense-form/expense-form.com
 import { PaymentListComponent } from './components/payment-list/payment-list.component';
 import { PaymentFormComponent } from './components/payment-form/payment-form.component';
 import { BudgetEmailFormComponent } from './components/budget-email-form/budget-email-form.component';
+import { TemplateDataEditorComponent } from '../shared/components/template-data-editor/template-data-editor.component';
 
 const material = [
   MatAutocompleteModule,
@@ -48,6 +49,7 @@ const material = [
   ],
   imports: [
     CommonModule,
+    TemplateDataEditorComponent,
     SharedModule,
     FormsModule,
     ReactiveFormsModule,

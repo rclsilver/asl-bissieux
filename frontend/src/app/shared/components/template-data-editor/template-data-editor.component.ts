@@ -1,9 +1,14 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  ElementRef,
   forwardRef,
   inject,
   OnDestroy,
+  QueryList,
+  ViewChild,
+  ViewChildren,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -59,6 +64,11 @@ export class TemplateDataEditorComponent
   implements ControlValueAccessor, Validator, OnDestroy
 {
   private readonly builder = inject(FormBuilder);
+  private readonly detector = inject(ChangeDetectorRef);
+  @ViewChildren('fieldName', { read: ElementRef })
+  private fieldNames!: QueryList<ElementRef<HTMLInputElement>>;
+  @ViewChild('addValue', { read: ElementRef })
+  private addButton!: ElementRef<HTMLButtonElement>;
   private readonly destroyed$ = new Subject<void>();
   readonly fields = new FormArray<FormGroup>([]);
   readonly form = this.builder.group({ fields: this.fields });
@@ -118,13 +128,18 @@ export class TemplateDataEditorComponent
     );
     this.emitFields();
     this.touch();
+    this.detector.detectChanges();
+    this.fieldNames.last?.nativeElement.focus();
   }
 
   removeField(index: number) {
-    if (this.disabled) return;
+    if (this.disabled || index < 0 || index >= this.fields.length) return;
     this.fields.removeAt(index, { emitEvent: false });
     this.emitFields();
     this.touch();
+    this.detector.detectChanges();
+    const next = this.fieldNames.get(Math.min(index, this.fields.length - 1));
+    (next?.nativeElement ?? this.addButton.nativeElement).focus();
   }
 
   toggleMode() {

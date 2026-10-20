@@ -96,6 +96,24 @@ describe('Template data editor', () => {
     expect(JSON.parse(control.value).member.first_name).toBe('Alice');
   });
 
+  it('keeps keyboard focus in the editor when adding or deleting values', () => {
+    const { fixture, editor } = setup('{"reference":"budget 2026"}');
+    const add = fixture.nativeElement.querySelector(
+      'button[aria-label="Ajouter une valeur"]'
+    ) as HTMLButtonElement;
+    add.focus();
+    add.click();
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelectorAll('input[formControlName="name"]')[1]
+    );
+    editor.removeField(1);
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('input[formControlName="name"]')
+    );
+    editor.removeField(0);
+    expect(document.activeElement).toBe(add);
+  });
+
   it('validates advanced JSON, keeps invalid input editable and can return to guided fields', () => {
     const { fixture, editor, control } = setup();
     editor.toggleMode();

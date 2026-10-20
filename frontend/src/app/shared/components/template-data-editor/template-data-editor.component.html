@@ -4,6 +4,7 @@
   </button>
   @if (!advanced) {
     <button
+      #addValue
       mat-mini-fab
       color="primary"
       class="add-value"
@@ -41,6 +42,7 @@
           <mat-form-field class="value-name"
             ><mat-label>Nom de la valeur</mat-label
             ><input
+              #fieldName
               matInput
               formControlName="name"
               placeholder="ex. date_limite"

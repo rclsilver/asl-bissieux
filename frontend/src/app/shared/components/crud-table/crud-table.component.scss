@@ -12,6 +12,11 @@ mat-toolbar {
   gap: 0.5rem 0.25rem;
   padding-block: 0.5rem;
 
+  .spacer {
+    flex: 0 0 0;
+    margin-inline-start: auto;
+  }
+
   > button,
   > mat-progress-spinner {
     flex-shrink: 0;

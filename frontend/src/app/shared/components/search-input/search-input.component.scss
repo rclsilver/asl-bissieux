@@ -1,12 +1,28 @@
+@use '@angular/material' as mat;
+
 :host {
-  display: block;
-  flex: 0 0 auto;
-  min-inline-size: 0;
-  max-inline-size: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  // Reserve the same usable search area while folded and expanded.
+  flex: 1 1 8rem;
+  min-inline-size: min(8rem, 100%);
+  max-inline-size: 16rem;
+}
+
+:host:empty {
+  display: none;
 }
 
 mat-form-field {
-  inline-size: 16rem;
-  max-inline-size: 100%;
+  inline-size: 100%;
   min-inline-size: 0;
+  @include mat.form-field-overrides(
+    (
+      container-height: 48px,
+      container-vertical-padding: 12px,
+      filled-with-label-container-padding-top: 20px,
+      filled-with-label-container-padding-bottom: 4px,
+    )
+  );
 }

@@ -35,6 +35,17 @@ export type APISchemas = {
     amount?: number;
     label?: string;
   };
+  CreateFinancialEntryInput: {
+    /* Format: double */
+    amount?: number;
+    date?: string;
+    id?: string;
+    kind?: string;
+    reason?: string;
+    reference?: string;
+    reverses_id?: string;
+    version?: string;
+  };
   CreateMemberInput: {
     address?: string;
     email?: string;
@@ -101,15 +112,23 @@ export type APISchemas = {
   };
   ModelsBudgetResult: {
     /* Format: double */
+    adjustment?: number;
+    /* Format: double */
     amount?: number;
+    /* Format: double */
+    called?: number;
     /* Format: date-time */
     created_at?: string;
     draft?: boolean;
+    /* Format: double */
+    gross_paid?: number;
     id?: string;
     label?: string;
     /* Format: double */
     paid?: number;
     preview?: APISchemas['ModelsBudgetPreview'];
+    /* Format: double */
+    refunded?: number;
     /* Format: date-time */
     updated_at?: string;
   };
@@ -129,16 +148,24 @@ export type APISchemas = {
   };
   ModelsCotisationResult: {
     /* Format: double */
+    adjustment?: number;
+    /* Format: double */
     amount?: number;
     budget?: APISchemas['ModelsBudget'];
     budget_id?: string;
     /* Format: date-time */
     created_at?: string;
+    /* Format: double */
+    gross_paid?: number;
     id?: string;
+    /* Format: double */
+    initial_amount?: number;
     /* Format: double */
     paid?: number;
     /* Format: int32 */
     payment_state?: number;
+    /* Format: double */
+    refunded?: number;
     /* Format: double */
     remaining?: number;
     unit?: APISchemas['ModelsUnit'];
@@ -247,6 +274,35 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsFinancialEntry: {
+    /* Format: double */
+    amount?: number;
+    cotisation_id?: string;
+    /* Format: date-time */
+    created_at?: string;
+    /* Format: date-time */
+    date?: string;
+    id?: string;
+    kind?: string;
+    reason?: string;
+    reference?: string;
+    reverses_id?: null | string;
+    user?: APISchemas['AuthUser'];
+    user_id?: string;
+  };
+  ModelsFinancialPreview: {
+    /* Format: double */
+    called_after?: number;
+    /* Format: double */
+    called_before?: number;
+    /* Format: double */
+    paid_after?: number;
+    /* Format: double */
+    paid_before?: number;
+    /* Format: double */
+    remaining_after?: number;
+    version?: string;
+  };
   ModelsMember: {
     address?: string;
     /* Format: date-time */
@@ -297,6 +353,17 @@ export type APISchemas = {
     template_id?: string;
   };
   PreviewEmailTemplateInput: { data?: { [key: string]: unknown } };
+  PreviewFinancialEntryInput: {
+    /* Format: double */
+    amount?: number;
+    date?: string;
+    id?: string;
+    kind?: string;
+    reason?: string;
+    reference?: string;
+    reverses_id?: string;
+    version?: string;
+  };
   SendBudgetEmailInput: {
     data?: { [key: string]: unknown };
     send_to_doing?: boolean;
@@ -426,6 +493,30 @@ export type APIEndpoints = {
   '/api/budget/{budget_id}/cotisations': {
     responses: { get: Array<APISchemas['ModelsCotisationResult']> };
     requests: { method?: 'get'; urlParams: { budget_id: string } };
+  };
+  '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries': {
+    responses: {
+      get: Array<APISchemas['ModelsFinancialEntry']>;
+      post: APISchemas['ModelsFinancialEntry'];
+    };
+    requests:
+      | {
+          method?: 'get';
+          urlParams: { budget_id: string; cotisation_id: string };
+        }
+      | {
+          method: 'post';
+          urlParams: { budget_id: string; cotisation_id: string };
+          body: APISchemas['CreateFinancialEntryInput'];
+        };
+  };
+  '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries/preview': {
+    responses: { post: APISchemas['ModelsFinancialPreview'] };
+    requests: {
+      method: 'post';
+      urlParams: { budget_id: string; cotisation_id: string };
+      body: APISchemas['PreviewFinancialEntryInput'];
+    };
   };
   '/api/budget/{budget_id}/cotisations/{cotisation_id}/payments': {
     responses: {

@@ -89,13 +89,18 @@ func RequireAdministrator() func(c *gin.Context) {
 	}
 }
 
-func RequireAction(action string) func(c *gin.Context) {
+func RegisterActions(names ...string) {
 	actionsMut.Lock()
 	defer actionsMut.Unlock()
-
-	if !slices.Contains(actions, action) {
-		actions = append(actions, action)
+	for _, name := range names {
+		if !slices.Contains(actions, name) {
+			actions = append(actions, name)
+		}
 	}
+}
+
+func RequireAction(action string) func(c *gin.Context) {
+	RegisterActions(action)
 
 	return func(c *gin.Context) {
 		u, err := GetCurrentUser(c)

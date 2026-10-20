@@ -39,6 +39,7 @@ func (s *httpServer) WithAuthProvider(provider auth.AuthProvider) *httpServer {
 }
 
 func (s *httpServer) Build() error {
+	_auth.RegisterActions(handlers.CreateRefundAction, handlers.CreateAdjustmentAction)
 	tonic.SetBindHook(func(c *gin.Context, v interface{}) error {
 		val := reflect.ValueOf(v)
 		typ := reflect.TypeOf(v).Elem()
@@ -272,6 +273,9 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListCotisations, http.StatusOK))
 
+		budgetGroup.GET(":budget_id/cotisations/:cotisation_id/entries", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListFinancialEntries, http.StatusOK))
+		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/entries/preview", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.PreviewFinancialEntry, http.StatusOK))
+		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/entries", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.CreateFinancialEntry, http.StatusCreated))
 		budgetGroup.GET(":budget_id/cotisations/:cotisation_id/payments", []fizz.OperationOption{
 			fizz.Summary("Get the payments"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),

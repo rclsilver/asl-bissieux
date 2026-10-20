@@ -21,9 +21,13 @@ type Budget struct {
 type BudgetResult struct {
 	Budget
 
-	Amount  money.Amount   `json:"amount"`
-	Paid    money.Amount   `json:"paid"`
-	Preview *BudgetPreview `json:"preview,omitempty" gorm:"-"`
+	Amount     money.Amount   `json:"amount"`
+	Called     money.Amount   `json:"called"`
+	Adjustment money.Amount   `json:"adjustment"`
+	Refunded   money.Amount   `json:"refunded"`
+	GrossPaid  money.Amount   `json:"gross_paid"`
+	Paid       money.Amount   `json:"paid"`
+	Preview    *BudgetPreview `json:"preview,omitempty" gorm:"-"`
 }
 
 // Informative rates are shown to six decimal places. Actual unit cotisations
@@ -93,9 +97,13 @@ type Cotisation struct {
 type CotisationResult struct {
 	Cotisation
 
-	Paid         money.Amount `json:"paid"`
-	Remaining    money.Amount `json:"remaining" gorm:"-"`
-	PaymentState int          `json:"payment_state" gorm:"-"`
+	Paid          money.Amount `json:"paid"`
+	InitialAmount money.Amount `json:"initial_amount" gorm:"-"`
+	Adjustment    money.Amount `json:"adjustment"`
+	Refunded      money.Amount `json:"refunded"`
+	GrossPaid     money.Amount `json:"gross_paid" gorm:"-"`
+	Remaining     money.Amount `json:"remaining" gorm:"-"`
+	PaymentState  int          `json:"payment_state" gorm:"-"`
 }
 
 func NewCotisation(budgetID, unitID string, amount money.Amount) *Cotisation {

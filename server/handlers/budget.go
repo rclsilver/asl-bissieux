@@ -526,6 +526,9 @@ func CreatePayment(c *gin.Context, in *createPaymentIn) (*models.Payment, error)
 		return nil, db.Error
 	}
 	defer db.Rollback()
+	if err := controllers.LockFinancialBudget(db, in.BudgetID); err != nil {
+		return nil, err
+	}
 
 	var cotisation models.Cotisation
 	if err := db.Preload("Payments").Preload("Unit").Where("id = ? AND budget_id = ?", in.CotisationID, in.BudgetID).First(&cotisation).Error; err != nil {
@@ -596,6 +599,9 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		return nil, db.Error
 	}
 	defer db.Rollback()
+	if err := controllers.LockFinancialBudget(db, in.BudgetID); err != nil {
+		return nil, err
+	}
 
 	var payment models.Payment
 	if err := db.
@@ -608,6 +614,9 @@ func UpdatePayment(c *gin.Context, in *updatePaymentIn) (*models.Payment, error)
 		return nil, err
 	}
 
+	if err := controllers.GuardPaymentReduction(db, in.CotisationID, money.Of(payment.Amount.Sub(in.Amount.Decimal))); err != nil {
+		return nil, err
+	}
 	payment.Date = in.Date
 	payment.Amount = in.Amount
 	payment.Comment = in.Comment
@@ -656,6 +665,9 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 		return db.Error
 	}
 	defer db.Rollback()
+	if err := controllers.LockFinancialBudget(db, in.BudgetID); err != nil {
+		return err
+	}
 
 	var payment models.Payment
 	if err := db.
@@ -668,6 +680,9 @@ func DeletePayment(c *gin.Context, in *deletePaymentIn) error {
 		return err
 	}
 
+	if err := controllers.GuardPaymentReduction(db, in.CotisationID, payment.Amount); err != nil {
+		return err
+	}
 	if err := db.Delete(&payment).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to delete payment")
 		return err

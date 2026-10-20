@@ -36,6 +36,9 @@ func ListBudgets(tx *gorm.DB) ([]*models.BudgetResult, error) {
 		return nil, err
 	}
 
+	if err := applyBudgetFinancialTotals(tx, result); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -69,6 +72,9 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 		return nil, err
 	}
 
+	if err := applyBudgetFinancialTotals(tx, []*models.BudgetResult{&row}); err != nil {
+		return nil, err
+	}
 	if row.Draft {
 		var units []*models.Unit
 		if err := tx.Find(&units).Error; err != nil {
@@ -138,12 +144,17 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 	if err := tx.
 		Model(&models.Cotisation{}).
 		Preload("Unit.Members").
-		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid").
+		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid, COALESCE(entries.adjustment,0) AS adjustment, COALESCE(entries.refunded,0) AS refunded").
+		Joins("LEFT JOIN (SELECT cotisation_id, SUM(CASE WHEN kind = 'adjustment' THEN amount ELSE 0 END) adjustment, SUM(CASE WHEN kind = 'refund' THEN amount ELSE 0 END) refunded FROM financial_entry GROUP BY cotisation_id) entries ON entries.cotisation_id = cotisation.id").
 		Joins("LEFT JOIN (?) AS payments ON payments.cotisation_id = cotisation.id", paymentsAmounts).
 		Find(&result, "cotisation.budget_id = ?", budget.ID).Error; err != nil {
 		return nil, err
 	}
 	for _, row := range result {
+		row.InitialAmount = row.Amount
+		row.Amount = row.Amount.Add(row.Adjustment)
+		row.GrossPaid = row.Paid
+		row.Paid = money.Of(row.Paid.Sub(row.Refunded.Decimal))
 		row.Remaining = money.Of(row.Amount.Sub(row.Paid.Decimal))
 		switch row.Paid.Cmp(row.Amount) {
 		case 1:

@@ -39,7 +39,19 @@ Les valeurs saisies pour une campagne sont ajoutées à la racine du contexte. E
 
 Le moteur existant permet à ces données de remplacer une racine automatique portant le même nom ; l’interface ne doit pas supprimer silencieusement une telle valeur lors de la lecture d’un ancien paramétrage.
 
+## Choix et insertion dans un modèle
+
+Dans **E-mails > Modèles**, le formulaire de création ou modification propose **Insérer une variable**. Le catalogue présente les noms métier, le sens et un exemple fictif de chaque donnée. L’insertion remplace la sélection ou s’effectue au curseur mémorisé, séparément pour l’objet et le corps. Sans sélection préalable, elle ajoute l’expression à la fin du champ choisi. Le focus et le curseur reviennent après l’expression insérée.
+
+Les données d’un lot et les dépenses sont proposées sous forme de blocs `range` complets, avec un contexte correct à l’intérieur du bloc. Ces blocs de plusieurs lignes s’insèrent dans le corps. Les valeurs scalaires peuvent aussi s’insérer dans l’objet. L’écriture manuelle Go/Sprig reste libre : aucun ancien modèle n’est réécrit à l’ouverture et les pièces jointes se gèrent toujours depuis leur action dédiée.
+
+Le choix **Valeur supplémentaire à renseigner** insère une expression comme `{{.date_limite}}`. Cette aide accepte les noms simples composés de lettres ASCII, chiffres et tirets bas, sans chiffre initial, et refuse les racines automatiques pour éviter leur remplacement accidentel. Cette restriction porte uniquement sur l’aide d’insertion ; les expressions et données avancées existantes restent acceptées. La valeur doit ensuite être fournie dans la personnalisation de la campagne.
+
+Le catalogue et son exemple fictif se trouvent dans `frontend/src/app/emails/template-variables.json`. Un test Go exécute chaque expression avec le moteur serveur et compare son résultat à l’exemple annoncé, y compris les blocs répétés. Le téléphone fictif est vide pour représenter une propriété facultative.
+
 La prévisualisation générique d’un modèle (`email/templates/:id/preview`) reçoit uniquement les données fournies par l’appelant. Elle n’ajoute pas automatiquement le contexte d’un budget : ce contexte appartient à `budget/:id/email-preview` et à la préparation de campagnes.
+
+Depuis la liste des modèles, l’aperçu teste la version **enregistrée**. Il propose un exemple fictif de budget, modifiable en JSON, ou des données d’essai personnalisées avec l’éditeur de valeurs. Les deux saisies sont conservées séparément lors d’un changement de source. Une saisie invalide bloque ce changement jusqu’à correction pour ne pas perdre une ligne incomplète. Les membres réels ne sont pas consultés par cet aperçu. Les résultats sont calculés par le serveur, affichés dans la même fenêtre et marqués périmés après modification des données ; une réponse devenue périmée pendant son calcul est ignorée. Cet essai ne crée aucune campagne.
 
 ## Préparation et envoi
 

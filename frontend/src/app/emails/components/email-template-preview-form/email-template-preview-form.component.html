@@ -1,38 +1,89 @@
-<h1 mat-dialog-title>Preview of the template {{ data.template.label }}</h1>
-<form [formGroup]="form" (submit)="submit()">
+<h1 mat-dialog-title>Aperçu du modèle enregistré</h1>
+<form [formGroup]="form" (ngSubmit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>Data</mat-label>
-      <textarea
-        matInput
-        rows="15"
-        formControlName="data"
-        [required]="true"
-      ></textarea>
-      @if (form.controls["data"].touched && form.controls["data"].invalid) {
-        <mat-error>
-          @if (form.controls["data"].errors!["required"]) {
-            <span>This field is mandatory</span>
-          }
-          @if (form.controls["data"].errors!["server"]) {
-            <span>{{ form.controls["data"].errors!["server"] }}</span>
-          }
-        </mat-error>
-      }
+    <p class="model-name">{{ data.template.label }}</p>
+    <p>
+      Cet essai utilise la dernière version enregistrée du modèle. Il ne crée
+      aucun e-mail et n’envoie aucun message.
+    </p>
+    <mat-form-field subscriptSizing="dynamic" class="full-width">
+      <mat-label>Données pour l’aperçu</mat-label>
+      <mat-select formControlName="source">
+        <mat-option value="sample">Exemple fictif de budget</mat-option>
+        <mat-option value="custom">Mes données d’essai</mat-option>
+      </mat-select>
     </mat-form-field>
+    @if (form.controls.source.value === 'sample') {
+      <p>
+        L’exemple de départ représente Camille Exemple, deux lots et 250 € de
+        cotisations incluses. Ces données sont fictives ; aucun membre réel
+        n’est consulté.
+      </p>
+      <details>
+        <summary>Voir ou adapter les données fictives</summary>
+        <p>
+          Les objets et listes utilisent le mode JSON. Tu peux ajouter les
+          valeurs supplémentaires attendues par ton modèle.
+        </p>
+        <app-template-data-editor
+          [formControl]="form.controls.sampleData"
+        ></app-template-data-editor>
+      </details>
+    } @else {
+      <p>
+        Fournis toutes les données attendues par le modèle. Le membre, le budget
+        et les cotisations ne sont pas ajoutés automatiquement ici. Le mode JSON
+        permet de renseigner des objets et des listes.
+      </p>
+      <app-template-data-editor
+        [formControl]="form.controls.customData"
+      ></app-template-data-editor>
+    }
+    @if (activeData.invalid) {
+      <p role="status">
+        Corrige les données d’essai avant de changer de source ou de
+        prévisualiser.
+      </p>
+    }
+    <p>
+      Pour un aperçu avec un membre et ses cotisations réels, utilise Préparer
+      les e-mails depuis un budget.
+    </p>
+    @if (previewing) {
+      <p role="status">Calcul de l’aperçu…</p>
+    }
+    @if (error) {
+      <p role="alert">{{ error }}</p>
+    }
+    @if (result) {
+      <section class="preview-block" aria-label="Résultat de l’aperçu">
+        @if (!previewCurrent && !previewing) {
+          <p role="status">
+            Cet aperçu n’est plus à jour. Relance-le après tes modifications.
+          </p>
+        }
+        <p>{{ resultSource }}</p>
+        <h2>{{ result.subject }}</h2>
+        <div
+          class="preview-message"
+          role="region"
+          aria-label="Corps de l’aperçu du message"
+          tabindex="0"
+          [innerHTML]="result.message"
+        ></div>
+      </section>
+    }
   </div>
-  <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="close()">
-      Close
-    </button>
-    <div class="spacer"></div>
+  <div mat-dialog-actions class="form-actions">
+    <button mat-button type="button" (click)="close()">Fermer</button>
+    <span class="spacer"></span>
     <button
-      mat-button
+      mat-flat-button
       color="primary"
       type="submit"
-      [disabled]="form.invalid || !form.touched"
+      [disabled]="!canPreview"
     >
-      Submit
+      {{ previewing ? 'Calcul de l’aperçu…' : 'Prévisualiser' }}
     </button>
   </div>
 </form>

@@ -16,7 +16,6 @@ import { NotificationDialogLevel } from 'src/app/shared/components/notification-
 import { Column, DateRender } from 'src/app/shared/models/column.model';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { EmailCampaignDataSource } from '../../datasources/campaign.datasource';
-import { emailStateLabel } from '../../email-state';
 
 @Component({
   selector: 'app-campaign-email-list',
@@ -44,28 +43,19 @@ export class EmailCampaignListComponent {
       canSort: true,
       render: DateRender(),
     }),
-    new Column<APISchemas['ModelsEmail'][] | undefined>('emails', {
+    new Column<APISchemas['ModelsEmailCounts'] | undefined>('counts', {
       label: 'E-mails',
-      render: (emails) => {
-        var byState = (emails ?? [])
-          .map((email) => ({
-            [email.state!]: 1,
-          }))
-          .reduce((acc, val) => {
-            Object.keys(val).forEach((key) => {
-              if (acc[key]) {
-                acc[key] += val[key];
-              } else {
-                acc[key] = 1;
-              }
-            });
-
-            return acc;
-          }, {});
-
-        return Object.keys(byState)
-          .sort((a, b) => (a < b ? -1 : 1))
-          .map((key) => `${byState[key]} ${emailStateLabel(key)}`)
+      render: (counts) => {
+        if (!counts?.total) return 'Aucun e-mail';
+        return [
+          [counts.successful, counts.successful === 1 ? 'envoyé' : 'envoyés'],
+          [counts.waiting, 'en attente'],
+          [counts.sending, 'en cours'],
+          [counts.error, 'en erreur'],
+          [counts.unknown, 'à vérifier'],
+        ]
+          .filter(([count]) => Number(count) > 0)
+          .map(([count, label]) => `${count} ${label}`)
           .join(' / ');
       },
     }),
@@ -73,17 +63,17 @@ export class EmailCampaignListComponent {
   readonly datasource = new EmailCampaignDataSource();
 
   @ViewChild(CrudTableComponent, { static: true })
-  table!: CrudTableComponent<APISchemas['ModelsEmail']>;
+  table!: CrudTableComponent<APISchemas['ModelsEmailCampaignSummary']>;
 
   refresh() {
     this.datasource.load();
   }
 
-  canDelete(_: APISchemas['ModelsEmail']) {
+  canDelete(_: APISchemas['ModelsEmailCampaignSummary']) {
     return this._auth.allowed$('email.DeleteEmailCampaign');
   }
 
-  delete(campaign: APISchemas['ModelsEmailCampaign']) {
+  delete(campaign: APISchemas['ModelsEmailCampaignSummary']) {
     this._notifications
       .showConfirm({
         title: 'Supprimer une campagne',

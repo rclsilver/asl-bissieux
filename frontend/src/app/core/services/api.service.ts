@@ -1,7 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
+import {
+  APIPaths,
+  APIRequests,
+  APIResponse,
+  APISchemas,
+  APIRequest,
+} from '../api/openapi';
 import { catchError, filter, map, tap, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpParams,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
@@ -507,10 +518,13 @@ export class ApiService {
     });
   }
 
-  listEmailCampaigns() {
+  listEmailCampaigns(
+    query: APIRequest<'/api/email/campaigns', 'get'>['query'] = {}
+  ) {
     return this.request('/api/email/campaigns', {
       method: 'get',
-    }).pipe(map((r) => r ?? []));
+      query,
+    });
   }
 
   createEmailCampaign(payload: APISchemas['CreateEmailCampaignInput']) {
@@ -588,9 +602,12 @@ export class ApiService {
     return (error: APIError) =>
       this._notifications.showDialog({
         title: 'Error',
-        message: error.status >= 400 && error.status < 500 && typeof error.data?.message === 'string'
-          ? `${message}: ${error.data.message}`
-          : `${message}: HTTP ${error.status} ${error.statusText}`,
+        message:
+          error.status >= 400 &&
+          error.status < 500 &&
+          typeof error.data?.message === 'string'
+            ? `${message}: ${error.data.message}`
+            : `${message}: HTTP ${error.status} ${error.statusText}`,
         level: NotificationDialogLevel.Error,
       });
   }
@@ -612,7 +629,8 @@ export class ApiService {
 
     if ('query' in options && options.query) {
       for (const [name, value] of Object.entries(options.query)) {
-        params.set(
+        if (value === undefined || value === null) continue;
+        params = params.set(
           name,
           typeof value === 'object'
             ? JSON.stringify(value)
@@ -638,11 +656,7 @@ export class ApiService {
 
     return new HttpRequest<Result>(
       (method ?? 'get').toUpperCase() as
-        | 'DELETE'
-        | 'GET'
-        | 'HEAD'
-        | 'JSONP'
-        | 'OPTIONS',
+        'DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS',
       uri,
       body,
       init
@@ -652,7 +666,7 @@ export class ApiService {
   private request<
     Path extends APIPaths,
     Options extends APIRequests<Path>,
-    Result extends APIResponse<Path, Options['method']>
+    Result extends APIResponse<Path, Options['method']>,
   >(path: Path, options?: Options) {
     options = (options ?? {}) as Options;
 

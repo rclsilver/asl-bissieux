@@ -173,6 +173,36 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsEmailCampaignPage: {
+    items?: Array<APISchemas['ModelsEmailCampaignSummary']>;
+    /* Format: int32 */
+    page?: number;
+    /* Format: int32 */
+    page_size?: number;
+    /* Format: int64 */
+    total?: number;
+  };
+  ModelsEmailCampaignSummary: {
+    counts?: APISchemas['ModelsEmailCounts'];
+    /* Format: date-time */
+    created_at?: string;
+    id?: string;
+    title?: string;
+  };
+  ModelsEmailCounts: {
+    /* Format: int64 */
+    error?: number;
+    /* Format: int64 */
+    sending?: number;
+    /* Format: int64 */
+    successful?: number;
+    /* Format: int64 */
+    total?: number;
+    /* Format: int64 */
+    unknown?: number;
+    /* Format: int64 */
+    waiting?: number;
+  };
   ModelsEmailTemplate: {
     attachments?: Array<APISchemas['ModelsAttachment']>;
     campaigns?: Array<APISchemas['ModelsEmailCampaign']>;
@@ -463,11 +493,22 @@ export type APIEndpoints = {
   };
   '/api/email/campaigns': {
     responses: {
-      get: Array<APISchemas['ModelsEmailCampaign']>;
+      get: APISchemas['ModelsEmailCampaignPage'];
       post: APISchemas['ModelsEmailCampaign'];
     };
     requests:
-      | { method?: 'get' }
+      | {
+          method?: 'get';
+          query?: {
+            direction?: string;
+            /* Format: int32 */
+            page?: number;
+            /* Format: int32 */
+            page_size?: number;
+            query?: string;
+            sort?: string;
+          };
+        }
       | { method: 'post'; body: APISchemas['CreateEmailCampaignInput'] };
   };
   '/api/email/campaigns/{campaign_id}': {

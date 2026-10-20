@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { MatSidenav } from '@angular/material/sidenav';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -12,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: false,
 })
 export class PageComponent {
+  mobileMenuOpen = false;
   readonly isHandset$ = this._breakpoints.observe(Breakpoints.Handset).pipe(
     map((result) => result.matches),
     shareReplay()
@@ -78,8 +78,8 @@ export class PageComponent {
     content.focus();
   }
 
-  closeMobileMenu(drawer: MatSidenav, handset: boolean | null) {
-    if (handset) void drawer.close();
+  closeMobileMenu(handset: boolean) {
+    if (handset) this.mobileMenuOpen = false;
   }
 
   logout() {

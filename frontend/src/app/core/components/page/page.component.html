@@ -12,7 +12,7 @@
       [attr.aria-label]="drawer.opened ? 'Fermer le menu' : 'Ouvrir le menu'"
       [attr.aria-expanded]="drawer.opened"
       aria-controls="primary-navigation"
-      (click)="drawer.toggle()"
+      (click)="mobileMenuOpen = !mobileMenuOpen"
     >
       <mat-icon aria-hidden="true">menu</mat-icon>
     </button>
@@ -54,7 +54,10 @@
     class="sidenav"
     [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
     [mode]="(isHandset$ | async) ? 'over' : 'side'"
-    [opened]="(active$ | async) && (isHandset$ | async) === false"
+    [opened]="
+      (active$ | async) && ((isHandset$ | async) === false || mobileMenuOpen)
+    "
+    (closedStart)="mobileMenuOpen = false"
     [attr.aria-modal]="(isHandset$ | async) && drawer.opened ? true : null"
   >
     <mat-nav-list id="left-menu">
@@ -65,7 +68,7 @@
             [routerLink]="link.path"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
-            (click)="closeMobileMenu(drawer, drawer.mode === 'over')"
+            (click)="closeMobileMenu(drawer.mode === 'over')"
           >
             <mat-icon matListItemIcon aria-hidden="true">{{
               link.icon

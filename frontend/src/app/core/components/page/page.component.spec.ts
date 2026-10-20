@@ -1,5 +1,6 @@
 import {
   HTTP_INTERCEPTORS,
+  HttpClient,
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
@@ -254,6 +255,66 @@ describe('OIDC sign-in page', () => {
     expect(drawer.opened).toBe(false);
     expect(members.getAttribute('aria-current')).toBe('page');
     expect(menu.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes an open mobile drawer when a protected request expires the session', async () => {
+    handset.next({ matches: true, breakpoints: {} });
+    const fixture = authenticated();
+    await fixture.whenStable();
+    fixture.nativeElement
+      .querySelector('button[aria-controls="primary-navigation"]')
+      .click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const drawer = fixture.debugElement.query(By.directive(MatSidenav))
+      .componentInstance as MatSidenav;
+    expect(drawer.opened).toBe(true);
+
+    TestBed.inject(HttpClient)
+      .get('/api/budget')
+      .subscribe({ error: () => {} });
+    http
+      .expectOne('/api/budget')
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(drawer.opened).toBe(false);
+    expect(
+      fixture.nativeElement.querySelector('.sign-in')?.textContent
+    ).toContain('Continuer avec Google');
+    expect(
+      fixture.nativeElement.querySelector('[role="alert"]')?.textContent
+    ).toContain('Ta session a expiré');
+    expect(
+      fixture.nativeElement.querySelector(
+        'button[aria-controls="primary-navigation"]'
+      )
+    ).toBeNull();
+  });
+
+  it('synchronizes a dismissed mobile drawer so it can reopen', async () => {
+    handset.next({ matches: true, breakpoints: {} });
+    const fixture = authenticated();
+    await fixture.whenStable();
+    const menu = fixture.nativeElement.querySelector(
+      'button[aria-controls="primary-navigation"]'
+    ) as HTMLButtonElement;
+    menu.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const drawer = fixture.debugElement.query(By.directive(MatSidenav))
+      .componentInstance as MatSidenav;
+    expect(drawer.opened).toBe(true);
+    fixture.nativeElement.querySelector('.mat-drawer-backdrop').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(menu.getAttribute('aria-expanded')).toBe('false');
+    expect(drawer.opened).toBe(false);
+    menu.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(drawer.opened).toBe(true);
   });
 
   it('keeps desktop navigation open after selecting a destination', async () => {

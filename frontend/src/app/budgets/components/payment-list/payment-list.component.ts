@@ -1,5 +1,6 @@
 import {
   Component,
+  ViewChild,
   Inject,
   OnInit,
   inject,
@@ -12,6 +13,7 @@ import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { PaymentDataSource } from '../../datasources/payment.datasource';
 import { Column, DateRender } from 'src/app/shared/models/column.model';
+import { FinancialHistoryComponent } from '../financial-history/financial-history.component';
 import { PaymentFormComponent } from '../payment-form/payment-form.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -27,6 +29,10 @@ export class PaymentListComponent implements OnInit {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
   private readonly _notifications = inject(NotificationsService);
+
+  @ViewChild(FinancialHistoryComponent) history?: FinancialHistoryComponent;
+  loadError = false;
+  readonly data = this._data;
 
   readonly columns = [
     new Column('date', {
@@ -146,12 +152,19 @@ export class PaymentListComponent implements OnInit {
   }
 
   loadBudget() {
-    this._api
-      .getBudget(this._data.budgetId)
-      .subscribe((budget) => this._budget$.next(budget));
+    this._api.getBudget(this._data.budgetId).subscribe({
+      next: (budget) => {
+        this.loadError = false;
+        this._budget$.next(budget);
+      },
+      error: () => {
+        this.loadError = true;
+      },
+    });
   }
 
   refresh() {
+    this.history?.load();
     this.payments$.pipe(take(1)).subscribe((ds) => {
       if (ds) {
         ds.load();

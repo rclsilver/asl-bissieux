@@ -1,0 +1,288 @@
+<section aria-label="Situation de la cotisation">
+  @if (loading) {
+    <p role="status">Chargement de la situation…</p>
+  }
+  @if (loadError) {
+    <p role="alert">Impossible de charger la situation et son historique.</p>
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="load()"
+      [disabled]="loading || busy"
+    >
+      Réessayer
+    </button>
+  }
+  @if (!loading && !loadError && cotisation; as c) {
+    <div class="heading">
+      <div>
+        <h2>Lot {{ c.unit?.number }}</h2>
+        <p>{{ members() }}</p>
+      </div>
+      @if ((canPay$ | async) || (canRefund$ | async) || (canAdjust$ | async)) {
+        <button
+          mat-mini-fab
+          color="primary"
+          type="button"
+          [matMenuTriggerFor]="operations"
+          aria-label="Ajouter une opération"
+          matTooltip="Ajouter une opération"
+          [disabled]="busy || kind !== null"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
+        <mat-menu #operations="matMenu">
+          @if (canPay$ | async) {
+            <button mat-menu-item type="button" (click)="addPayment.emit()">
+              Ajouter un paiement
+            </button>
+          }
+          @if (canRefund$ | async) {
+            <button mat-menu-item type="button" (click)="start('refund')">
+              Enregistrer un remboursement
+            </button>
+          }
+          @if (canAdjust$ | async) {
+            <button mat-menu-item type="button" (click)="start('adjustment')">
+              Ajuster le montant appelé
+            </button>
+          }
+        </mat-menu>
+      }
+    </div>
+    <dl class="totals">
+      <div>
+        <dt>Appelé après ajustements</dt>
+        <dd>{{ amount(c.amount) }}</dd>
+      </div>
+      <div>
+        <dt>Encaissé net</dt>
+        <dd>{{ amount(c.paid) }}</dd>
+      </div>
+      <div>
+        <dt>{{ (c.remaining ?? 0) < 0 ? 'À rembourser' : 'À payer' }}</dt>
+        <dd>
+          {{
+            amount((c.remaining ?? 0) < 0 ? -(c.remaining ?? 0) : c.remaining)
+          }}
+        </dd>
+      </div>
+    </dl>
+    <p>
+      Appel initial : {{ amount(c.initial_amount) }} · Ajustements :
+      {{ amount(c.adjustment) }} · Paiements : {{ amount(c.gross_paid) }} ·
+      Remboursé net : {{ amount(c.refunded) }}
+    </p>
+  }
+  @if (kind) {
+    <form [formGroup]="form" (ngSubmit)="review()" class="operation">
+      <h3 #operationTitle tabindex="-1">
+        {{
+          reversal
+            ? 'Annuler une opération par contre-écriture'
+            : kind === 'refund'
+              ? 'Enregistrer un remboursement déjà effectué'
+              : 'Ajuster le montant appelé'
+        }}
+      </h3>
+      <p>
+        {{
+          kind === 'refund'
+            ? 'Cette saisie corrige l’encaissé net. Aucun virement bancaire n’est déclenché.'
+            : 'L’appel initial est conservé. Cet ajustement modifie le montant appelé effectif du lot.'
+        }}
+      </p>
+      @if (reversal) {
+        <p>
+          Opération d’origine : {{ amount(reversal.amount) }} du
+          {{ reversal.date | date: 'dd/MM/yyyy' : 'UTC' }} —
+          {{ reversal.reason }}. La contre-écriture annule son effet comptable,
+          sans mouvement bancaire.
+        </p>
+      }
+      <fieldset [disabled]="busy">
+        <legend class="visually-hidden">Détails de l’opération</legend>
+        @if (!reversal) {
+          @if (kind === 'adjustment') {
+            <mat-form-field subscriptSizing="dynamic"
+              ><mat-label>Sens de l’ajustement</mat-label
+              ><mat-select formControlName="direction"
+                ><mat-option value="increase">Supplément à appeler</mat-option
+                ><mat-option value="decrease"
+                  >Réduction de l’appel</mat-option
+                ></mat-select
+              ></mat-form-field
+            >
+          }
+          <mat-form-field subscriptSizing="dynamic"
+            ><mat-label>Montant en euros</mat-label
+            ><input
+              matInput
+              type="number"
+              min="0.01"
+              step="0.01"
+              formControlName="amount"
+              required
+            />
+            @if (form.controls.amount.invalid) {
+              <mat-error
+                >Montant positif, avec au plus deux décimales.</mat-error
+              >
+            }
+          </mat-form-field>
+        }
+        <mat-form-field subscriptSizing="dynamic"
+          ><mat-label>Date de l’opération</mat-label
+          ><input
+            matInput
+            type="date"
+            formControlName="date"
+            required
+          /><mat-error>Indique une date valide.</mat-error></mat-form-field
+        >
+        <mat-form-field subscriptSizing="dynamic"
+          ><mat-label>Motif</mat-label
+          ><textarea
+            matInput
+            formControlName="reason"
+            maxlength="1000"
+            required
+          ></textarea
+          ><mat-error
+            >Indique un motif (1 000 caractères maximum).</mat-error
+          ></mat-form-field
+        >
+        <mat-form-field subscriptSizing="dynamic"
+          ><mat-label>Référence (facultative)</mat-label
+          ><input matInput formControlName="reference" maxlength="200"
+        /></mat-form-field>
+      </fieldset>
+      @if (error) {
+        <p role="alert">{{ error }}</p>
+      }
+      @if (preview; as p) {
+        <section
+          class="effect"
+          aria-label="Effet à confirmer"
+          aria-live="polite"
+        >
+          <h4 #effectTitle tabindex="-1">
+            Effet sur le lot {{ cotisation?.unit?.number }}
+          </h4>
+          <p>
+            Appelé : {{ amount(p.called_before) }} →
+            {{ amount(p.called_after) }}
+          </p>
+          <p>
+            Encaissé net : {{ amount(p.paid_before) }} →
+            {{ amount(p.paid_after) }}
+          </p>
+          <p>
+            Solde après opération : {{ amount(p.remaining_after) }} (positif : à
+            payer ; négatif : à rembourser).
+          </p>
+        </section>
+      }
+      <div class="actions">
+        <button mat-button type="button" (click)="cancel()" [disabled]="busy">
+          Annuler la saisie
+        </button>
+        @if (!preview) {
+          <button
+            mat-stroked-button
+            type="submit"
+            [disabled]="busy || form.invalid"
+          >
+            {{ busy ? 'Prévisualisation…' : 'Prévisualiser l’effet' }}
+          </button>
+        } @else {
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            (click)="confirm()"
+            [disabled]="busy"
+          >
+            {{ busy ? 'Enregistrement…' : 'Confirmer l’enregistrement' }}
+          </button>
+        }
+      </div>
+    </form>
+  }
+  @if (!loading && !loadError) {
+    <h3>Ajustements et remboursements</h3>
+    @if (entries.length === 0) {
+      <p>Aucun ajustement ni remboursement enregistré pour cette cotisation.</p>
+    } @else {
+      <div
+        class="history-scroll"
+        tabindex="0"
+        role="region"
+        aria-label="Historique des ajustements et remboursements"
+      >
+        <table>
+          <caption class="visually-hidden">
+            Opérations tracées, par ordre d’enregistrement
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Nature et date</th>
+              <th scope="col">Montant</th>
+              <th scope="col">Motif et référence</th>
+              <th scope="col">Enregistré par</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries; track entry.id) {
+              <tr [id]="'financial-entry-' + entry.id" tabindex="-1">
+                <td>
+                  {{ entry.kind === 'refund' ? 'Remboursement' : 'Ajustement'
+                  }}{{ entry.reverses_id ? ' — contre-écriture' : '' }}
+                  @if (entry.reverses_id) {
+                    <br /><a
+                      [href]="'#financial-entry-' + entry.reverses_id"
+                      (click)="focusEntry($event, entry.reverses_id)"
+                      >Voir l’opération annulée</a
+                    >
+                  }
+                  <br />{{ entry.date | date: 'dd/MM/yyyy' : 'UTC'
+                  }}<br /><small
+                    >Enregistré le
+                    {{ entry.created_at | date: 'dd/MM/yyyy HH:mm' }}</small
+                  >
+                </td>
+                <td>{{ amount(entry.amount) }}</td>
+                <td>{{ entry.reason }}<br />{{ entry.reference }}</td>
+                <td>{{ entry.user?.username }}</td>
+                <td>
+                  @if (reversed(entry)) {
+                    Annulée par contre-écriture
+                  } @else if (
+                    !entry.reverses_id &&
+                    ((entry.kind === 'refund' && (canRefund$ | async)) ||
+                      (entry.kind === 'adjustment' && (canAdjust$ | async)))
+                  ) {
+                    <button
+                      mat-button
+                      type="button"
+                      (click)="
+                        start(
+                          entry.kind === 'refund' ? 'refund' : 'adjustment',
+                          entry
+                        )
+                      "
+                      [disabled]="busy || kind !== null"
+                    >
+                      Contre-écriture
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

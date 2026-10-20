@@ -11,7 +11,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
@@ -67,7 +67,7 @@ describe('Payment form after the Angular migration', () => {
   it('renders an existing payment with its date and amount', () => {
     const element: HTMLElement = fixture.nativeElement;
     expect(element.querySelector('h1')?.textContent).toContain(
-      'Update payment'
+      'Modifier le paiement'
     );
     expect(
       element.querySelector<HTMLInputElement>('[formControlName="amount"]')
@@ -92,6 +92,18 @@ describe('Payment form after the Angular migration', () => {
     expect(api.updatePayment).not.toHaveBeenCalled();
   });
 
+  it('blocks repeated submissions while saving and preserves values after an error', () => {
+    const pending = new Subject<{}>();
+    api.updatePayment.mockReturnValueOnce(pending);
+    fixture.componentInstance.submit();
+    fixture.componentInstance.submit();
+    expect(api.updatePayment).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance.form.disabled).toBe(true);
+    pending.error({ status: 400 });
+    expect(fixture.componentInstance.form.enabled).toBe(true);
+    expect(fixture.componentInstance.form.value.amount).toBe(24.01);
+    expect(dialog.close).not.toHaveBeenCalled();
+  });
   it('updates the selected payment without creating a duplicate', () => {
     fixture.componentInstance.form.controls['amount'].setValue(25.02);
     fixture.nativeElement

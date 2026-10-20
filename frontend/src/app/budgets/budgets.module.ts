@@ -23,7 +23,14 @@ import { PaymentFormComponent } from './components/payment-form/payment-form.com
 import { BudgetEmailFormComponent } from './components/budget-email-form/budget-email-form.component';
 import { TemplateDataEditorComponent } from '../shared/components/template-data-editor/template-data-editor.component';
 
+import { FinancialHistoryComponent } from './components/financial-history/financial-history.component';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 const material = [
+  MatMenuModule,
+  MatIconModule,
+  MatTooltipModule,
   MatAutocompleteModule,
   MatButtonModule,
   MatCheckboxModule,
@@ -44,6 +51,7 @@ const material = [
     BudgetFormComponent,
     ExpenseFormComponent,
     PaymentListComponent,
+    FinancialHistoryComponent,
     PaymentFormComponent,
     BudgetEmailFormComponent,
   ],

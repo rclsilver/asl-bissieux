@@ -11,8 +11,9 @@
     </h2>
     @if (!budget.draft) {
       <p class="budget-locked">
-        Budget publié : les dépenses et cotisations sont figées. Le libellé et
-        les paiements restent modifiables selon tes droits.
+        Budget publié : les dépenses et appels initiaux sont conservés. Les
+        ajustements et remboursements sont tracés dans l’historique de chaque
+        cotisation.
       </p>
     }
     @if (budget.draft && budget.preview; as preview) {

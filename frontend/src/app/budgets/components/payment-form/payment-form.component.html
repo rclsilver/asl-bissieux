@@ -1,31 +1,31 @@
 <h1 mat-dialog-title>
   @if (!data.payment) {
-    Create payment
+    Ajouter un paiement
   }
   @if (data.payment) {
-    Update payment
+    Modifier le paiement
   }
 </h1>
 <form [formGroup]="form" (submit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>Comment</mat-label>
+    <mat-form-field appearance="fill" subscriptSizing="dynamic">
+      <mat-label>Commentaire</mat-label>
       <input matInput formControlName="comment" [required]="true" />
       @if (
-        form.controls["comment"].touched && form.controls["comment"].invalid
+        form.controls['comment'].touched && form.controls['comment'].invalid
       ) {
         <mat-error>
-          @if (form.controls["comment"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['comment'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["comment"].errors!["server"]) {
-            <span>{{ form.controls["comment"].errors!["server"] }}</span>
+          @if (form.controls['comment'].errors!['server']) {
+            <span>{{ form.controls['comment'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Amount</mat-label>
+    <mat-form-field appearance="fill" subscriptSizing="dynamic">
+      <mat-label>Montant en euros</mat-label>
       <input
         matInput
         type="number"
@@ -34,47 +34,53 @@
         formControlName="amount"
         [required]="true"
       />
-      @if (form.controls["amount"].touched && form.controls["amount"].invalid) {
+      @if (form.controls['amount'].touched && form.controls['amount'].invalid) {
         <mat-error>
-          @if (form.controls["amount"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['amount'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["amount"].errors!["money"]) {
+          @if (form.controls['amount'].errors!['money']) {
             <span>Montant positif, avec au plus deux décimales.</span>
           }
-          @if (form.controls["amount"].errors!["server"]) {
-            <span>{{ form.controls["amount"].errors!["server"] }}</span>
+          @if (form.controls['amount'].errors!['server']) {
+            <span>{{ form.controls['amount'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
-    <mat-form-field appearance="fill">
+    <mat-form-field appearance="fill" subscriptSizing="dynamic">
       <mat-label>Date</mat-label>
       <input matInput type="date" formControlName="date" [required]="true" />
-      @if (form.controls["date"].touched && form.controls["date"].invalid) {
+      @if (form.controls['date'].touched && form.controls['date'].invalid) {
         <mat-error>
-          @if (form.controls["date"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['date'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["date"].errors!["server"]) {
-            <span>{{ form.controls["date"].errors!["server"] }}</span>
+          @if (form.controls['date'].errors!['server']) {
+            <span>{{ form.controls['date'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
   </div>
   <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">
-      Cancel
+    <button
+      mat-button
+      color="secondary"
+      type="button"
+      (click)="cancel()"
+      [disabled]="busy"
+    >
+      Annuler
     </button>
     <div class="spacer"></div>
     <button
       mat-button
       color="primary"
       type="submit"
-      [disabled]="form.invalid || !form.touched"
+      [disabled]="busy || form.invalid || !form.touched"
     >
-      Submit
+      Enregistrer
     </button>
   </div>
 </form>

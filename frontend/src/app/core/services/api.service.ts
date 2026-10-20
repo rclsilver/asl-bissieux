@@ -38,6 +38,43 @@ export class ApiService {
     });
   }
 
+  listFinancialEntries(budgetId: string, cotisationId: string) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries',
+      {
+        method: 'get',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+      }
+    ).pipe(map((r) => r ?? []));
+  }
+  previewFinancialEntry(
+    budgetId: string,
+    cotisationId: string,
+    body: APISchemas['PreviewFinancialEntryInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries/preview',
+      {
+        method: 'post',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+        body,
+      }
+    );
+  }
+  createFinancialEntry(
+    budgetId: string,
+    cotisationId: string,
+    body: APISchemas['CreateFinancialEntryInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries',
+      {
+        method: 'post',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+        body,
+      }
+    );
+  }
   listBudgets() {
     return this.request('/api/budget', {
       method: 'get',

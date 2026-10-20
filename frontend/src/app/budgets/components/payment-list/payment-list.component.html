@@ -1,22 +1,37 @@
-@if (budget$ | async; as budget) {
-  <h1 mat-dialog-title>Paiements</h1>
-  <div mat-dialog-content class="content">
+<h1 mat-dialog-title>Historique de la cotisation</h1>
+<div mat-dialog-content class="content">
+  @if (loadError) {
+    <p role="alert">Impossible de charger le budget.</p>
+    <button mat-stroked-button type="button" (click)="loadBudget()">
+      Réessayer
+    </button>
+  } @else if (!(budget$ | async)) {
+    <p role="status">Chargement du budget…</p>
+  }
+  @if (budget$ | async; as budget) {
+    <p>{{ budget.label }}</p>
+    <app-financial-history
+      #history
+      [budgetId]="data.budgetId"
+      [cotisationId]="data.cotisationId"
+      (changed)="refresh()"
+      (addPayment)="edit()"
+    ></app-financial-history>
+    <h2>Paiements reçus</h2>
     <app-crud-table
-      tableLabel="Paiements"
-      createLabel="Ajouter un paiement"
+      tableLabel="Paiements reçus"
       [columns]="columns"
       [dataSource]="payments$ | async"
-      [canCreate]="canCreate$"
       [canEdit]="canEdit.bind(this)"
       (edit)="edit($event)"
       [canDelete]="canDelete.bind(this)"
       (delete)="delete($event)"
     ></app-crud-table>
-  </div>
-  <div mat-dialog-actions>
-    <div class="spacer"></div>
-    <button mat-button color="primary" type="button" (click)="close()">
-      Close
-    </button>
-  </div>
-}
+  }
+</div>
+<div mat-dialog-actions>
+  <div class="spacer"></div>
+  <button mat-button type="button" (click)="close()" [disabled]="!!history?.busy">
+    Fermer
+  </button>
+</div>

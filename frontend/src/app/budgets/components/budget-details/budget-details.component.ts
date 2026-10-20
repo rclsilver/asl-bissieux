@@ -303,8 +303,8 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'list',
-            'Gérer les paiements',
-            'Gérer les paiements',
+            'Consulter la cotisation',
+            'Consulter la cotisation',
             (row) =>
               this._notifications
                 .showForm(PaymentListComponent, {
@@ -315,7 +315,7 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
                 })
                 .afterClosed()
                 .subscribe(() => {
-                  this.refreshCotisations();
+                  this.refreshBudget();
                 })
           )
         );

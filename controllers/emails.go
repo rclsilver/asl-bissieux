@@ -23,7 +23,13 @@ import (
 func ListEmailTemplates(tx *gorm.DB) ([]*models.EmailTemplate, error) {
 	var result []*models.EmailTemplate
 
-	return result, tx.Preload("Attachments").Find(&result).Error
+	if err := tx.Preload("Attachments").Find(&result).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range result {
+		row.CustomFields = templates.DescribeFields(row.Subject, row.Message)
+	}
+	return result, nil
 }
 
 func GetEmailTemplate(tx *gorm.DB, templateID string) (*models.EmailTemplate, error) {
@@ -40,11 +46,13 @@ func GetEmailTemplate(tx *gorm.DB, templateID string) (*models.EmailTemplate, er
 		return nil, err
 	}
 
+	row.CustomFields = templates.DescribeFields(row.Subject, row.Message)
 	return &row, nil
 }
 
 func CreateEmailTemplate(tx *gorm.DB, label, subject, message string) (*models.EmailTemplate, error) {
 	row := models.NewEmailTemplate(label, subject, message)
+	row.CustomFields = templates.DescribeFields(subject, message)
 
 	if err := tx.Create(row).Error; err != nil {
 		return nil, err
@@ -62,6 +70,7 @@ func UpdateEmailTemplate(tx *gorm.DB, templateID, label, subject, message string
 	row.Label = label
 	row.Subject = subject
 	row.Message = message
+	row.CustomFields = templates.DescribeFields(subject, message)
 
 	if err := tx.Where("id = ?", templateID).Updates(row).Error; err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
+	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
 
 type BuiltEmail struct {
@@ -12,9 +13,10 @@ type BuiltEmail struct {
 type EmailTemplate struct {
 	db.Model
 
-	Label   string `json:"label" gorm:"notNull"`
-	Subject string `json:"subject" gorm:"notNull"`
-	Message string `json:"message" gorm:"notNull"`
+	Label        string                     `json:"label" gorm:"notNull"`
+	Subject      string                     `json:"subject" gorm:"notNull"`
+	Message      string                     `json:"message" gorm:"notNull"`
+	CustomFields templates.FieldDescription `json:"custom_fields" gorm:"-"`
 
 	Attachments []*Attachment    `json:"attachments,omitempty"`
 	Campaigns   []*EmailCampaign `json:"campaigns,omitempty"`

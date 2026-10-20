@@ -178,6 +178,7 @@ export type APISchemas = {
     campaigns?: Array<APISchemas['ModelsEmailCampaign']>;
     /* Format: date-time */
     created_at?: string;
+    custom_fields?: APISchemas['TemplatesFieldDescription'];
     id?: string;
     label?: string;
     message?: string;
@@ -263,6 +264,11 @@ export type APISchemas = {
   };
   ServerLogoutResult: { redirect_url?: string };
   ServerPingOut: { message?: string; status?: string };
+  TemplatesCustomField: { complex?: boolean; name?: string };
+  TemplatesFieldDescription: {
+    advanced?: boolean;
+    fields?: Array<APISchemas['TemplatesCustomField']>;
+  };
   UpdateBudgetInput: { label?: string };
   UpdateEmailTemplateInput: {
     label?: string;

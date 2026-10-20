@@ -1,14 +1,228 @@
 <h2>Membres</h2>
-
-<app-crud-table
-  tableLabel="Membres"
-  createLabel="Ajouter un membre"
-  [columns]="columns"
-  [rowLabel]="rowLabel"
-  [dataSource]="datasource"
-  [canCreate]="canCreate$"
-  [canEdit]="canEdit.bind(this)"
-  (edit)="edit($event)"
-  [canDelete]="canDelete.bind(this)"
-  (delete)="delete($event)"
-></app-crud-table>
+<p>Retrouve un membre, ses coordonnées et les lots qui lui sont associés.</p>
+<div class="directory-toolbar">
+  <mat-form-field subscriptSizing="dynamic" class="directory-search">
+    <mat-label>Rechercher un membre ou un lot</mat-label>
+    <input
+      #directorySearch
+      matInput
+      [formControl]="query"
+      type="search"
+      autocomplete="off"
+    />
+    <mat-hint>Nom, prénom, coordonnées, adresse ou « lot 12 ».</mat-hint>
+    <button
+      mat-icon-button
+      matSuffix
+      type="button"
+      (click)="query.setValue('')"
+      [disabled]="!query.value"
+      aria-label="Effacer la recherche"
+      matTooltip="Effacer la recherche"
+    >
+      <mat-icon aria-hidden="true">clear</mat-icon>
+    </button>
+  </mat-form-field>
+  <mat-button-toggle-group
+    [value]="view"
+    (change)="setView($event.value)"
+    aria-label="Vue des membres"
+  >
+    <mat-button-toggle value="list">Annuaire</mat-button-toggle>
+    <mat-button-toggle value="map">Carte</mat-button-toggle>
+  </mat-button-toggle-group>
+  <button
+    mat-icon-button
+    type="button"
+    (click)="refresh()"
+    [disabled]="loading || unitsLoading"
+    aria-label="Actualiser les membres et les lots"
+    matTooltip="Actualiser les membres et les lots"
+  >
+    <mat-icon aria-hidden="true">refresh</mat-icon>
+  </button>
+</div>
+@if (loaded && !loading && !error) {
+  <p role="status">
+    {{ filteredMembers.length }}
+    {{ filteredMembers.length === 1 ? 'membre trouvé' : 'membres trouvés' }} ·
+    {{ matchingUnits.length }}
+    {{
+      matchingUnits.length === 1
+        ? 'lot associé ou trouvé'
+        : 'lots associés ou trouvés'
+    }}.
+  </p>
+}
+<div [hidden]="view !== 'list'">
+  <app-crud-table
+    tableLabel="Annuaire des membres"
+    createLabel="Ajouter un membre"
+    [columns]="columns"
+    [rowLabel]="rowLabel"
+    [dataSource]="datasource"
+    [autoLoad]="false"
+    [canRefresh]="false"
+    [canCreate]="canCreate$"
+    [canEdit]="canEdit.bind(this)"
+    (edit)="edit($event)"
+    [canDelete]="canDelete.bind(this)"
+    (delete)="delete($event)"
+    [rowActions]="rowActions"
+  ></app-crud-table>
+</div>
+<section
+  class="directory-map"
+  [hidden]="view !== 'map'"
+  aria-label="Carte et consultation des membres"
+>
+  <div class="map-pane">
+    @if (loading) {
+      <p role="status">Chargement des membres et des lots…</p>
+    }
+    @if (error) {
+      <p role="alert">
+        Impossible de charger les membres. Réessaie avec le bouton
+        d’actualisation.
+      </p>
+    }
+    @if (unitsError && !error) {
+      <p role="alert">
+        La liste complète des lots n’a pas pu être chargée. Les membres et leurs
+        lots restent consultables ; les lots sans membre ne sont pas disponibles
+        pour le moment.
+      </p>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="datasource.retryUnits()"
+        [disabled]="unitsLoading"
+      >
+        {{ unitsLoading ? 'Chargement des lots…' : 'Réessayer les lots' }}
+      </button>
+    }
+    <div class="map-choices">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Choisir un membre trouvé</mat-label>
+        <mat-select
+          [value]="selectedMemberId"
+          (selectionChange)="selectMemberId($event.value)"
+          [disabled]="loading || error || !filteredMembers.length"
+        >
+          @for (member of filteredMembers; track member.id) {
+            <mat-option [value]="member.id">{{
+              memberName(member)
+            }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Choisir un lot</mat-label>
+        <mat-select
+          [value]="selectedUnitNumber"
+          (selectionChange)="selectUnit($event.value)"
+          [disabled]="loading || error || !directoryUnits.length"
+        >
+          @for (unit of directoryUnits; track unit.id) {
+            <mat-option [value]="unit.number"
+              >Lot {{ unit.number }} —
+              {{ unit.address || 'Adresse non renseignée' }}</mat-option
+            >
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (loaded && !loading && !error && !filteredMembers.length) {
+      <p>
+        Aucun membre ne correspond à cette recherche. Essaie un autre nom ou
+        efface la recherche.
+      </p>
+    }
+    <p>
+      Les contours bleus repèrent les lots trouvés ou ceux du membre choisi.
+      Pour consulter un lot, utilise la carte ou la liste ci-dessus.
+    </p>
+    <div class="map-frame" [attr.inert]="loading || error ? '' : null">
+      <app-interactive-map
+        [highlightedUnits]="highlightedUnits"
+        [selectedUnit]="selectedUnitNumber"
+        (unitClick)="selectUnit($event.unitId)"
+        label="Carte des lots et des membres"
+      ></app-interactive-map>
+    </div>
+    <p class="keyboard-help">
+      Clavier : Tab pour entrer dans la carte, flèches pour parcourir les lots,
+      Entrée ou Espace pour consulter.
+    </p>
+  </div>
+  <aside class="selection-pane" aria-label="Détails du membre ou du lot">
+    <h3 #selectionHeading tabindex="-1">
+      {{
+        selectedUnit
+          ? 'Lot ' + selectedUnit.number
+          : selectedMember
+            ? memberName(selectedMember)
+            : 'Consulter un membre ou un lot'
+      }}
+    </h3>
+    @if (!loading && !error) {
+      @if (selectionError) {
+        <p role="status">{{ selectionError }}</p>
+      }
+      @if (selectedUnit) {
+        <p>{{ selectedUnit.address || 'Adresse du lot non renseignée' }}</p>
+        @if (!selectionMembers.length) {
+          <p>Aucun membre n’est associé à ce lot.</p>
+        }
+      }
+      @if (!selectedUnit && !selectedMember && !selectionError) {
+        <p>
+          Choisis un membre ou un lot pour voir les coordonnées et les liens
+          entre membres et lots.
+        </p>
+      }
+      @for (member of selectionMembers; track member.id) {
+        <section class="contact-details">
+          @if (selectedUnit) {
+            <h4>{{ memberName(member) }}</h4>
+          }
+          <dl>
+            <dt>E-mail</dt>
+            <dd>{{ member.email || 'Non renseigné' }}</dd>
+            <dt>Téléphone</dt>
+            <dd>{{ member.phone_number || 'Non renseigné' }}</dd>
+            <dt>Adresse</dt>
+            <dd>{{ member.address || 'Non renseignée' }}</dd>
+          </dl>
+          <p>Lots associés :</p>
+          <div class="member-lots">
+            @for (unit of memberUnits(member); track unit.id) {
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="selectUnit(unit.number)"
+              >
+                Lot {{ unit.number }}
+              </button>
+            } @empty {
+              <p>Aucun lot associé à ce membre.</p>
+            }
+          </div>
+          @if (selectedUnit) {
+            <button mat-button type="button" (click)="selectMember(member)">
+              Voir tous ses lots
+            </button>
+          }
+        </section>
+      }
+    }
+    <button
+      mat-button
+      type="button"
+      (click)="clearSelection()"
+      [disabled]="!selectedMemberId && selectedUnitNumber === null"
+    >
+      Effacer la sélection
+    </button>
+  </aside>
+</section>

@@ -6,6 +6,10 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SharedModule } from '../shared/shared.module';
 import { MembersRouterModule } from './members.routes';
 import { MemberListComponent } from './components/member-list/member-list.component';
@@ -17,6 +21,10 @@ const material = [
   MatFormFieldModule,
   MatInputModule,
   MatTableModule,
+  MatButtonToggleModule,
+  MatSelectModule,
+  MatIconModule,
+  MatTooltipModule,
 ];
 
 @NgModule({

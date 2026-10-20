@@ -4,6 +4,8 @@ import {
   provideZoneChangeDetection,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { SearchInputComponent } from '../search-input/search-input.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -147,6 +149,59 @@ describe('Contextual list controls and recovery', () => {
     expect(fixture.nativeElement.textContent).not.toContain(
       'Aucun résultat pour cette recherche.'
     );
+  });
+
+  it('reuses the search input, filters once per change and restores focus over repeated openings', async () => {
+    const fixture = await setup();
+    const search = fixture.debugElement.query(
+      By.directive(SearchInputComponent)
+    ).componentInstance as SearchInputComponent;
+    const changes = vi.fn();
+    const subscription = search.onPatternChange.subscribe(changes);
+    const input = fixture.nativeElement.querySelector(
+      'input[matInput]'
+    ) as HTMLInputElement;
+    const trigger = fixture.nativeElement.querySelector(
+      'button[aria-label="Rechercher dans la liste"]'
+    ) as HTMLButtonElement;
+    const field = input.closest('mat-form-field')!;
+    expect(field.hasAttribute('inert')).toBe(true);
+    for (let cycle = 0; cycle < 3; cycle++) {
+      trigger.click();
+      expect(document.activeElement).toBe(input);
+      expect(field.hasAttribute('inert')).toBe(false);
+      expect(trigger.hasAttribute('inert')).toBe(true);
+      expect(fixture.nativeElement.querySelector('input[matInput]')).toBe(
+        input
+      );
+      input.value = 'Alice';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('tr[mat-row]').length).toBe(
+        1
+      );
+      field
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Effacer la recherche"]'
+        )!
+        .click();
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(trigger);
+      expect(field.hasAttribute('inert')).toBe(true);
+      expect(trigger.hasAttribute('inert')).toBe(false);
+      expect(fixture.nativeElement.querySelectorAll('tr[mat-row]').length).toBe(
+        2
+      );
+    }
+    expect(changes.mock.calls.map(([pattern]) => pattern)).toEqual([
+      'Alice',
+      '',
+      'Alice',
+      '',
+      'Alice',
+      '',
+    ]);
+    subscription.unsubscribe();
   });
 
   it('recovers a failed fetch through retry without exposing backend details', async () => {

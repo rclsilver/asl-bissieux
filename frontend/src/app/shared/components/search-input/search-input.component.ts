@@ -1,5 +1,6 @@
 import {
   Component,
+  ChangeDetectorRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -37,6 +38,11 @@ export class SearchInputComponent implements OnDestroy {
     this._columns.next(!columns ? [] : columns);
   }
 
+  @ViewChild('trigger', { read: ElementRef })
+  private _trigger?: ElementRef<HTMLButtonElement>;
+
+  constructor(private readonly _changeDetector: ChangeDetectorRef) {}
+
   @Output() onPatternChange = new EventEmitter<string>();
 
   @ViewChild('input', { static: false }) set input(
@@ -68,7 +74,8 @@ export class SearchInputComponent implements OnDestroy {
 
   show(): void {
     this._folded$.next(false);
-    setTimeout(() => this._input!.nativeElement.focus());
+    this._changeDetector.detectChanges();
+    this._input?.nativeElement.focus();
   }
 
   clear($event: UIEvent): void {
@@ -76,6 +83,8 @@ export class SearchInputComponent implements OnDestroy {
     this._input!.nativeElement.value = '';
     this._clear$.next();
     this._folded$.next(true);
+    this._changeDetector.detectChanges();
+    this._trigger?.nativeElement.focus();
   }
 
   get pattern(): string {

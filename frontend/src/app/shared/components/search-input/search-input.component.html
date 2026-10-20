@@ -1,24 +1,32 @@
 @if ((columns$ | async)?.length) {
-  @if (this.folded$ | async) {
+  <div class="search-shell" [class.expanded]="!(folded$ | async)">
     <button
+      #trigger
+      class="search-trigger"
       mat-icon-button
       type="button"
       (click)="show()"
+      [attr.inert]="(folded$ | async) ? null : ''"
+      [attr.aria-hidden]="!(folded$ | async)"
       matTooltip="Rechercher dans la liste"
       aria-label="Rechercher dans la liste"
     >
-      <mat-icon>search</mat-icon>
+      <mat-icon aria-hidden="true">search</mat-icon>
     </button>
-  }
-  @if (!(this.folded$ | async)) {
-    <mat-form-field subscriptSizing="dynamic">
+    <mat-form-field
+      class="search-field"
+      subscriptSizing="dynamic"
+      floatLabel="always"
+      [attr.inert]="(folded$ | async) ? '' : null"
+      [attr.aria-hidden]="folded$ | async"
+    >
       <mat-label>Rechercher</mat-label>
       <input
         matInput
         #input
         [attr.aria-label]="'Rechercher : ' + (label$ | async)"
       />
-      <mat-icon matPrefix>search</mat-icon>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
       <button
         mat-icon-button
         matSuffix
@@ -27,8 +35,8 @@
         matTooltip="Effacer la recherche"
         aria-label="Effacer la recherche"
       >
-        <mat-icon>clear</mat-icon>
+        <mat-icon aria-hidden="true">clear</mat-icon>
       </button>
     </mat-form-field>
-  }
+  </div>
 }

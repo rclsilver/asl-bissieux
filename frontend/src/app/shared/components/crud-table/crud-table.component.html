@@ -50,16 +50,16 @@
   }
 
   <button
-    mat-flat-button
+    mat-mini-fab
     color="primary"
     class="create-action"
     type="button"
     (click)="onEdit()"
     [matTooltip]="createLabel"
+    [attr.aria-label]="createLabel"
     [disabled]="!(canCreate$ | async)"
   >
     <mat-icon aria-hidden="true">add</mat-icon>
-    {{ createLabel }}
   </button>
 </mat-toolbar>
 

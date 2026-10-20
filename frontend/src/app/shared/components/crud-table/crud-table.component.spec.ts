@@ -72,7 +72,8 @@ describe('Contextual list controls and recovery', () => {
     const create = fixture.nativeElement.querySelector(
       '.create-action'
     ) as HTMLButtonElement;
-    expect(create.textContent).toContain('Ajouter un membre');
+    expect(create.getAttribute('aria-label')).toBe('Ajouter un membre');
+    expect(create.textContent).not.toContain('Ajouter un membre');
     expect(create.disabled).toBe(true);
     create.click();
     expect(fixture.componentInstance.edit).not.toHaveBeenCalled();

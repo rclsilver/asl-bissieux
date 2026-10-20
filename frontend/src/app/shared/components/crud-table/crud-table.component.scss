@@ -102,11 +102,8 @@ a {
 }
 
 .create-action {
-  block-size: auto;
-  min-block-size: 44px;
-  max-inline-size: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  inline-size: 44px;
+  block-size: 44px;
 }
 
 .selection-count {

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -10,12 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type CampaignPageOptions struct {
+type PageOptions struct {
 	Page, PageSize         int
 	Query, Sort, Direction string
 }
 
-func (o *CampaignPageOptions) normalize() error {
+type CampaignPageOptions = PageOptions
+
+func (o *PageOptions) normalize(allowedSorts ...string) error {
 	if o.Page == 0 {
 		o.Page = 1
 	}
@@ -31,9 +34,9 @@ func (o *CampaignPageOptions) normalize() error {
 	o.Query = strings.TrimSpace(o.Query)
 	if o.Page < 1 || o.Page > 1000000 || o.PageSize < 1 || o.PageSize > 100 ||
 		utf8.RuneCountInString(o.Query) > 200 ||
-		(o.Sort != "created_at" && o.Sort != "title") ||
+		!slices.Contains(allowedSorts, o.Sort) ||
 		(o.Direction != "asc" && o.Direction != "desc") {
-		return errors.NewBadRequest(nil, "invalid campaign pagination, search or sort")
+		return errors.NewBadRequest(nil, "invalid pagination, search or sort")
 	}
 	return nil
 }
@@ -41,7 +44,7 @@ func (o *CampaignPageOptions) normalize() error {
 // ListEmailCampaignPage returns only the requested summaries. No template,
 // context, recipient, message body or attachment is loaded by this endpoint.
 func ListEmailCampaignPage(tx *gorm.DB, options CampaignPageOptions) (*models.EmailCampaignPage, error) {
-	if err := options.normalize(); err != nil {
+	if err := options.normalize("created_at", "title"); err != nil {
 		return nil, err
 	}
 	result := &models.EmailCampaignPage{Items: []models.EmailCampaignSummary{}, Page: options.Page, PageSize: options.PageSize}

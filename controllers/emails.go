@@ -407,18 +407,7 @@ func BuildEmail(template *models.EmailTemplate, t *templates.Template) (*models.
 }
 
 func buildEmail(email *models.Email) error {
-	if email.EmailCampaign == nil || email.EmailCampaign.EmailTemplate == nil {
-		return fmt.Errorf("email campaign or template no longer exists")
-	}
-	data := make(map[string]any, len(email.Data)+len(email.EmailCampaign.Data))
-	for k, v := range email.Data {
-		data[k] = v
-	}
-	for k, v := range email.EmailCampaign.Data {
-		data[k] = v
-	}
-
-	t, err := templates.NewTemplate(data)
+	t, err := emailTemplateContext(email)
 	if err != nil {
 		return err
 	}

@@ -365,13 +365,19 @@ func DeleteEmailCampaign(c *gin.Context, in *deleteEmailCampaignIn) error {
 }
 
 type listEmailsIn struct {
-	CampaignID string `path:"campaign_id"`
+	CampaignID string            `path:"campaign_id"`
+	Page       int               `query:"page"`
+	PageSize   int               `query:"page_size"`
+	Query      string            `query:"query"`
+	Sort       string            `query:"sort"`
+	Direction  string            `query:"direction"`
+	State      models.EmailState `query:"state"`
 }
 
-func ListEmails(c *gin.Context, in *listEmailsIn) ([]*models.Email, error) {
+func ListEmails(c *gin.Context, in *listEmailsIn) (*models.EmailPage, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.ListEmails(db, in.CampaignID)
+	result, err := controllers.ListEmailPage(db, in.CampaignID, controllers.EmailPageOptions{PageOptions: controllers.PageOptions{Page: in.Page, PageSize: in.PageSize, Query: in.Query, Sort: in.Sort, Direction: in.Direction}, State: in.State})
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get emails")
 		return nil, err
@@ -486,4 +492,13 @@ func TrackEmail(c *gin.Context, in *trackEmailIn) error {
 	c.Writer.Write([]byte{})
 
 	return nil
+}
+
+// GetEmailStatus exposes an existing delivery error without rendering a template.
+func GetEmailStatus(c *gin.Context, in *getEmailIn) (*models.EmailStatus, error) {
+	result, err := controllers.GetEmailStatus(db.Connection(c), in.EmailID)
+	if err != nil && !errors.IsNotFound(err) {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email status")
+	}
+	return result, err
 }

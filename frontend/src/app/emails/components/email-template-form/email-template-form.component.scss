@@ -1,16 +1,49 @@
 .content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-
-  & > * input {
-    width: 100%;
-  }
-
-  // Avoid scrolling with final checkbox
-  &:after {
-    content: " ";
-    display: block;
-    height: 10px;
-  }
+  gap: 1.5rem;
+  line-height: 1.5;
+}
+mat-form-field {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.insertion-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+}
+.variable-choice {
+  flex: 2 1 16rem;
+}
+.target-choice {
+  flex: 1 1 12rem;
+}
+details {
+  min-inline-size: 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  min-block-size: 44px;
+  align-content: center;
+}
+p {
+  margin-block: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.example {
+  white-space: pre-wrap;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 1rem;
+}
+button {
+  min-block-size: 44px;
+  block-size: auto;
+  white-space: normal;
 }

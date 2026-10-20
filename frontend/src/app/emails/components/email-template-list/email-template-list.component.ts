@@ -46,6 +46,9 @@ export class EmailTemplateListComponent {
       'Prévisualiser',
       (row) =>
         this._notifications.showForm(EmailTemplatePreviewFormComponent, {
+          width: '760px',
+          maxWidth: 'calc(100vw - 2rem)',
+          maxHeight: 'calc(100dvh - 2rem)',
           data: {
             template: row,
           },
@@ -96,6 +99,9 @@ export class EmailTemplateListComponent {
   edit(template?: APISchemas['ModelsEmailTemplate']) {
     this._notifications
       .showForm(EmailTemplateFormComponent, {
+        width: '840px',
+        maxWidth: 'calc(100vw - 2rem)',
+        maxHeight: 'calc(100dvh - 2rem)',
         data: {
           template,
         },

@@ -109,10 +109,15 @@ describe('Budget email preparation', () => {
   });
   afterEach(() => http.verify());
 
-  function setup() {
+  function setup(customFields?: { name: string; complex?: boolean }[]) {
     const fixture = TestBed.createComponent(BudgetEmailFormComponent);
     fixture.detectChanges();
-    http.expectOne('/api/email/templates').flush(templates);
+    http.expectOne('/api/email/templates').flush(
+      templates.map((template) => ({
+        ...template,
+        custom_fields: { fields: customFields ?? [], advanced: false },
+      }))
+    );
     http.expectOne('/api/budget/budget-test/cotisations').flush(cotisations);
     fixture.detectChanges();
     fixture.componentInstance.form.controls.template.setValue('template-test');
@@ -275,5 +280,27 @@ describe('Budget email preparation', () => {
     expect(page.canPrepare).toBe(false);
     page.submit();
     http.expectNone('/api/budget/budget-test/email');
+  });
+
+  it('creates named custom inputs from the selected template and previews their typed values', () => {
+    const fixture = setup([{ name: 'date_limite' }]);
+    const page = fixture.componentInstance;
+    expect(page.canPreview).toBe(false);
+    const name = fixture.nativeElement.querySelector(
+      'input[formControlName="name"]'
+    ) as HTMLInputElement;
+    expect(name.value).toBe('date_limite');
+    const value = fixture.nativeElement.querySelector(
+      'input[formControlName="value"]'
+    ) as HTMLInputElement;
+    value.value = '31 décembre';
+    value.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(page.canPreview).toBe(true);
+    page.preview();
+    const request = http.expectOne('/api/budget/budget-test/email-preview');
+    expect(request.request.body.data).toEqual({ date_limite: '31 décembre' });
+    request.flush({ subject: 'Bonjour', message: '<p>31 décembre</p>' });
+    expect(page.canPrepare).toBe(true);
   });
 });

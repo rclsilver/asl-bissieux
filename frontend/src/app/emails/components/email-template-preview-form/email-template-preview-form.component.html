@@ -19,16 +19,16 @@
         cotisations incluses. Ces données sont fictives ; aucun membre réel
         n’est consulté.
       </p>
-      <details>
-        <summary>Voir ou adapter les données fictives</summary>
-        <p>
-          Les objets et listes utilisent le mode JSON. Tu peux ajouter les
-          valeurs supplémentaires attendues par ton modèle.
-        </p>
-        <app-template-data-editor
-          [formControl]="form.controls.sampleData"
-        ></app-template-data-editor>
-      </details>
+      <p>
+        Les champs ci-dessous correspondent aux valeurs supplémentaires du
+        modèle. Le mode avancé permet aussi de consulter ou modifier les données
+        fictives du budget.
+      </p>
+      <app-template-data-editor
+        [formControl]="form.controls.sampleData"
+        [suggestedFields]="data.template.custom_fields?.fields"
+        [preserveRoots]="automaticRoots"
+      ></app-template-data-editor>
     } @else {
       <p>
         Fournis toutes les données attendues par le modèle. Le membre, le budget
@@ -37,7 +37,15 @@
       </p>
       <app-template-data-editor
         [formControl]="form.controls.customData"
+        [suggestedFields]="data.template.custom_fields?.fields"
+        [preserveRoots]="automaticRoots"
       ></app-template-data-editor>
+    }
+    @if (data.template.custom_fields?.advanced) {
+      <p>
+        Des expressions avancées peuvent nécessiter des données supplémentaires
+        non détectées. Le mode JSON reste disponible.
+      </p>
     }
     @if (activeData.invalid) {
       <p role="status">

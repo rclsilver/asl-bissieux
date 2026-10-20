@@ -91,7 +91,15 @@
         </p>
         <app-template-data-editor
           formControlName="data"
+          [suggestedFields]="selectedTemplate?.custom_fields?.fields"
         ></app-template-data-editor>
+        @if (selectedTemplate?.custom_fields?.advanced) {
+          <p>
+            Le modèle contient des expressions avancées. Certaines valeurs ne
+            peuvent pas être détectées automatiquement ; le mode JSON reste
+            disponible.
+          </p>
+        }
       </section>
       <section>
         <h2>Aperçu</h2>

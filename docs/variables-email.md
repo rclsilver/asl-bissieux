@@ -49,6 +49,16 @@ Le choix **Valeur supplémentaire à renseigner** insère une expression comme `
 
 Le catalogue et son exemple fictif se trouvent dans `frontend/src/app/emails/template-variables.json`. Un test Go exécute chaque expression avec le moteur serveur et compare son résultat à l’exemple annoncé, y compris les blocs répétés. Le téléphone fictif est vide pour représenter une propriété facultative.
 
+## Formulaire automatique des valeurs supplémentaires
+
+Les modèles renvoyés par l’API incluent `custom_fields`, une description calculée depuis l’objet et le corps enregistrés. Elle ne crée aucune colonne en base. Le serveur analyse l’arbre syntaxique Go avec les fonctions Sprig déclarées, sans exécuter le modèle. Il distingue le contexte racine des contextes locaux de `range`, `with` et des modèles nommés, ainsi que les alias de variables. Les cinq racines automatiques ne deviennent pas des champs personnalisés.
+
+Ainsi, `{{.date_limite}}` produit directement un champ **Date limite** dans l’aperçu et la préparation depuis un budget. Le nom est déjà renseigné et protégé ; le type et la valeur restent modifiables. Un champ détecté manquant bloque l’aperçu jusqu’à saisie ou choix explicite d’une valeur vide. Les valeurs existantes gardent leurs types. Une référence imbriquée ou une liste produit une saisie JSON locale pour sa racine, afin de conserver sa structure.
+
+Un changement de modèle ajoute ses champs sans effacer les anciennes lignes saisies. Les lignes devenues libres peuvent être modifiées ou supprimées. Les noms dupliqués sont refusés sans verrouiller une ligne ajoutée manuellement. Les valeurs fictives automatiques de l’aperçu restent conservées lorsqu’on modifie ses champs personnalisés.
+
+Les accès calculés à des clés et certaines constructions avancées ne permettent pas de déduire tous les champs. Un avertissement indique ces limites ; le mode JSON et l’ajout manuel restent disponibles. L’analyse des champs n’est pas une validation de rendu : l’aperçu serveur et le contrôle de tous les destinataires avant création restent nécessaires. L’analyse ne déduit pas les types métier attendus par une fonction ; l’utilisateur choisit au besoin Nombre, Oui/non ou JSON.
+
 La prévisualisation générique d’un modèle (`email/templates/:id/preview`) reçoit uniquement les données fournies par l’appelant. Elle n’ajoute pas automatiquement le contexte d’un budget : ce contexte appartient à `budget/:id/email-preview` et à la préparation de campagnes.
 
 Depuis la liste des modèles, l’aperçu teste la version **enregistrée**. Il propose un exemple fictif de budget, modifiable en JSON, ou des données d’essai personnalisées avec l’éditeur de valeurs. Les deux saisies sont conservées séparément lors d’un changement de source. Une saisie invalide bloque ce changement jusqu’à correction pour ne pas perdre une ligne incomplète. Les membres réels ne sont pas consultés par cet aperçu. Les résultats sont calculés par le serveur, affichés dans la même fenêtre et marqués périmés après modification des données ; une réponse devenue périmée pendant son calcul est ignorée. Cet essai ne crée aucune campagne.

@@ -151,4 +151,32 @@ describe('Saved email template preview', () => {
     http.expectNone('/api/email/campaigns');
     http.expectNone('/api/email/templates');
   });
+
+  it('shows custom fields from the saved model and combines their values with the fictitious context', () => {
+    TestBed.inject(MAT_DIALOG_DATA).template.custom_fields = {
+      fields: [{ name: 'date_limite' }],
+      advanced: false,
+    };
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    expect(page.canPreview).toBe(false);
+    const name = fixture.nativeElement.querySelector(
+      'input[formControlName="name"]'
+    ) as HTMLInputElement;
+    expect(name.value).toBe('date_limite');
+    expect(name.readOnly).toBe(true);
+    const value = fixture.nativeElement.querySelector(
+      'input[formControlName="value"]'
+    ) as HTMLInputElement;
+    value.value = '31 décembre';
+    value.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(page.canPreview).toBe(true);
+    page.submit();
+    const request = http.expectOne(url);
+    expect(request.request.body).toEqual({
+      data: { ...templateSampleData, date_limite: '31 décembre' },
+    });
+    request.flush({ subject: 'Essai', message: '<p>31 décembre</p>' });
+  });
 });

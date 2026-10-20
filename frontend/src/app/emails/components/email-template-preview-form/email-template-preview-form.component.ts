@@ -10,7 +10,11 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Subject, takeUntil } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService, APIError } from 'src/app/core/services/api.service';
-import { templateSampleData } from '../../template-variables';
+import {
+  templateSampleData,
+  automaticTemplateRoots,
+} from '../../template-variables';
+import { validateTemplateValues } from 'src/app/shared/components/template-data-editor/template-data-validation';
 
 @Component({
   selector: 'app-email-template-preview-form',
@@ -20,6 +24,7 @@ import { templateSampleData } from '../../template-variables';
   standalone: false,
 })
 export class EmailTemplatePreviewFormComponent implements OnDestroy {
+  readonly automaticRoots = [...automaticTemplateRoots];
   private readonly api = inject(ApiService);
   private readonly destroyed$ = new Subject<void>();
   private revision = 0;
@@ -47,6 +52,15 @@ export class EmailTemplatePreviewFormComponent implements OnDestroy {
     public readonly data: { template: APISchemas['ModelsEmailTemplate'] },
     private readonly dialog: MatDialogRef<EmailTemplatePreviewFormComponent>
   ) {
+    for (const control of [
+      this.form.controls.sampleData,
+      this.form.controls.customData,
+    ]) {
+      control.addValidators((value) =>
+        validateTemplateValues(value.value, data.template.custom_fields?.fields)
+      );
+      control.updateValueAndValidity({ emitEvent: false });
+    }
     this.form.valueChanges.pipe(takeUntil(this.destroyed$)).subscribe(() => {
       this.revision++;
       if (this.activeData.invalid)

@@ -15,6 +15,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { PaymentState, paymentState } from '../../payment-state';
+import { validateTemplateValues } from 'src/app/shared/components/template-data-editor/template-data-validation';
 
 type Recipient = {
   member: APISchemas['ModelsMember'];
@@ -62,7 +63,14 @@ export class BudgetEmailFormComponent implements OnInit, OnDestroy {
     }),
     data: new FormControl('{}', {
       nonNullable: true,
-      validators: Validators.required,
+      validators: [
+        Validators.required,
+        (control) =>
+          validateTemplateValues(
+            control.value,
+            this.selectedTemplate?.custom_fields?.fields
+          ),
+      ],
     }),
     to_doing: new FormControl(false, { nonNullable: true }),
     to_paid: new FormControl(false, { nonNullable: true }),
@@ -88,6 +96,7 @@ export class BudgetEmailFormComponent implements OnInit, OnDestroy {
     this.form.valueChanges.pipe(takeUntil(this.destroyed$)).subscribe(() => {
       this.revision++;
       this.updateRecipients();
+      this.form.controls.data.updateValueAndValidity({ emitEvent: false });
     });
     this.auth
       .allowed$('budget.SendEmail')
@@ -148,6 +157,11 @@ export class BudgetEmailFormComponent implements OnInit, OnDestroy {
     return this.recipients.find(
       (recipient) =>
         recipient.member.id === this.form.controls.previewMember.value
+    );
+  }
+  get selectedTemplate(): APISchemas['ModelsEmailTemplate'] | undefined {
+    return this.templates.find(
+      (template) => template.id === this.form.controls.template.value
     );
   }
   get canPreview() {

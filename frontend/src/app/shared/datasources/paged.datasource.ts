@@ -12,6 +12,7 @@ import {
   of,
   switchMap,
   tap,
+  timer,
 } from 'rxjs';
 import { DataSource } from '.';
 
@@ -20,7 +21,7 @@ export type PageState = { pageIndex: number; pageSize: number; total: number };
 export type PageResult<T> = PageState & { items: T[] };
 
 export abstract class PagedDataSource<T> extends DataSource<T> {
-  private readonly reload = new Subject<void>();
+  private readonly reload = new Subject<number>();
   private readonly state = new BehaviorSubject<PageState>({
     pageIndex: 0,
     pageSize: 25,
@@ -37,11 +38,12 @@ export abstract class PagedDataSource<T> extends DataSource<T> {
     super();
     this.subscription = this.reload
       .pipe(
-        switchMap(() =>
+        switchMap((delay) =>
           defer(() => {
             this._setLoading(true);
             this._setError();
-            return this._fetch().pipe(
+            return (delay ? timer(delay) : of(0)).pipe(
+              switchMap(() => this._fetch()),
               catchError((error) => {
                 this._setError(error);
                 return of<T[]>([]);
@@ -68,14 +70,15 @@ export abstract class PagedDataSource<T> extends DataSource<T> {
       map((page) => page.items)
     );
   }
-  override load() {
-    this.reload.next();
+  override load(delay = 0) {
+    this.reload.next(delay);
   }
   setFilter(query: string) {
     if (query === this.query) return;
     this.query = query;
     this.pageIndex = 0;
-    this.load();
+    // Cancel and disable stale rows immediately, then debounce only the new request.
+    this.load(250);
   }
   setSort(sort: Sort) {
     if (

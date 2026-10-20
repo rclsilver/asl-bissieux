@@ -66,6 +66,7 @@
 <div class="table-container">
   <div
     class="table-scroll"
+    [attr.inert]="remoteSource && (loading$ | async) ? '' : null"
     role="region"
     [attr.aria-label]="tableLabel"
     tabindex="0"

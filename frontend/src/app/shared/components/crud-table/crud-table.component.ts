@@ -18,7 +18,6 @@ import {
   Subject,
   combineLatest,
   distinctUntilChanged,
-  debounceTime,
   first,
   map,
   skip,
@@ -98,6 +97,10 @@ export class SelectionModel<T> {
         this._selected$.value.filter((item) => item.hash !== hash)
       );
     }
+  }
+
+  clear(): void {
+    this._selected$.next([]);
   }
 
   isSelected(row: T): boolean {
@@ -345,15 +348,14 @@ export class CrudTableComponent<T extends {}>
   }
 
   ngAfterViewInit(): void {
+    this.loading$.pipe(takeUntil(this._destroyed$)).subscribe((loading) => {
+      if (loading && this.remoteSource) this.selected.clear();
+    });
     this.sort.sortChange
       .pipe(takeUntil(this._destroyed$))
       .subscribe((sort) => this.remoteSource?.setSort(sort));
     this.search.onPatternChange
-      .pipe(
-        debounceTime(250),
-        distinctUntilChanged(),
-        takeUntil(this._destroyed$)
-      )
+      .pipe(distinctUntilChanged(), takeUntil(this._destroyed$))
       .subscribe((query) => this.remoteSource?.setFilter(query));
     // set the table datasource
     this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
@@ -451,7 +453,10 @@ export class CrudTableComponent<T extends {}>
   readonly allSelected$ = this._dataSource$.pipe(
     switchMap((ds) =>
       combineLatest([this.selected.selected$, ds.results$]).pipe(
-        map(([selected, results]) => selected.length === results.length)
+        map(
+          ([selected, results]) =>
+            results.length > 0 && selected.length === results.length
+        )
       )
     )
   );

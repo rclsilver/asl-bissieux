@@ -552,13 +552,27 @@ export class ApiService {
     });
   }
 
-  listEmails(campaignId: string) {
+  listEmails(
+    campaignId: string,
+    query: APIRequest<
+      '/api/email/campaigns/{campaign_id}/emails',
+      'get'
+    >['query'] = {}
+  ) {
     return this.request('/api/email/campaigns/{campaign_id}/emails', {
       method: 'get',
       urlParams: {
         campaign_id: campaignId,
       },
-    }).pipe(map((r) => r ?? []));
+      query,
+    });
+  }
+
+  getEmailStatus(emailId: string) {
+    return this.request('/api/email/{email_id}/status', {
+      method: 'get',
+      urlParams: { email_id: emailId },
+    });
   }
 
   getEmail(emailId: string) {

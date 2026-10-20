@@ -9,15 +9,20 @@ import {
 import {
   BehaviorSubject,
   Subject,
+  Observable,
+  catchError,
   combineLatest,
+  finalize,
   first,
   forkJoin,
   map,
-  takeUntil,
+  of,
   shareReplay,
   switchMap,
-  of,
+  takeUntil,
+  tap,
 } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -26,20 +31,22 @@ import {
   CustomRowAction,
   CustomToolbarAction,
 } from 'src/app/shared/components/crud-table/crud-table.component';
+import { ConfirmDialogData } from 'src/app/shared/components/confirm-dialog/confirm-dialog.component';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
-import { Column } from 'src/app/shared/models/column.model';
+import { Column, DateRender } from 'src/app/shared/models/column.model';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { DataSource } from 'src/app/shared/datasources';
+import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 import { EmailDataSource } from '../../datasources/email.datasource';
 import { EmailTemplatePreviewComponent } from '../email-template-preview/email-template-preview.component';
-import { ActivatedRoute } from '@angular/router';
-import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
-import { DataSource } from 'src/app/shared/datasources';
 import { EmailSendingPopupComponent } from '../email-sending-popup/email-sending-popup.component';
 import {
   canSendEmail,
   canResetEmail,
   emailStateLabel,
 } from '../../email-state';
+
+type Email = APISchemas['ModelsEmailSummary'];
 
 @Component({
   selector: 'app-email-list',
@@ -49,297 +56,411 @@ import {
   standalone: false,
 })
 export class EmailListComponent implements AfterViewInit, OnDestroy {
-  readonly stateLabel = emailStateLabel;
-  private _destroyed$ = new Subject<void>();
-
-  private readonly _api = inject(ApiService);
-  private readonly _auth = inject(AuthService);
-  private readonly _notifications = inject(NotificationsService);
-  private readonly _route = inject(ActivatedRoute);
-
-  readonly rowActions$ = combineLatest([
-    this._auth.allowed$('email.SendEmail'),
-    this._auth.allowed$('email.SetError'),
-  ]).pipe(
-    map(([sendEmail, setError]) => {
-      const actions: CustomRowAction<APISchemas['ModelsEmail']>[] = [];
-
-      if (sendEmail) {
-        actions.push(
-          new CustomRowAction<APISchemas['ModelsEmail']>(
-            'mail',
-            'Envoyer l’e-mail',
-            'Envoyer',
-            (row) =>
-              this._notifications
-                .showConfirm({
-                  title: 'Envoyer un e-mail',
-                  confirmLabel: 'Envoyer',
-                  message: `Envoyer l’e-mail à ${row.to} ?`,
-                  class: 'primary',
-                })
-                .afterClosed()
-                .subscribe((result) => {
-                  if (result) {
-                    this._notifications
-                      .showForm(EmailSendingPopupComponent, {
-                        width: '50%',
-                        data: {
-                          emails: [row],
-                        },
-                      })
-                      .afterClosed()
-                      .subscribe(() => this.refresh());
-                  }
-                }),
-            (row) => this._canSend(row)
-          )
-        );
-      }
-
-      if (setError) {
-        actions.push(
-          new CustomRowAction<APISchemas['ModelsEmail']>(
-            'sms_failed',
-            'Autoriser un nouvel envoi après vérification',
-            'Autoriser un renvoi',
-            (row) =>
-              this._notifications
-                .showConfirm({
-                  title: 'Autoriser un renvoi',
-                  confirmLabel: 'Autoriser le renvoi',
-                  message:
-                    row.state === 'UNKNOWN'
-                      ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, confirmes-tu qu’un nouvel envoi est nécessaire ?`
-                      : `Ce message à ${row.to} a déjà été envoyé. Confirmes-tu qu’un nouvel envoi est nécessaire ?`,
-                  class: 'primary',
-                })
-                .afterClosed()
-                .subscribe((result) => {
-                  if (result) {
-                    this._api.emailSetError(row.id!).subscribe({
-                      next: () => {
-                        this.refresh();
-                        this._notifications.showDialog({
-                          title: 'Renvoi autorisé',
-                          message: `Tu peux maintenant renvoyer le message à ${row.to}.`,
-                          level: NotificationDialogLevel.Info,
-                        });
-                      },
-                      error: this._api.handleError(
-                        'Impossible de modifier l’état de l’e-mail'
-                      ),
-                    });
-                  }
-                }),
-            (row) => canResetEmail(row.state)
-          )
-        );
-      }
-
-      return actions;
-    })
+  private readonly destroyed = new Subject<void>();
+  private readonly scopeChanged = new Subject<void>();
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  private readonly notifications = inject(NotificationsService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly campaignReload = new BehaviorSubject(0);
+  private readonly source = new BehaviorSubject<DataSource<Email>>(
+    new EmptyDataSource<Email>()
   );
+  readonly emails$ = this.source.asObservable();
+  private visible: readonly Email[] = [];
+  private revision = 0;
+  private alive = true;
+  loading = false;
+  campaignLoading = true;
+  campaignError = false;
+  busyAction = false;
+  previewingId: string | null = null;
+  state = '';
+  readonly states = ['WAITING', 'SENDING', 'SENT', 'READ', 'ERROR', 'UNKNOWN'];
+  readonly stateLabel = (state: string | undefined) =>
+    state === 'READ' ? 'Signal d’ouverture' : emailStateLabel(state);
 
-  private _toolbarActions$ = new BehaviorSubject<CustomToolbarAction[]>([]);
-  readonly toolbarActions$ = this._toolbarActions$.asObservable();
+  readonly campaign$ = combineLatest([
+    this.route.paramMap,
+    this.campaignReload,
+  ]).pipe(
+    tap(() => {
+      this.campaignLoading = true;
+      this.campaignError = false;
+      this.revision++;
+      this.scopeChanged.next();
+      this.table?.selected.clear();
+    }),
+    switchMap(([params]) => {
+      const id = params.get('id');
+      if (!id) {
+        this.campaignError = true;
+        return of(null);
+      }
+      return this.api.getEmailCampaign(id).pipe(
+        catchError(() => {
+          this.campaignError = true;
+          return of(null);
+        })
+      );
+    }),
+    tap(() => (this.campaignLoading = false)),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   readonly columns = [
     new Column('subject', {
       label: 'Objet',
+      render: (value) => value || 'Objet indisponible',
+    }),
+    new Column('to', { label: 'Destinataire', canSort: true, canFilter: true }),
+    new Column('created_at', {
+      label: 'Préparé le',
       canSort: true,
-      canFilter: true,
+      render: DateRender(),
     }),
-    new Column('to', {
-      label: 'Destinataire',
-      canSort: true,
-      canFilter: true,
-    }),
-    new Column('state', {
-      label: 'État',
-      canSort: true,
-      canFilter: true,
-    }),
-    new Column('message', {
-      label: '',
-      canFilter: true,
-    }),
+    new Column('state', { label: 'État', canSort: true }),
+    new Column('message', { label: '' }),
   ];
-  readonly campaign$ = this._route.paramMap.pipe(
-    switchMap((params) =>
-      params.get('id')
-        ? this._api.getEmailCampaign(params.get('id')!)
-        : of(null)
-    ),
-    shareReplay(1)
+  readonly rowActions$ = combineLatest([
+    this.auth.allowed$('email.SendEmail'),
+    this.auth.allowed$('email.SetError'),
+  ]).pipe(
+    map(([send, reset]) => {
+      const actions: CustomRowAction<Email>[] = [];
+      if (send)
+        actions.push(
+          new CustomRowAction(
+            'mail',
+            'Envoyer l’e-mail',
+            'Envoyer',
+            (row) => this.sendOne(row),
+            (row) => canSendEmail(row.state),
+            (row) => !this.isUsable(row)
+          )
+        );
+      if (reset)
+        actions.push(
+          new CustomRowAction(
+            'sms_failed',
+            'Autoriser un nouvel envoi après vérification',
+            'Autoriser un renvoi',
+            (row) => this.resetOne(row),
+            (row) => canResetEmail(row.state),
+            (row) => !this.isUsable(row)
+          )
+        );
+      return actions;
+    })
   );
-  private _emails$ = new BehaviorSubject<DataSource<APISchemas['ModelsEmail']>>(
-    new EmptyDataSource<APISchemas['ModelsEmail']>()
-  );
-  readonly emails$ = this._emails$.asObservable();
+  private readonly toolbar = new BehaviorSubject<CustomToolbarAction[]>([]);
+  readonly toolbarActions$ = this.toolbar.asObservable();
 
   @ViewChild(CrudTableComponent, { static: false })
-  table!: CrudTableComponent<APISchemas['ModelsEmail']>;
+  table!: CrudTableComponent<Email>;
 
   ngAfterViewInit() {
+    this.source
+      .pipe(
+        switchMap((source) => source.results$),
+        takeUntil(this.destroyed)
+      )
+      .subscribe((rows) => (this.visible = rows));
+    this.source
+      .pipe(
+        switchMap((source) => source.loading$),
+        takeUntil(this.destroyed)
+      )
+      .subscribe((loading) => {
+        this.loading = loading;
+        if (loading) {
+          this.revision++;
+          this.scopeChanged.next();
+        }
+      });
     combineLatest([
-      this._auth.allowed$('email.DeleteEmail'),
-      this._auth.allowed$('email.SendEmail'),
+      this.auth.allowed$('email.DeleteEmail'),
+      this.auth.allowed$('email.SendEmail'),
       this.table.selected.selected$,
     ])
-      .pipe(
-        takeUntil(this._destroyed$),
-        map(([canDelete, canSend, selected]) => [
-          canDelete && selected.some((row) => row.state !== 'SENDING'),
-          canSend && selected.filter((row) => this._canSend(row)).length > 0,
-        ])
-      )
-      .subscribe(([canDelete, canSend]) => {
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(([canDelete, canSend, selected]) => {
         const actions: CustomToolbarAction[] = [];
-
-        if (canDelete) {
+        if (canDelete && selected.some((row) => row.state !== 'SENDING'))
           actions.push({
             icon: 'delete',
-            tooltip: 'Supprimer les e-mails sélectionnés',
-            func: this.bulkDelete.bind(this),
+            tooltip: 'Supprimer les e-mails sélectionnés sur cette page',
+            func: () => this.bulkDelete(),
           });
-        }
-
-        if (canSend) {
+        if (canSend && selected.some((row) => canSendEmail(row.state)))
           actions.push({
             icon: 'mail',
-            tooltip: 'Envoyer les e-mails sélectionnés',
-            func: this.bulkSend.bind(this),
+            tooltip: 'Envoyer les e-mails sélectionnés sur cette page',
+            func: () => this.bulkSend(),
           });
-        }
-
-        this._toolbarActions$.next(actions);
+        this.toolbar.next(actions);
       });
-
-    this.campaign$.pipe(takeUntil(this._destroyed$)).subscribe((campaign) => {
-      if (campaign) {
-        this._emails$.next(new EmailDataSource(this._api, campaign.id!));
-      } else {
-        this._emails$.next(new EmptyDataSource<APISchemas['ModelsEmail']>());
-      }
+    this.campaign$.pipe(takeUntil(this.destroyed)).subscribe((campaign) => {
+      this.state = '';
+      if (this.table.search.pattern)
+        this.table.search.clear(new UIEvent('change'));
+      this.source.next(
+        campaign?.id
+          ? new EmailDataSource(this.api, campaign.id)
+          : new EmptyDataSource<Email>()
+      );
     });
   }
 
   ngOnDestroy() {
-    this._destroyed$.next();
-    this._destroyed$.complete();
+    this.alive = false;
+    this.destroyed.next();
+    this.destroyed.complete();
+    this.scopeChanged.complete();
+    this.toolbar.complete();
+    this.campaignReload.complete();
+    this.source.complete();
   }
-
+  reloadCampaign() {
+    this.campaignReload.next(this.campaignReload.value + 1);
+  }
   refresh() {
-    this._emails$.value.load();
+    if (this.alive) this.source.value.load();
+  }
+  setState(state: string) {
+    this.state = state;
+    const source = this.source.value;
+    if (source instanceof EmailDataSource) source.setState(state);
+  }
+  private get canAct() {
+    return (
+      !this.loading &&
+      !this.campaignLoading &&
+      !this.campaignError &&
+      !this.busyAction
+    );
+  }
+  private isUsable(row: Email) {
+    return (
+      this.canAct &&
+      !!row.id &&
+      this.visible.some(
+        (item) => item.id === row.id && item.state === row.state
+      )
+    );
+  }
+  canDelete(row: Email) {
+    return !this.isUsable(row) || row.state === 'SENDING'
+      ? of(false)
+      : this.auth.allowed$('email.DeleteEmail');
   }
 
-  canDelete(row: APISchemas['ModelsEmail']) {
-    if (row.state === 'SENDING') {
-      return of(false);
-    }
-    return this._auth.allowed$('email.DeleteEmail');
+  private confirmRows(
+    rows: Email[],
+    config: ConfirmDialogData,
+    action: (rows: Email[]) => void
+  ) {
+    if (!rows.length || !rows.every((row) => this.isUsable(row))) return;
+    const frozen = rows.map((row) => ({ ...row })),
+      revision = this.revision;
+    this.notifications
+      .showConfirm(config)
+      .afterClosed()
+      .pipe(takeUntil(this.destroyed))
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        if (
+          revision !== this.revision ||
+          !frozen.every((row) => this.isUsable(row))
+        ) {
+          this.notifications.showDialog({
+            title: 'La liste a changé',
+            message:
+              'Vérifie la page et sélectionne à nouveau les e-mails à traiter.',
+            level: NotificationDialogLevel.Info,
+          });
+          return;
+        }
+        action(frozen);
+      });
   }
-
-  delete(email: APISchemas['ModelsEmail']) {
-    this._notifications
-      .showConfirm({
+  delete(row: Email) {
+    if (row.state === 'SENDING') return;
+    this.confirmRows(
+      [row],
+      {
         title: 'Supprimer un e-mail',
         confirmLabel: 'Supprimer',
-        message: `Supprimer l’e-mail destiné à ${email.to} ?`,
+        message: `Supprimer l’e-mail destiné à ${row.to} ?`,
         class: 'warn',
-      })
-      .afterClosed()
-      .subscribe((confirm) => {
-        if (confirm) {
-          this._api.deleteEmail(email.id!).subscribe({
-            next: () => {
-              this.refresh();
-              this._notifications.showDialog({
-                title: 'Info',
-                message: `L’e-mail destiné à ${email.to} a été supprimé.`,
-                level: NotificationDialogLevel.Info,
-              });
-            },
-            error: this._api.handleError('Impossible de supprimer l’e-mail'),
-          });
-        }
+      },
+      (rows) => this.deleteRows(rows)
+    );
+  }
+  bulkDelete() {
+    this.table.selected.selected$
+      .pipe(first(), takeUntil(this.destroyed))
+      .subscribe((selected) =>
+        this.confirmRows(
+          selected.filter((row) => row.state !== 'SENDING'),
+          {
+            title: 'Supprimer la sélection',
+            confirmLabel: 'Supprimer',
+            message:
+              'Supprimer les e-mails sélectionnés sur cette page ? Les messages en cours d’envoi seront conservés.',
+            class: 'warn',
+          },
+          (rows) => this.deleteRows(rows)
+        )
+      );
+  }
+  private deleteRows(rows: Email[]) {
+    this.busyAction = true;
+    forkJoin(rows.map((row) => this.api.deleteEmail(row.id!)))
+      .pipe(
+        takeUntil(this.destroyed),
+        finalize(() => {
+          this.busyAction = false;
+          this.refresh();
+        })
+      )
+      .subscribe({
+        next: () =>
+          this.notifications.showDialog({
+            title: 'Suppression terminée',
+            message:
+              'Les e-mails sélectionnés hors envoi en cours ont été supprimés.',
+            level: NotificationDialogLevel.Info,
+          }),
+        error: this.api.handleError(
+          'La suppression de certains e-mails a échoué'
+        ),
       });
   }
-
-  show(email: APISchemas['ModelsEmail']) {
-    this._notifications.show(EmailTemplatePreviewComponent, {
-      data: {
-        subject: email.subject,
-        message: email.message,
+  private sendOne(row: Email) {
+    if (!canSendEmail(row.state)) return;
+    this.confirmRows(
+      [row],
+      {
+        title: 'Envoyer un e-mail',
+        confirmLabel: 'Envoyer',
+        message: `Envoyer l’e-mail à ${row.to} ?`,
+        class: 'primary',
       },
+      (rows) => this.sendRows(rows)
+    );
+  }
+  bulkSend() {
+    this.table.selected.selected$
+      .pipe(first(), takeUntil(this.destroyed))
+      .subscribe((selected) =>
+        this.confirmRows(
+          selected.filter((row) => canSendEmail(row.state)),
+          {
+            title: 'Envoyer la sélection',
+            confirmLabel: 'Envoyer',
+            message:
+              'Envoyer les e-mails sélectionnés sur cette page dont l’état autorise l’envoi ?',
+            class: 'primary',
+          },
+          (rows) => this.sendRows(rows)
+        )
+      );
+  }
+  private sendRows(rows: Email[]) {
+    this.busyAction = true;
+    this.notifications
+      .showForm(EmailSendingPopupComponent, {
+        width: '640px',
+        maxWidth: 'calc(100vw - 2rem)',
+        data: { emails: rows },
+      })
+      .afterClosed()
+      .pipe(
+        takeUntil(this.destroyed),
+        finalize(() => (this.busyAction = false))
+      )
+      .subscribe(() => this.refresh());
+  }
+  private resetOne(row: Email) {
+    if (!canResetEmail(row.state)) return;
+    this.confirmRows(
+      [row],
+      {
+        title: 'Autoriser un renvoi',
+        confirmLabel: 'Autoriser le renvoi',
+        message:
+          row.state === 'UNKNOWN'
+            ? `Le résultat de l’envoi à ${row.to} est incertain. Vérifie d’abord sa réception pour éviter un doublon. Après vérification, un nouvel envoi est-il nécessaire ?`
+            : `Ce message à ${row.to} a déjà été envoyé. Un nouvel envoi est-il nécessaire ?`,
+        class: 'primary',
+      },
+      (rows) => {
+        this.busyAction = true;
+        this.api
+          .emailSetError(rows[0].id!)
+          .pipe(
+            takeUntil(this.destroyed),
+            finalize(() => {
+              this.busyAction = false;
+              this.refresh();
+            })
+          )
+          .subscribe({
+            next: () =>
+              this.notifications.showDialog({
+                title: 'Renvoi autorisé',
+                message: 'Tu peux maintenant renvoyer ce message.',
+                level: NotificationDialogLevel.Info,
+              }),
+            error: this.api.handleError(
+              'Impossible de modifier l’état de l’e-mail'
+            ),
+          });
+      }
+    );
+  }
+  private loadDetails<T>(
+    row: Email,
+    request: Observable<T>,
+    show: (result: T) => void
+  ) {
+    if (!this.isUsable(row) || this.previewingId) return;
+    this.previewingId = row.id!;
+    request
+      .pipe(
+        takeUntil(this.scopeChanged),
+        takeUntil(this.destroyed),
+        finalize(() => (this.previewingId = null))
+      )
+      .subscribe({
+        next: show,
+        error: this.api.handleError(
+          'Impossible de charger le détail de l’e-mail'
+        ),
+      });
+  }
+  show(row: Email) {
+    this.loadDetails(row, this.api.getEmail(row.id!), (email) => {
+      if (email)
+        this.notifications.show(EmailTemplatePreviewComponent, {
+          width: '960px',
+          maxWidth: 'calc(100vw - 2rem)',
+          data: { subject: email.subject, message: email.message },
+        });
     });
   }
-
-  bulkDelete() {
-    this._notifications
-      .showConfirm({
-        title: 'Supprimer la sélection',
-        confirmLabel: 'Supprimer',
+  showError(row: Email) {
+    this.loadDetails(row, this.api.getEmailStatus(row.id!), (status) => {
+      this.notifications.showDialog({
+        title: 'Détails de l’e-mail',
         message:
-          'Supprimer les e-mails sélectionnés ? Les messages en cours d’envoi seront conservés.',
-        class: 'warn',
-      })
-      .afterClosed()
-      .subscribe((result) => {
-        if (result) {
-          this.table.selected.selected$.pipe(first()).subscribe((selected) => {
-            const calls$ = selected
-              .filter((row) => row.state !== 'SENDING')
-              .map((row) => this._api.deleteEmail(row.id!));
-
-            forkJoin(calls$).subscribe(() => {
-              this.refresh();
-              this._notifications.showDialog({
-                title: 'Supprimer la sélection',
-                message:
-                  'Les e-mails sélectionnés hors envoi en cours ont été supprimés.',
-                level: NotificationDialogLevel.Info,
-              });
-            });
-          });
-        }
+          status?.error ||
+          'Aucune erreur d’envoi enregistrée. Vérifie le modèle avec l’aperçu.',
+        level: status?.error
+          ? NotificationDialogLevel.Error
+          : NotificationDialogLevel.Info,
       });
-  }
-
-  bulkSend() {
-    this._notifications
-      .showConfirm({
-        title: 'Envoyer la sélection',
-        confirmLabel: 'Envoyer',
-        message:
-          'Confirmer l’envoi des e-mails sélectionnés ? Seuls les messages dont l’état autorise l’envoi seront pris en compte.',
-        class: 'primary',
-      })
-      .afterClosed()
-      .subscribe((result) => {
-        if (result) {
-          this.table.selected.selected$
-            .pipe(
-              first(),
-              map((selected) => selected.filter((row) => this._canSend(row)))
-            )
-            .subscribe((selected) => {
-              this._notifications
-                .showForm(EmailSendingPopupComponent, {
-                  width: '50%',
-                  data: {
-                    emails: selected,
-                  },
-                })
-                .afterClosed()
-                .subscribe(() => this.refresh());
-            });
-        }
-      });
-  }
-
-  private _canSend(row: APISchemas['ModelsEmail']) {
-    return canSendEmail(row.state);
+    });
   }
 }

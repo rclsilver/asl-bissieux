@@ -19,10 +19,25 @@
   font-weight: bold;
 }
 
-.sending { color: #075985; font-style: italic; }
-.unknown { color: #92400e; font-weight: bold; }
+.sending {
+  color: #075985;
+  font-style: italic;
+}
+.unknown {
+  color: #92400e;
+  font-weight: bold;
+}
 
 .mat-column-message {
   width: 0.5rem;
   text-align: right;
+}
+
+h2,
+p {
+  overflow-wrap: anywhere;
+}
+.state-filter {
+  inline-size: min(100%, 20rem);
+  margin-block: 0.5rem;
 }

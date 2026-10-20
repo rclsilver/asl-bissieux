@@ -203,6 +203,25 @@ export type APISchemas = {
     /* Format: int64 */
     waiting?: number;
   };
+  ModelsEmailPage: {
+    items?: Array<APISchemas['ModelsEmailSummary']>;
+    /* Format: int32 */
+    page?: number;
+    /* Format: int32 */
+    page_size?: number;
+    /* Format: int64 */
+    total?: number;
+  };
+  ModelsEmailStatus: { error?: string; id?: string; state?: string };
+  ModelsEmailSummary: {
+    /* Format: date-time */
+    created_at?: string;
+    has_error?: boolean;
+    id?: string;
+    state?: string;
+    subject?: string;
+    to?: string;
+  };
   ModelsEmailTemplate: {
     attachments?: Array<APISchemas['ModelsAttachment']>;
     campaigns?: Array<APISchemas['ModelsEmailCampaign']>;
@@ -518,8 +537,21 @@ export type APIEndpoints = {
       | { method: 'delete'; urlParams: { campaign_id: string } };
   };
   '/api/email/campaigns/{campaign_id}/emails': {
-    responses: { get: Array<APISchemas['ModelsEmail']> };
-    requests: { method?: 'get'; urlParams: { campaign_id: string } };
+    responses: { get: APISchemas['ModelsEmailPage'] };
+    requests: {
+      method?: 'get';
+      query?: {
+        direction?: string;
+        /* Format: int32 */
+        page?: number;
+        /* Format: int32 */
+        page_size?: number;
+        query?: string;
+        sort?: string;
+        state?: string;
+      };
+      urlParams: { campaign_id: string };
+    };
   };
   '/api/email/templates': {
     responses: {
@@ -595,6 +627,10 @@ export type APIEndpoints = {
   '/api/email/{email_id}/set-error': {
     responses: { post: null };
     requests: { method: 'post'; urlParams: { email_id: string } };
+  };
+  '/api/email/{email_id}/status': {
+    responses: { get: APISchemas['ModelsEmailStatus'] };
+    requests: { method?: 'get'; urlParams: { email_id: string } };
   };
   '/api/email/{email_id}/tracker': {
     responses: { get: null };

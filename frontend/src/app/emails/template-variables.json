@@ -1,0 +1,180 @@
+{
+  "groups": [
+    {
+      "label": "Membre destinataire",
+      "variables": [
+        {
+          "id": "member.first_name",
+          "label": "Prénom du membre",
+          "description": "Prénom du destinataire du message.",
+          "snippet": "{{.member.first_name}}",
+          "example": "Camille"
+        },
+        {
+          "id": "member.last_name",
+          "label": "Nom du membre",
+          "description": "Nom du destinataire du message.",
+          "snippet": "{{.member.last_name}}",
+          "example": "Exemple"
+        },
+        {
+          "id": "member.email",
+          "label": "Adresse e-mail du membre",
+          "description": "Adresse du destinataire du message.",
+          "snippet": "{{.member.email}}",
+          "example": "camille@example.invalid"
+        },
+        {
+          "id": "member.phone_number",
+          "label": "Téléphone du membre",
+          "description": "Téléphone renseigné dans sa fiche ; peut être vide.",
+          "snippet": "{{.member.phone_number}}",
+          "example": ""
+        },
+        {
+          "id": "member.address",
+          "label": "Adresse postale du membre",
+          "description": "Adresse renseignée dans sa fiche ; peut être vide.",
+          "snippet": "{{.member.address}}",
+          "example": "Adresse fictive du membre"
+        }
+      ]
+    },
+    {
+      "label": "Budget et montant du membre",
+      "variables": [
+        {
+          "id": "budget.label",
+          "label": "Libellé du budget",
+          "description": "Nom du budget à l’origine de la campagne.",
+          "snippet": "{{.budget.label}}",
+          "example": "Budget de démonstration"
+        },
+        {
+          "id": "budget.amount",
+          "label": "Montant total du budget",
+          "description": "Montant global du budget en euros, pour tous les lots.",
+          "snippet": "{{.budget.amount}}",
+          "example": "1000"
+        },
+        {
+          "id": "budget.paid",
+          "label": "Total réglé sur le budget",
+          "description": "Total des paiements du budget, pour tous les lots.",
+          "snippet": "{{.budget.paid}}",
+          "example": "300"
+        },
+        {
+          "id": "amount",
+          "label": "Montant des cotisations incluses",
+          "description": "Somme des cotisations retenues pour ce membre selon les critères. Ce n’est pas son reste à payer.",
+          "snippet": "{{.amount}}",
+          "example": "250"
+        }
+      ]
+    },
+    {
+      "label": "Lots du membre — blocs répétés",
+      "variables": [
+        {
+          "id": "cotisations.number",
+          "label": "Numéros des lots inclus",
+          "description": "Un numéro par ligne. Le bloc parcourt les cotisations retenues du membre.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}}\n{{end}}",
+          "example": "Lot 1\nLot 2\n"
+        },
+        {
+          "id": "cotisations.address",
+          "label": "Adresses des lots inclus",
+          "description": "Une adresse par lot, avec son numéro.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}} : {{.unit.address}}\n{{end}}",
+          "example": "Lot 1 : Adresse fictive du lot 1\nLot 2 : Adresse fictive du lot 2\n"
+        },
+        {
+          "id": "cotisations.share",
+          "label": "Tantièmes par lot",
+          "description": "Le bloc indique les tantièmes de chaque lot inclus.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}} : {{.unit.share}} tantièmes\n{{end}}",
+          "example": "Lot 1 : 100 tantièmes\nLot 2 : 150 tantièmes\n"
+        },
+        {
+          "id": "cotisations.amount",
+          "label": "Cotisation appelée par lot",
+          "description": "Montant appelé en euros pour chaque lot inclus.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}} : {{.amount}} €\n{{end}}",
+          "example": "Lot 1 : 100 €\nLot 2 : 150 €\n"
+        },
+        {
+          "id": "cotisations.paid",
+          "label": "Montant réglé par lot",
+          "description": "Paiements reçus en euros pour chaque lot inclus.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}} : {{.paid}} € réglés\n{{end}}",
+          "example": "Lot 1 : 0 € réglés\nLot 2 : 50 € réglés\n"
+        },
+        {
+          "id": "cotisations.remaining",
+          "label": "Reste à payer par lot",
+          "description": "Solde de chaque lot inclus, en euros. Une valeur négative correspond à un trop-perçu.",
+          "snippet": "{{range .cotisations}}Lot {{.unit.number}} : {{.remaining}} € restants\n{{end}}",
+          "example": "Lot 1 : 100 € restants\nLot 2 : 100 € restants\n"
+        }
+      ]
+    },
+    {
+      "label": "Dépenses du budget — bloc répété",
+      "variables": [
+        {
+          "id": "expenses",
+          "label": "Détail des dépenses",
+          "description": "Une ligne par dépense du budget, avec son libellé et son montant en euros.",
+          "snippet": "{{range .expenses}}{{.label}} : {{.amount}} €\n{{end}}",
+          "example": "Entretien fictif : 600 €\nAssurance fictive : 400 €\n"
+        }
+      ]
+    }
+  ],
+  "sampleData": {
+    "member": {
+      "first_name": "Camille",
+      "last_name": "Exemple",
+      "email": "camille@example.invalid",
+      "phone_number": "",
+      "address": "Adresse fictive du membre"
+    },
+    "budget": {
+      "label": "Budget de démonstration",
+      "amount": 1000,
+      "paid": 300,
+      "draft": false
+    },
+    "amount": 250,
+    "cotisations": [
+      {
+        "unit": {
+          "number": 1,
+          "address": "Adresse fictive du lot 1",
+          "share": 100
+        },
+        "amount": 100,
+        "paid": 0,
+        "remaining": 100,
+        "payment_state": 3
+      },
+      {
+        "unit": {
+          "number": 2,
+          "address": "Adresse fictive du lot 2",
+          "share": 150
+        },
+        "amount": 150,
+        "paid": 50,
+        "remaining": 100,
+        "payment_state": 3
+      }
+    ],
+    "expenses": [
+      { "label": "Entretien fictif", "amount": 600 },
+      { "label": "Assurance fictive", "amount": 400 }
+    ]
+  }
+}

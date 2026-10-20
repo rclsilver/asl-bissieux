@@ -238,6 +238,7 @@ export class CrudTableComponent<T extends {}>
   }
 
   @Input() canRefresh = true;
+  @Input() autoLoad = true;
 
   @Input() toolbarActions: CustomToolbarAction[] | null = null;
   @Input() set rowActions(actions: CustomRowAction<T>[] | null) {
@@ -331,7 +332,7 @@ export class CrudTableComponent<T extends {}>
   );
 
   ngOnInit() {
-    this.refresh();
+    if (this.autoLoad) this.refresh();
   }
 
   ngAfterViewInit(): void {
@@ -367,7 +368,7 @@ export class CrudTableComponent<T extends {}>
     this._dataSource$
       .pipe(takeUntil(this._destroyed$), skip(1))
       .subscribe((ds) => {
-        if (ds) {
+        if (ds && this.autoLoad) {
           ds.load();
         }
       });

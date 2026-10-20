@@ -35,6 +35,7 @@ class RowsSource extends DataSource<Row> {
     createLabel="Ajouter un membre"
     [columns]="columns"
     [dataSource]="source"
+    [autoLoad]="autoLoad"
     [canCreate]="canCreate"
     [canEdit]="canCreate"
     [canDelete]="canCreate"
@@ -44,6 +45,7 @@ class RowsSource extends DataSource<Row> {
   />`,
 })
 class ListHarness {
+  autoLoad = true;
   source = new RowsSource();
   canCreate = false;
   columns = [new Column('name', { label: 'Nom', canFilter: true })];
@@ -68,6 +70,18 @@ describe('Contextual list controls and recovery', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  it('lets a parent own the initial load without duplicating a request', async () => {
+    const fixture = TestBed.createComponent(ListHarness);
+    fixture.componentInstance.autoLoad = false;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.source.requests).toBe(0);
+    fixture.componentInstance.source.load();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.source.requests).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Alice');
+  });
 
   it('names the primary action while retaining its permission and edit event', async () => {
     const fixture = await setup();

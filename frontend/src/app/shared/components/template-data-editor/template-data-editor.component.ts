@@ -9,6 +9,8 @@ import {
   QueryList,
   ViewChild,
   ViewChildren,
+  Input,
+  OnChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -30,6 +32,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, takeUntil } from 'rxjs';
+import { validateTemplateValues } from './template-data-validation';
 
 @Component({
   selector: 'app-template-data-editor',
@@ -61,7 +64,7 @@ import { Subject, takeUntil } from 'rxjs';
   ],
 })
 export class TemplateDataEditorComponent
-  implements ControlValueAccessor, Validator, OnDestroy
+  implements ControlValueAccessor, Validator, OnDestroy, OnChanges
 {
   private readonly builder = inject(FormBuilder);
   private readonly detector = inject(ChangeDetectorRef);
@@ -70,6 +73,12 @@ export class TemplateDataEditorComponent
   @ViewChild('addValue', { read: ElementRef })
   private addButton!: ElementRef<HTMLButtonElement>;
   private readonly destroyed$ = new Subject<void>();
+  @Input() suggestedFields?: { name?: string; complex?: boolean }[] | null;
+  @Input() preserveRoots: string[] = [];
+  private preserved: Record<string, unknown> = {};
+  private readonly pending = new Set<FormGroup>();
+  private readonly suggestedRows = new Set<FormGroup>();
+  private missingOnly = false;
   readonly fields = new FormArray<FormGroup>([]);
   readonly form = this.builder.group({ fields: this.fields });
   advanced = false;
@@ -92,10 +101,76 @@ export class TemplateDataEditorComponent
     this.destroyed$.complete();
   }
 
+  ngOnChanges() {
+    if (!this.advanced) {
+      this.ensureSuggestions();
+      this.checkMissing();
+      this.validatorChanged();
+    }
+  }
+
+  isSuggested(name: string) {
+    return !!this.suggestedFields?.some((field) => field.name === name);
+  }
+  isSuggestedRow(field: FormGroup) {
+    return this.suggestedRows.has(field);
+  }
+  labelFor(name: string) {
+    const label = name.replace(/_/g, ' ');
+    return label ? label[0].toLocaleUpperCase('fr') + label.slice(1) : 'Valeur';
+  }
+  private makeField(name: string, type: string, value: string) {
+    const field = this.builder.group({ name, type, value });
+    field.valueChanges.pipe(takeUntil(this.destroyed$)).subscribe(() => {
+      this.pending.delete(field);
+    });
+    if (this.disabled) field.disable({ emitEvent: false });
+    return field;
+  }
+  private ensureSuggestions() {
+    this.suggestedRows.clear();
+    for (const field of this.suggestedFields ?? []) {
+      if (!field.name) continue;
+      const existing = this.fields.controls.find(
+        (row) => row.controls['name'].value === field.name
+      );
+      if (existing) {
+        this.suggestedRows.add(existing);
+        continue;
+      }
+      const row = this.makeField(
+        field.name,
+        field.complex ? 'json' : 'text',
+        ''
+      );
+      this.fields.push(row, { emitEvent: false });
+      this.suggestedRows.add(row);
+      this.pending.add(row);
+    }
+  }
+  private checkMissing() {
+    const missing = this.fields.controls.find(
+      (row) => this.suggestedRows.has(row) && this.pending.has(row)
+    );
+    if (missing && (!this.error || this.missingOnly)) {
+      this.error = `Renseigne « ${this.labelFor(missing.controls['name'].value)} » ou choisis explicitement une valeur vide.`;
+      this.missingOnly = true;
+    } else if (!missing && this.missingOnly) {
+      this.error = '';
+      this.missingOnly = false;
+    }
+  }
+
   writeValue(value: string | null) {
     this.raw = value ?? '{}';
     const parsed = this.parse();
     this.advanced = parsed === null || !this.loadFields(parsed);
+    if (this.advanced && parsed)
+      this.error =
+        validateTemplateValues(this.raw, this.suggestedFields)?.[
+          'templateData'
+        ] ?? '';
+    if (!this.advanced) this.checkMissing();
   }
 
   registerOnChange(fn: (value: string) => void) {
@@ -108,7 +183,9 @@ export class TemplateDataEditorComponent
     this.validatorChanged = fn;
   }
   validate(_: AbstractControl): ValidationErrors | null {
-    return this.error ? { templateData: this.error } : null;
+    return this.error
+      ? { templateData: this.error }
+      : validateTemplateValues(this.raw, this.suggestedFields);
   }
   touch() {
     this.touched();
@@ -122,10 +199,7 @@ export class TemplateDataEditorComponent
 
   addField() {
     if (this.disabled || this.advanced) return;
-    this.fields.push(
-      this.builder.group({ name: '', type: 'text', value: '' }),
-      { emitEvent: false }
-    );
+    this.fields.push(this.makeField('', 'text', ''), { emitEvent: false });
     this.emitFields();
     this.touch();
     this.detector.detectChanges();
@@ -134,6 +208,8 @@ export class TemplateDataEditorComponent
 
   removeField(index: number) {
     if (this.disabled || index < 0 || index >= this.fields.length) return;
+    if (this.isSuggestedRow(this.fields.at(index))) return;
+    this.pending.delete(this.fields.at(index));
     this.fields.removeAt(index, { emitEvent: false });
     this.emitFields();
     this.touch();
@@ -154,23 +230,36 @@ export class TemplateDataEditorComponent
         return;
       }
       this.advanced = false;
-    } else if (this.error) {
+      this.checkMissing();
+    } else if (this.error && !this.missingOnly) {
       this.notice =
         'Corrige ou supprime la valeur incomplète avant de changer de mode.';
     } else {
       this.advanced = true;
+      this.error =
+        validateTemplateValues(this.raw, this.suggestedFields)?.[
+          'templateData'
+        ] ?? '';
+      this.missingOnly = !!this.error;
     }
     this.touch();
+    this.validatorChanged();
   }
 
   updateRaw(event: Event) {
     this.raw = (event.target as HTMLTextAreaElement).value;
     this.parse();
+    if (!this.error)
+      this.error =
+        validateTemplateValues(this.raw, this.suggestedFields)?.[
+          'templateData'
+        ] ?? '';
     this.change(this.raw);
     this.validatorChanged();
   }
 
   private parse(): Record<string, unknown> | null {
+    this.missingOnly = false;
     try {
       const value = JSON.parse(this.raw);
       if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -191,47 +280,76 @@ export class TemplateDataEditorComponent
     if (
       Object.entries(data).some(
         ([name, value]) =>
-          !name.trim() ||
-          name !== name.trim() ||
-          (value !== null && typeof value === 'object')
+          !this.preserveRoots.includes(name) &&
+          (!name.trim() ||
+            name !== name.trim() ||
+            (value !== null &&
+              typeof value === 'object' &&
+              !this.isSuggested(name)))
       )
     )
       return false;
     this.fields.clear({ emitEvent: false });
+    this.pending.clear();
+    this.preserved = Object.fromEntries(
+      Object.entries(data).filter(([name]) => this.preserveRoots.includes(name))
+    );
     for (const [name, value] of Object.entries(data)) {
+      if (this.preserveRoots.includes(name)) continue;
       this.fields.push(
-        this.builder.group({
+        this.makeField(
           name,
-          type:
-            value === null
-              ? 'null'
+          value === null
+            ? 'null'
+            : typeof value === 'object'
+              ? 'json'
               : typeof value === 'string'
                 ? 'text'
                 : typeof value,
-          value: value === null ? '' : String(value),
-        }),
+          value === null
+            ? ''
+            : typeof value === 'object'
+              ? JSON.stringify(value, null, 2)
+              : String(value)
+        ),
         { emitEvent: false }
       );
     }
+    this.ensureSuggestions();
     return true;
   }
 
   private emitFields() {
-    const data: Record<string, unknown> = Object.create(null);
+    const data: Record<string, unknown> = Object.assign(
+      Object.create(null),
+      this.preserved
+    );
     this.error = '';
+    this.missingOnly = false;
     this.notice = '';
-    for (const field of this.fields.getRawValue()) {
+    const names = new Set(Object.keys(this.preserved));
+    for (const row of this.fields.controls) {
+      const field = row.getRawValue();
       const name = String(field['name'] ?? '').trim();
       if (!name) {
         this.error = 'Donne un nom à chaque valeur.';
         break;
       }
-      if (Object.hasOwn(data, name)) {
+      if (names.has(name)) {
         this.error = `Le nom « ${name} » est utilisé plusieurs fois.`;
         break;
       }
+      names.add(name);
       const text = String(field['value'] ?? '');
+      if (this.pending.has(row)) continue;
       switch (field['type']) {
+        case 'json':
+          try {
+            data[name] = JSON.parse(text);
+          } catch {
+            this.error = `Saisis un JSON valide pour « ${name} ».`;
+          }
+          break;
         case 'text':
           data[name] = text;
           break;
@@ -259,6 +377,7 @@ export class TemplateDataEditorComponent
       if (this.error) break;
     }
     if (!this.error) this.raw = JSON.stringify(data, null, 2);
+    this.checkMissing();
     this.change(this.raw);
     this.validatorChanged();
   }

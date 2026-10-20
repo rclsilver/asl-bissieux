@@ -45,6 +45,7 @@
               #fieldName
               matInput
               formControlName="name"
+              [readonly]="isSuggestedRow(field)"
               placeholder="ex. date_limite"
           /></mat-form-field>
           <mat-form-field class="value-type"
@@ -53,12 +54,32 @@
               ><mat-option value="text">Texte</mat-option
               ><mat-option value="number">Nombre</mat-option
               ><mat-option value="boolean">Oui/non</mat-option
-              ><mat-option value="null">Valeur vide</mat-option></mat-select
+              ><mat-option value="null">Valeur vide</mat-option
+              ><mat-option value="json"
+                >Objet ou liste (JSON)</mat-option
+              ></mat-select
             ></mat-form-field
           >
-          @if (field.controls['type'].value === 'boolean') {
+          @if (field.controls['type'].value === 'json') {
+            <mat-form-field class="value-content" subscriptSizing="dynamic">
+              <mat-label>{{
+                labelFor(field.controls['name'].value)
+              }}</mat-label>
+              <textarea
+                matInput
+                rows="4"
+                formControlName="value"
+                spellcheck="false"
+              ></textarea>
+              <mat-hint
+                >Objet ou liste au format JSON, selon le modèle.</mat-hint
+              >
+            </mat-form-field>
+          } @else if (field.controls['type'].value === 'boolean') {
             <mat-form-field class="value-content"
-              ><mat-label>Valeur</mat-label
+              ><mat-label>{{
+                labelFor(field.controls['name'].value)
+              }}</mat-label
               ><mat-select formControlName="value"
                 ><mat-option value="true">Oui</mat-option
                 ><mat-option value="false">Non</mat-option></mat-select
@@ -66,7 +87,9 @@
             >
           } @else if (field.controls['type'].value !== 'null') {
             <mat-form-field class="value-content"
-              ><mat-label>Valeur</mat-label
+              ><mat-label>{{
+                labelFor(field.controls['name'].value)
+              }}</mat-label
               ><input
                 matInput
                 formControlName="value"
@@ -76,6 +99,7 @@
             /></mat-form-field>
           }
           <button
+            [hidden]="isSuggestedRow(field)"
             mat-icon-button
             type="button"
             [disabled]="disabled"

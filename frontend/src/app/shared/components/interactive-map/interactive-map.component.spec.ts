@@ -26,4 +26,67 @@ describe('Interactive map after the Angular migration', () => {
     unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(selected).toBe(1);
   });
+
+  it('keeps payment classes, selection and highlights independent during an update', async () => {
+    await TestBed.configureTestingModule({
+      declarations: [InteractiveMapComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(InteractiveMapComponent);
+    fixture.componentRef.setInput('unitClasses', { 1: 'payment-waiting' });
+    fixture.componentRef.setInput('highlightedUnits', [1, 2]);
+    fixture.componentRef.setInput('selectedUnit', 1);
+    fixture.detectChanges();
+    const unit = fixture.nativeElement.querySelector('#unit-01') as SVGGElement;
+    expect(unit.classList.contains('unit-highlighted')).toBe(true);
+    fixture.componentRef.setInput('unitClasses', { 1: 'payment-overpaid' });
+    fixture.detectChanges();
+    expect(unit.classList.contains('payment-waiting')).toBe(false);
+    expect(unit.classList.contains('payment-overpaid')).toBe(true);
+    expect(unit.classList.contains('unit-selected')).toBe(true);
+    expect(unit.getAttribute('aria-current')).toBe('true');
+    fixture.componentRef.setInput('highlightedUnits', []);
+    fixture.detectChanges();
+    expect(unit.classList.contains('unit-highlighted')).toBe(false);
+    expect(unit.classList.contains('payment-overpaid')).toBe(true);
+  });
+
+  it('provides one tab stop with numeric arrow navigation and keyboard activation', async () => {
+    await TestBed.configureTestingModule({
+      declarations: [InteractiveMapComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(InteractiveMapComponent);
+    fixture.detectChanges();
+    const first = fixture.nativeElement.querySelector(
+      '#unit-01'
+    ) as SVGGElement;
+    const second = fixture.nativeElement.querySelector(
+      '#unit-02'
+    ) as SVGGElement;
+    expect(
+      fixture.nativeElement.querySelectorAll('#units > g[tabindex="0"]').length
+    ).toBe(1);
+    expect(first.getAttribute('tabindex')).toBe('0');
+    expect(first.getAttribute('role')).toBe('button');
+    first.focus();
+    first.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
+    );
+    expect(document.activeElement).toBe(second);
+    expect(second.getAttribute('tabindex')).toBe('0');
+    const selected: number[] = [];
+    fixture.componentInstance.unitClick.subscribe((event) =>
+      selected.push(event.unitId)
+    );
+    second.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    );
+    second.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true })
+    );
+    expect(selected).toEqual([2, 2]);
+    second.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Home', bubbles: true })
+    );
+    expect(document.activeElement).toBe(first);
+  });
 });

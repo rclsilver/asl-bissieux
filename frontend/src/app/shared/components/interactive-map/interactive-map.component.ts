@@ -10,8 +10,9 @@ import {
 } from '@angular/core';
 
 export type UnitClickEvent = {
+  // Historical name: this is the number from the SVG, not the database UUID.
   unitId: number;
-  event: MouseEvent;
+  event: MouseEvent | KeyboardEvent;
 };
 
 export type UnitClasses = { [unitId: number]: string };
@@ -35,6 +36,24 @@ export class InteractiveMapComponent implements AfterViewInit {
   private _height?: number;
 
   private _classes: UnitClasses = {};
+  private readonly appliedClasses = new Map<number, string[]>();
+  private _highlightedUnits: number[] = [];
+  private _selectedUnit: number | null = null;
+  private activeUnit?: number;
+  private unitElements: { number: number; element: SVGGElement }[] = [];
+  @Input() label = 'Carte des lots';
+  @Input() set highlightedUnits(units: number[]) {
+    this._highlightedUnits = units ?? [];
+    if (this.container) this.setSelection();
+  }
+  @Input() set selectedUnit(number: number | null) {
+    this._selectedUnit = number;
+    if (number !== null) this.activeUnit = number;
+    if (this.container) {
+      this.setSelection();
+      this.setTabStops();
+    }
+  }
 
   @Input() set width(v: number) {
     this._width = v;
@@ -90,6 +109,9 @@ export class InteractiveMapComponent implements AfterViewInit {
     this.setShowLabels(this._showLabels);
 
     this.foreachUnits((unitId, element) => {
+      this.unitElements.push({ number: unitId, element });
+      element.setAttribute('role', 'button');
+      element.setAttribute('aria-label', `Consulter le lot ${unitId}`);
       element.onmouseenter = (e) => {
         if (this.hoverClass) {
           element.classList.add(this.hoverClass);
@@ -108,7 +130,68 @@ export class InteractiveMapComponent implements AfterViewInit {
           event,
         });
       };
+      element.onfocus = () => {
+        this.activeUnit = unitId;
+        this.setTabStops();
+      };
+      element.onkeydown = (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (!event.repeat) this.unitClick.emit({ unitId, event });
+        } else {
+          const index = this.unitElements.findIndex(
+            (unit) => unit.number === unitId
+          );
+          let next: number;
+          switch (event.key) {
+            case 'ArrowRight':
+            case 'ArrowDown':
+              next = Math.min(index + 1, this.unitElements.length - 1);
+              break;
+            case 'ArrowLeft':
+            case 'ArrowUp':
+              next = Math.max(index - 1, 0);
+              break;
+            case 'Home':
+              next = 0;
+              break;
+            case 'End':
+              next = this.unitElements.length - 1;
+              break;
+            default:
+              return;
+          }
+          event.preventDefault();
+          this.unitElements[next]?.element.focus();
+        }
+      };
     });
+    this.unitElements.sort((a, b) => a.number - b.number);
+    this.setSelection();
+    this.setTabStops();
+  }
+
+  private setSelection() {
+    this.foreachUnits((number, element) => {
+      element.classList.toggle(
+        'unit-highlighted',
+        this._highlightedUnits.includes(number)
+      );
+      element.classList.toggle('unit-selected', this._selectedUnit === number);
+      if (this._selectedUnit === number)
+        element.setAttribute('aria-current', 'true');
+      else element.removeAttribute('aria-current');
+    });
+  }
+  private setTabStops() {
+    if (!this.unitElements.some((unit) => unit.number === this.activeUnit))
+      this.activeUnit = this.unitElements[0]?.number;
+    this.unitElements.forEach((unit) =>
+      unit.element.setAttribute(
+        'tabindex',
+        unit.number === this.activeUnit ? '0' : '-1'
+      )
+    );
   }
 
   private setWidth(width: number) {
@@ -124,12 +207,13 @@ export class InteractiveMapComponent implements AfterViewInit {
       const cls = classes[unitId];
 
       // remove old classes
-      element.classList.forEach((c) => element.classList.remove(c));
+      for (const cls of this.appliedClasses.get(unitId) ?? [])
+        element.classList.remove(cls);
 
       // set class if defined
-      if (cls) {
-        element.classList.add(cls);
-      }
+      const next = (cls ?? '').split(/\s+/).filter(Boolean);
+      next.forEach((value) => element.classList.add(value));
+      this.appliedClasses.set(unitId, next);
     });
   }
 

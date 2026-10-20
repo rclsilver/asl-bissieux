@@ -2,6 +2,32 @@
   cursor: pointer;
 }
 
+:host {
+  display: block;
+  max-inline-size: 100%;
+}
+svg {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+#units > g.unit-highlighted > polygon {
+  stroke: var(--mat-sys-primary, #1565c0);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+#units > g.unit-selected > polygon {
+  stroke: var(--mat-sys-primary, #1565c0);
+  stroke-width: 4px;
+  vector-effect: non-scaling-stroke;
+}
+#units > g:focus > polygon {
+  stroke: var(--mat-sys-primary, #1565c0);
+  stroke-width: 4px;
+  stroke-dasharray: 5 3;
+  vector-effect: non-scaling-stroke;
+}
+
 .hidden * {
   display: none;
 }

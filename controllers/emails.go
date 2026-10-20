@@ -175,12 +175,6 @@ func DeleteAttachment(tx *gorm.DB, templateID, attachmentID string) error {
 	return tx.Delete(attachment).Error
 }
 
-func ListEmailCampaigns(tx *gorm.DB) ([]*models.EmailCampaign, error) {
-	var result []*models.EmailCampaign
-
-	return result, tx.Order("created_at ASC").Preload("EmailTemplate").Preload("Emails").Find(&result).Error
-}
-
 func GetEmailCampaign(tx *gorm.DB, campaignID string) (*models.EmailCampaign, error) {
 	if err := validateUUID(campaignID); err != nil {
 		return nil, errors.NewNotFound(nil, fmt.Sprintf("campaign %q not found", campaignID))

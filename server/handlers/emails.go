@@ -281,12 +281,18 @@ func RemoveAttachment(c *gin.Context, in *removeAttachmentIn) error {
 	return nil
 }
 
-type listEmailCampaignsIn struct{}
+type listEmailCampaignsIn struct {
+	Page      int    `query:"page"`
+	PageSize  int    `query:"page_size"`
+	Query     string `query:"query"`
+	Sort      string `query:"sort"`
+	Direction string `query:"direction"`
+}
 
-func ListEmailCampaigns(c *gin.Context, in *listEmailCampaignsIn) ([]*models.EmailCampaign, error) {
+func ListEmailCampaigns(c *gin.Context, in *listEmailCampaignsIn) (*models.EmailCampaignPage, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.ListEmailCampaigns(db)
+	result, err := controllers.ListEmailCampaignPage(db, controllers.CampaignPageOptions{Page: in.Page, PageSize: in.PageSize, Query: in.Query, Sort: in.Sort, Direction: in.Direction})
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get campaigns")
 		return nil, err

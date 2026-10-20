@@ -19,8 +19,12 @@
         <h2>Lot {{ c.unit?.number }}</h2>
         <p>{{ members() }}</p>
       </div>
-      @if ((canPay$ | async) || (canRefund$ | async) || (canAdjust$ | async)) {
+      @if (
+        kind === null &&
+        ((canPay$ | async) || (canRefund$ | async) || (canAdjust$ | async))
+      ) {
         <button
+          #operationButton
           mat-mini-fab
           color="primary"
           type="button"

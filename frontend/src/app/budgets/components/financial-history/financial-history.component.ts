@@ -35,6 +35,17 @@ export class FinancialHistoryComponent implements OnInit, OnDestroy {
   @Output() addPayment = new EventEmitter<void>();
   private readonly api = inject(ApiService);
   private readonly document = inject(DOCUMENT);
+  private returnFocus = false;
+  @ViewChild('operationButton') set operationButton(
+    button: ElementRef<HTMLElement> | undefined
+  ) {
+    if (button && this.returnFocus) {
+      this.returnFocus = false;
+      queueMicrotask(() => {
+        if (this.alive) button.nativeElement.focus();
+      });
+    }
+  }
   @ViewChild('effectTitle') set effectTitle(
     title: ElementRef<HTMLElement> | undefined
   ) {
@@ -162,6 +173,7 @@ export class FinancialHistoryComponent implements OnInit, OnDestroy {
   }
   cancel() {
     if (!this.busy) {
+      this.returnFocus = true;
       this.kind = null;
       this.preview = null;
       this.payload = null;

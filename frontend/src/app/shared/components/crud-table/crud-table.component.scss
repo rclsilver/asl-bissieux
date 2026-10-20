@@ -1,3 +1,38 @@
+:host {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
+}
+
+mat-toolbar {
+  flex-wrap: wrap;
+  block-size: auto;
+  min-block-size: 64px;
+  gap: 0.5rem 0.25rem;
+  padding-block: 0.5rem;
+
+  > button,
+  > mat-progress-spinner {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  mat-toolbar {
+    min-block-size: 56px;
+  }
+}
+
+.table-scroll {
+  overflow: auto;
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+}
+
 table {
   width: 100%;
 }

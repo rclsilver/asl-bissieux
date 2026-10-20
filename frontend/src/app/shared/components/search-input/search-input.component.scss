@@ -1,0 +1,12 @@
+:host {
+  display: block;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+mat-form-field {
+  inline-size: 16rem;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}

@@ -1,0 +1,101 @@
+<div class="editor-toolbar">
+  <button mat-button type="button" [disabled]="disabled" (click)="toggleMode()">
+    {{ advanced ? 'Utiliser les champs' : 'Mode avancé (JSON)' }}
+  </button>
+  @if (!advanced) {
+    <button
+      mat-mini-fab
+      color="primary"
+      class="add-value"
+      type="button"
+      [disabled]="disabled"
+      (click)="addField()"
+      aria-label="Ajouter une valeur"
+      matTooltip="Ajouter une valeur"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+    </button>
+  }
+</div>
+@if (advanced) {
+  <mat-form-field class="advanced-data">
+    <mat-label>Valeurs supplémentaires en JSON</mat-label>
+    <textarea
+      matInput
+      rows="8"
+      [value]="raw"
+      [disabled]="disabled"
+      (input)="updateRaw($event)"
+      (blur)="touch()"
+      spellcheck="false"
+    ></textarea>
+    <mat-hint
+      >Les objets et listes des modèles avancés sont conservés.</mat-hint
+    >
+  </mat-form-field>
+} @else {
+  <div [formGroup]="form" (focusout)="touch()">
+    <div formArrayName="fields" class="fields">
+      @for (field of fields.controls; track field; let index = $index) {
+        <div class="field-row" [formGroupName]="index">
+          <mat-form-field class="value-name"
+            ><mat-label>Nom de la valeur</mat-label
+            ><input
+              matInput
+              formControlName="name"
+              placeholder="ex. date_limite"
+          /></mat-form-field>
+          <mat-form-field class="value-type"
+            ><mat-label>Type</mat-label
+            ><mat-select formControlName="type"
+              ><mat-option value="text">Texte</mat-option
+              ><mat-option value="number">Nombre</mat-option
+              ><mat-option value="boolean">Oui/non</mat-option
+              ><mat-option value="null">Valeur vide</mat-option></mat-select
+            ></mat-form-field
+          >
+          @if (field.controls['type'].value === 'boolean') {
+            <mat-form-field class="value-content"
+              ><mat-label>Valeur</mat-label
+              ><mat-select formControlName="value"
+                ><mat-option value="true">Oui</mat-option
+                ><mat-option value="false">Non</mat-option></mat-select
+              ></mat-form-field
+            >
+          } @else if (field.controls['type'].value !== 'null') {
+            <mat-form-field class="value-content"
+              ><mat-label>Valeur</mat-label
+              ><input
+                matInput
+                formControlName="value"
+                [attr.inputmode]="
+                  field.controls['type'].value === 'number' ? 'decimal' : null
+                "
+            /></mat-form-field>
+          }
+          <button
+            mat-icon-button
+            type="button"
+            [disabled]="disabled"
+            (click)="removeField(index)"
+            [attr.aria-label]="
+              'Supprimer la valeur ' +
+              (field.controls['name'].value || index + 1)
+            "
+            matTooltip="Supprimer la valeur"
+          >
+            <mat-icon aria-hidden="true">delete</mat-icon>
+          </button>
+        </div>
+      } @empty {
+        <p>Aucune valeur supplémentaire.</p>
+      }
+    </div>
+  </div>
+}
+@if (error) {
+  <p class="editor-error" role="alert">{{ error }}</p>
+}
+@if (notice) {
+  <p role="status">{{ notice }}</p>
+}

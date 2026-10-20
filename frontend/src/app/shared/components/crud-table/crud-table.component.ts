@@ -18,6 +18,7 @@ import {
   Subject,
   combineLatest,
   distinctUntilChanged,
+  debounceTime,
   first,
   map,
   skip,
@@ -34,6 +35,9 @@ import {
   CrudTableRow,
 } from '../../datasources/crud-table.datasource';
 import { MatSort } from '@angular/material/sort';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { PagedDataSource } from '../../datasources/paged.datasource';
+import { frenchPaginator } from './french-paginator';
 import { SearchInputComponent } from '../search-input/search-input.component';
 
 export class CustomAction {
@@ -107,6 +111,7 @@ export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
 
 @Component({
   selector: 'app-crud-table',
+  providers: [{ provide: MatPaginatorIntl, useFactory: frenchPaginator }],
   templateUrl: './crud-table.component.html',
   styleUrls: ['./crud-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -301,11 +306,15 @@ export class CrudTableComponent<T extends {}>
     return this._columnDefs$.getValue();
   }
 
+  remoteSource: PagedDataSource<T> | null = null;
+
   @Input() set dataSource(dataSource: DataSource<T> | null) {
     if (dataSource === null) {
       dataSource = new EmptyDataSource<T>();
     }
 
+    this.remoteSource =
+      dataSource instanceof PagedDataSource ? dataSource : null;
     this._dataSource$.next(
       new CrudTableDataSource<T>(
         dataSource,
@@ -336,6 +345,16 @@ export class CrudTableComponent<T extends {}>
   }
 
   ngAfterViewInit(): void {
+    this.sort.sortChange
+      .pipe(takeUntil(this._destroyed$))
+      .subscribe((sort) => this.remoteSource?.setSort(sort));
+    this.search.onPatternChange
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        takeUntil(this._destroyed$)
+      )
+      .subscribe((query) => this.remoteSource?.setFilter(query));
     // set the table datasource
     this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
       this.table.dataSource = ds;
@@ -374,6 +393,7 @@ export class CrudTableComponent<T extends {}>
       });
 
     this._columnDefs$.pipe(takeUntil(this._destroyed$)).subscribe((columns) => {
+      if (this.remoteSource) return;
       this.sort.active = '';
 
       // Define default active sort

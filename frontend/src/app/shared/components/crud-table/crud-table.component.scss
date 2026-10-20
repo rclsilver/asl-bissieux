@@ -127,3 +127,23 @@ a {
     margin: 0;
   }
 }
+
+.pagination-shell {
+  container-type: inline-size;
+}
+// Material wraps the outer paginator; its inner actions must also fit the container.
+:host ::ng-deep .pagination-shell .mat-mdc-paginator-range-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+@container (max-width: 32rem) {
+  :host ::ng-deep .pagination-shell .mat-mdc-paginator-range-label {
+    flex-basis: 100%;
+    margin: 0.5rem 0.75rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: end;
+  }
+}

@@ -3,6 +3,7 @@ import { AbstractDataSource, DataSource } from '.';
 import { Column } from '../models/column.model';
 import { CollectionViewer } from '@angular/cdk/collections';
 import { Sort } from '@angular/material/sort';
+import { PagedDataSource } from './paged.datasource';
 
 export type CrudTableColumn = {
   value: any;
@@ -56,7 +57,7 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
             return row;
           })
           .filter((result) => {
-            if (!filter) {
+            if (!filter || this._source instanceof PagedDataSource) {
               return true;
             }
 
@@ -74,7 +75,11 @@ export class CrudTableDataSource<T extends {}> extends AbstractDataSource<
             return false;
           })
           .sort((a, b) => {
-            if (!sort || !sort.active) {
+            if (
+              !sort ||
+              !sort.active ||
+              this._source instanceof PagedDataSource
+            ) {
               return 0;
             }
 

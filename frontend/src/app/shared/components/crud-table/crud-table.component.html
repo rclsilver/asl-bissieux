@@ -73,6 +73,8 @@
     <table
       mat-table
       matSort
+      [matSortActive]="remoteSource ? remoteSource.order.active : ''"
+      [matSortDirection]="remoteSource ? remoteSource.order.direction : ''"
       matSortDisableClear
       [class.invisible]="!(loaded$ | async)"
       [attr.aria-label]="tableLabel"
@@ -240,4 +242,21 @@
       diameter="32"
     ></mat-progress-spinner>
   </div>
+}
+
+@if (remoteSource && !(error$ | async)) {
+  @if (remoteSource.page$ | async; as page) {
+    <div class="pagination-shell">
+      <mat-paginator
+        [attr.aria-label]="'Pagination — ' + tableLabel"
+        [length]="page.total"
+        [pageIndex]="page.pageIndex"
+        [pageSize]="page.pageSize"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [showFirstLastButtons]="true"
+        [disabled]="!!(loading$ | async)"
+        (page)="remoteSource.setPage($event.pageIndex, $event.pageSize)"
+      ></mat-paginator>
+    </div>
+  }
 }

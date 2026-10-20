@@ -191,7 +191,14 @@ func ListPayments(tx *gorm.DB, budgetID, cotisationID string) ([]*models.Payment
 	return result, nil
 }
 
-func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data map[string]any) (*models.BuiltEmail, error) {
+type BudgetEmailRecipientFilter struct {
+	IncludeDoing bool
+	IncludePaid  bool
+}
+
+// An omitted filter preserves the legacy preview of all a member's cotisations.
+// Preparation screens pass the same filter for preview and campaign creation.
+func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data map[string]any, filters ...BudgetEmailRecipientFilter) (*models.BuiltEmail, error) {
 	template, err := GetEmailTemplate(tx, templateID)
 	if err != nil {
 		return nil, err
@@ -212,6 +219,22 @@ func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data
 		return nil, err
 	}
 	cotisations = filterCotisations(cotisations, member.ID)
+	if len(filters) > 0 {
+		filter := filters[0]
+		selected := make([]*models.CotisationResult, 0, len(cotisations))
+		for _, cotisation := range cotisations {
+			if includeBudgetEmailCotisation(cotisation, filter.IncludeDoing, filter.IncludePaid) {
+				selected = append(selected, cotisation)
+			}
+		}
+		cotisations = selected
+		if len(cotisations) == 0 {
+			return nil, errors.NewBadRequest(nil, "Ce membre ne fait pas partie des destinataires sélectionnés.")
+		}
+		if member.Email == "" {
+			return nil, errors.NewBadRequest(nil, "Ce membre n’a pas d’adresse e-mail.")
+		}
+	}
 
 	t, err := buildTemplate(tx, budget, member, cotisations, data)
 	if err != nil {
@@ -252,11 +275,7 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	members := make(map[string]*recipient)
 
 	for _, cotisation := range cotisations {
-		if cotisation.Paid.Cmp(cotisation.Amount) >= 0 {
-			if !toPaid {
-				continue
-			}
-		} else if cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) >= 0 && !toDoing {
+		if !includeBudgetEmailCotisation(cotisation, toDoing, toPaid) {
 			continue
 		}
 
@@ -292,6 +311,13 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	}
 
 	return nil
+}
+
+func includeBudgetEmailCotisation(cotisation *models.CotisationResult, toDoing, toPaid bool) bool {
+	if cotisation.Paid.Cmp(cotisation.Amount) >= 0 {
+		return toPaid
+	}
+	return cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) < 0 || toDoing
 }
 
 func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult) (map[string]any, error) {

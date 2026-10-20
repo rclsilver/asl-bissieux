@@ -1,13 +1,16 @@
 package controllers
 
 import (
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/juju/errors"
 	"github.com/rclsilver/asl-bissieux/internal/testdb"
 	"github.com/rclsilver/asl-bissieux/models"
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
 	"github.com/rclsilver/asl-bissieux/pkg/money"
+	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
 
 func TestBudgetRecipientsIntegration(t *testing.T) {
@@ -58,6 +61,10 @@ func TestBudgetRecipientsIntegration(t *testing.T) {
 	if err := conn.Model(withoutEmail).Association("Units").Append(units[4]); err != nil {
 		t.Fatal(err)
 	}
+	memberIDs := map[string]string{
+		multi.Email: multi.ID, coowner.Email: coowner.ID, paid.Email: paid.ID,
+	}
+
 	for _, tc := range []struct {
 		name            string
 		doing, paid     bool
@@ -69,7 +76,7 @@ func TestBudgetRecipientsIntegration(t *testing.T) {
 		{"all", true, true, 3},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			template := models.NewEmailTemplate(tc.name, "{{.member.first_name}}", "{{range .cotisations}}Lot {{.unit.number}} {{end}}")
+			template := models.NewEmailTemplate(tc.name, "{{.member.first_name}} / {{.amount}}", "{{range .cotisations}}Lot {{.unit.number}} {{end}}")
 			if err := conn.Create(template).Error; err != nil {
 				t.Fatal(err)
 			}
@@ -100,7 +107,39 @@ func TestBudgetRecipientsIntegration(t *testing.T) {
 				if !ok || len(cotisations) != count {
 					t.Fatalf("%s: got %v cotisations, expected %d", email.To, email.Data["cotisations"], count)
 				}
+				preview, err := PreviewBudgetEmail(conn, budget.ID, template.ID, memberIDs[email.To], map[string]any{}, BudgetEmailRecipientFilter{IncludeDoing: tc.doing, IncludePaid: tc.paid})
+				if err != nil {
+					t.Fatal(err)
+				}
+				context, err := templates.NewTemplate(email.Data)
+				if err != nil {
+					t.Fatal(err)
+				}
+				prepared, err := BuildEmail(template, context)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if preview.Subject != prepared.Subject || preview.Message != prepared.Message {
+					t.Fatalf("preview differs from prepared context for %s: %+v / %+v", email.To, preview, prepared)
+				}
 				delete(expected, email.To)
+			}
+			legacy, err := PreviewBudgetEmail(conn, budget.ID, template.ID, paid.ID, map[string]any{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Count(legacy.Message, "Lot ") != 3 {
+				t.Fatalf("legacy preview should keep all three cotisations: %+v", legacy)
+			}
+			if tc.paidCotisations == 0 {
+				_, err := PreviewBudgetEmail(conn, budget.ID, template.ID, paid.ID, map[string]any{}, BudgetEmailRecipientFilter{})
+				if !errors.IsBadRequest(err) {
+					t.Fatalf("excluded recipient preview must fail, got %v", err)
+				}
+			}
+			_, err = PreviewBudgetEmail(conn, budget.ID, template.ID, withoutEmail.ID, map[string]any{}, BudgetEmailRecipientFilter{IncludeDoing: true, IncludePaid: true})
+			if !errors.IsBadRequest(err) {
+				t.Fatalf("recipient without e-mail must be excluded, got %v", err)
 			}
 		})
 	}

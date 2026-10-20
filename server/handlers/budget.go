@@ -687,11 +687,24 @@ type previewBudgetEmailIn struct {
 	MemberID   string         `json:"member_id" binding:"required"`
 	TemplateID string         `json:"template_id" binding:"required"`
 	Data       map[string]any `json:"data" binding:"required"`
+	SendDoing  *bool          `json:"send_to_doing"`
+	SendPaid   *bool          `json:"send_to_paid"`
 }
 
 // PreviewBudgetEmail build a preview of an budget email
 func PreviewBudgetEmail(c *gin.Context, in *previewBudgetEmailIn) (*models.BuiltEmail, error) {
-	email, err := controllers.PreviewBudgetEmail(db.Connection(c), in.BudgetID, in.TemplateID, in.MemberID, in.Data)
+	var filters []controllers.BudgetEmailRecipientFilter
+	if in.SendDoing != nil || in.SendPaid != nil {
+		filter := controllers.BudgetEmailRecipientFilter{}
+		if in.SendDoing != nil {
+			filter.IncludeDoing = *in.SendDoing
+		}
+		if in.SendPaid != nil {
+			filter.IncludePaid = *in.SendPaid
+		}
+		filters = append(filters, filter)
+	}
+	email, err := controllers.PreviewBudgetEmail(db.Connection(c), in.BudgetID, in.TemplateID, in.MemberID, in.Data, filters...)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to build the preview")

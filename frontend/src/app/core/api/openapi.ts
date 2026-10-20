@@ -242,6 +242,8 @@ export type APISchemas = {
   PreviewBudgetEmailInput: {
     data?: { [key: string]: unknown };
     member_id?: string;
+    send_to_doing?: null | boolean;
+    send_to_paid?: null | boolean;
     template_id?: string;
   };
   PreviewEmailTemplateInput: { data?: { [key: string]: unknown } };

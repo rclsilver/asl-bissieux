@@ -1,11 +1,30 @@
-@use "sass:map";
-@use "@angular/material" as mat;
+@use 'sass:map';
+@use '@angular/material' as mat;
 
 @mixin page-component-theme($theme) {
   $color-config: mat.m2-get-color-config($theme);
-  $primary: map.get($color-config, "primary");
+  $primary: map.get($color-config, 'primary');
+  $background: map.get($color-config, 'background');
+  $foreground: map.get($color-config, 'foreground');
+  $is-dark: map.get($color-config, 'is-dark');
+
+  $active-tone: 50;
+  @if $is-dark {
+    $active-tone: 900;
+  }
+
+  #top-menu {
+    background-color: mat.m2-get-color-from-palette($primary, 700);
+    color: mat.m2-get-color-from-palette($primary, '700-contrast');
+  }
 
   #left-menu > a.active {
-    background-color: mat.m2-get-color-from-palette($primary, 0.4);
+    background-color: mat.m2-get-color-from-palette($primary, $active-tone);
+    font-weight: 500;
+  }
+
+  .skip-link {
+    background-color: map.get($background, 'card');
+    color: map.get($foreground, 'text');
   }
 }

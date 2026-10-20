@@ -1,19 +1,20 @@
-import { Component, ChangeDetectionStrategy } from "@angular/core";
-import { Observable, map, shareReplay } from "rxjs";
-import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
-import { AuthService } from "../../services/auth.service";
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Observable, map, shareReplay } from 'rxjs';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { MatSidenav } from '@angular/material/sidenav';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: "app-page",
-  templateUrl: "./page.component.html",
-  styleUrls: ["./page.component.scss"],
+  selector: 'app-page',
+  templateUrl: './page.component.html',
+  styleUrls: ['./page.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class PageComponent {
   readonly isHandset$ = this._breakpoints.observe(Breakpoints.Handset).pipe(
     map((result) => result.matches),
-    shareReplay(),
+    shareReplay()
   );
 
   readonly authenticated$ = this._auth.authenticated$;
@@ -31,44 +32,54 @@ export class PageComponent {
     allowed$: Observable<boolean>;
   }[] = [
     {
-      label: "Budgets",
-      path: "/budgets",
-      icon: "euro-sign",
+      label: 'Budgets',
+      path: '/budgets',
+      icon: 'account_balance_wallet',
       allowed$: this.active$,
     },
     {
-      label: "Units",
-      path: "/units",
-      icon: "map",
+      label: 'Lots',
+      path: '/units',
+      icon: 'map',
       allowed$: this.active$,
     },
     {
-      label: "Members",
-      path: "/members",
-      icon: "users",
+      label: 'Membres',
+      path: '/members',
+      icon: 'groups',
       allowed$: this.active$,
     },
     {
-      label: "E-mails",
-      path: "/emails",
-      icon: "mail-bulk",
+      label: 'E-mails',
+      path: '/emails',
+      icon: 'mail',
       allowed$: this.active$,
     },
     {
-      label: "Users",
-      path: "/users",
-      icon: "key",
+      label: 'Utilisateurs',
+      path: '/users',
+      icon: 'manage_accounts',
       allowed$: this.administrator$,
     },
   ];
 
   constructor(
     private _breakpoints: BreakpointObserver,
-    private _auth: AuthService,
+    private _auth: AuthService
   ) {}
 
   ngOnInit(): void {
     this._auth.init();
+  }
+
+  skipToContent(event: Event, content: HTMLElement) {
+    // Prevent a fragment change: the application uses hash-based routing.
+    event.preventDefault();
+    content.focus();
+  }
+
+  closeMobileMenu(drawer: MatSidenav, handset: boolean | null) {
+    if (handset) void drawer.close();
   }
 
   logout() {
@@ -77,9 +88,9 @@ export class PageComponent {
 
   loginLabel(label?: string): string {
     const provider = label?.trim();
-    return provider && provider !== "Se connecter"
+    return provider && provider !== 'Se connecter'
       ? `Continuer avec ${provider}`
-      : "Se connecter";
+      : 'Se connecter';
   }
 
   reloadPage() {

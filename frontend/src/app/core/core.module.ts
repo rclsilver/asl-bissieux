@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 
+import { MatMenuModule } from '@angular/material/menu';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -15,6 +16,7 @@ import { SharedModule } from '../shared/shared.module';
 import { WithGoogleAuthModule } from 'ngx-sign-in-with-google';
 
 const material = [
+  MatMenuModule,
   MatCardModule,
   MatListModule,
   MatSidenavModule,

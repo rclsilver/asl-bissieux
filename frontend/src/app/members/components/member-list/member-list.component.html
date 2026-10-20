@@ -23,24 +23,26 @@
       <mat-icon aria-hidden="true">clear</mat-icon>
     </button>
   </mat-form-field>
-  <mat-button-toggle-group
-    [value]="view"
-    (change)="setView($event.value)"
-    aria-label="Vue des membres"
-  >
-    <mat-button-toggle value="list">Annuaire</mat-button-toggle>
-    <mat-button-toggle value="map">Carte</mat-button-toggle>
-  </mat-button-toggle-group>
-  <button
-    mat-icon-button
-    type="button"
-    (click)="refresh()"
-    [disabled]="loading || unitsLoading"
-    aria-label="Actualiser les membres et les lots"
-    matTooltip="Actualiser les membres et les lots"
-  >
-    <mat-icon aria-hidden="true">refresh</mat-icon>
-  </button>
+  <div class="directory-view-actions">
+    <mat-button-toggle-group
+      [value]="view"
+      (change)="setView($event.value)"
+      aria-label="Vue des membres"
+    >
+      <mat-button-toggle value="list">Annuaire</mat-button-toggle>
+      <mat-button-toggle value="map">Carte</mat-button-toggle>
+    </mat-button-toggle-group>
+    <button
+      mat-icon-button
+      type="button"
+      (click)="refresh()"
+      [disabled]="loading || unitsLoading"
+      aria-label="Actualiser les membres et les lots"
+      matTooltip="Actualiser les membres et les lots"
+    >
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+    </button>
+  </div>
 </div>
 @if (loaded && !loading && !error) {
   <p role="status">

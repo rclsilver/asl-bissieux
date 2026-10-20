@@ -9,9 +9,18 @@ p {
 .directory-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   margin-block: 1.5rem 1rem;
+}
+// Align actions with the 56px Material input surface, excluding its hint.
+.directory-view-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-block-size: 56px;
+  max-inline-size: 100%;
 }
 .directory-search {
   flex: 1 1 20rem;

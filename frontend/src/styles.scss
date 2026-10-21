@@ -1,9 +1,10 @@
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
-@use "@angular/material" as mat;
-@use "normalize.css";
-@use "app/core/core.theme" as core;
-@use "app/shared/shared.theme" as shared;
+@use '@angular/material' as mat;
+@use 'normalize.css';
+@use 'app/core/core.theme' as core;
+@use 'app/shared/shared.theme' as shared;
+@use 'app/dashboard/dashboard.theme' as dashboard;
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
@@ -43,12 +44,14 @@ $light-theme: mat.m2-define-light-theme(
 @include mat.all-component-themes($dark-theme);
 @include core.core-theme($dark-theme);
 @include shared.shared-theme($dark-theme);
+@include dashboard.dashboard-theme($dark-theme);
 
 // Apply the light theme only when the user prefers light themes.
 @media (prefers-color-scheme: light) {
   @include mat.all-component-colors($light-theme);
   @include core.core-theme($light-theme);
   @include shared.shared-theme($light-theme);
+  @include dashboard.dashboard-theme($light-theme);
 }
 
 // Common styles
@@ -58,7 +61,7 @@ body {
 }
 
 body {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .spacer {

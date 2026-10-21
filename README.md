@@ -311,8 +311,8 @@ La compilation utilise le builder Angular actuel (esbuild) et le serveur de
 développement Vite. Les fichiers restent directement dans `dist/asl-bissieux`
 pour leur embarquement dans Go. Les modèles utilisent les blocs Angular
 `@if` et `@for`. La détection de changements, les requêtes HTTP et la connexion
-Google gardent leur comportement existant. La bascule OIDC/Keycloak viendra
-dans un autre lot.
+Google gardent leur comportement existant. La configuration OIDC/Keycloak est décrite
+dans la section suivante.
 
 Les tests Angular s’exécutent avec Vitest et jsdom, sans installation de Chrome.
 Ils vérifient le formulaire de paiement, l’intercepteur d’authentification et
@@ -447,3 +447,16 @@ pas globalement le compte Google dans le navigateur. Le parcours Google réel,
 la configuration Cloud et les associations de comptes doivent être vérifiés
 avant une bascule de production séparément autorisée. Le lot 8 ne déploie
 rien en production et ne modifie aucun client Google distant.
+
+## Parcours livrés et documentation
+
+- [Démarrage local, ports et vérifications](docs/demarrage-local.md)
+- [Accueil : recouvrement, carte, encaissements et synthèses](docs/tableau-de-bord.md)
+- [Remboursements, ajustements et contre-écritures](docs/journal-financier.md)
+- [Approbation des comptes et permissions](docs/administration-acces.md)
+- [Préparation de la bascule Google OIDC en production](docs/production-oidc.md)
+- [Pagination des campagnes](docs/pagination-campagnes.md) et [des e-mails](docs/pagination-emails.md)
+- [Variables des modèles](docs/variables-email.md) et [terminologie](docs/terminologie-interface.md)
+
+Sur le poste de validation actuel, Google OIDC est actif dans l’override privé ;
+la description Keycloak ci-dessus reste celle du Compose public pour un nouveau clone.

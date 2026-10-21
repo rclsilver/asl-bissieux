@@ -37,7 +37,7 @@ asl-bissieux/
 │       └── users/                # Users feature module
 ├── models/                       # GORM models
 ├── pkg/
-│   ├── auth/                     # Pluggable auth providers (Google implemented)
+│   ├── auth/                     # OIDC sessions and transitional Google provider
 │   ├── config/                   # Viper-based configuration loader
 │   ├── db/                       # Database connection, migrations, base model
 │   ├── smtp/                     # SMTP email sending
@@ -85,7 +85,7 @@ asl-bissieux/
 | Framework | Angular 22 (NgModules, lazy loading) |
 | UI Components | Angular Material |
 | HTTP | Angular `HttpClient` |
-| Auth (Google) | `ngx-sign-in-with-google` |
+| Auth | Server-side OIDC session; transitional Google component |
 | API types | Auto-generated from OpenAPI spec (`core/api/openapi.ts`) |
 | Reactive state | RxJS (`BehaviorSubject`, `Observable`) |
 
@@ -116,11 +116,12 @@ docker compose up
 ```
 
 This starts:
-- `postgresql` — PostgreSQL 14 (port not exposed externally)
+- `postgresql` — PostgreSQL 14 (no host port in public Compose; current private override uses 55432)
 - `smtp-mock` — fake SMTP server for local email testing
 - `server` — Go backend, runs via `go run main.go server -v`, port `8080`
 - `frontend` — Angular dev server (`npm start`), port `4200`
 - `swagger` — Swagger UI pointed at `http://localhost:8080/api/spec.json`
+- `keycloak` — OIDC development realm, port 9080 (current private override selects Google instead)
 
 ### Build the binary (without Docker)
 
@@ -273,3 +274,13 @@ The `Dockerfile` uses multi-stage builds:
 | `final` | Minimal Alpine image with the Go binary |
 
 The final Docker image serves both the API (`/api/`) and the Angular SPA from the embedded filesystem.
+
+## Completed local features
+
+The authenticated home is `/dashboard`, with explicit budget/year/reference selection,
+monthly Europe/Paris collections, payment map, directory quality and bounded email
+aggregates. Its access-request counter is administrator-only. See
+`docs/tableau-de-bord.md` for scope and formulas. Financial corrections use the immutable
+ledger (migration 0005), account decisions use explicit requests (0006); never mutate
+those histories to implement a UI shortcut. See `docs/demarrage-local.md` for the current
+machine's private network override versus the public Compose configuration.

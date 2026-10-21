@@ -18,4 +18,4 @@ Les boutons nomment l’opération dans leur nom accessible et leur infobulle ; 
 
 Une liste vide, une recherche sans résultat et une erreur de chargement ont des messages distincts. Une erreur propose de réessayer et une recherche sans résultat permet d’effacer le filtre. Les détails HTTP ne sont pas le message principal de ces listes.
 
-L’harmonisation se poursuit par lots : les formulaires métier et la préparation des e-mails ne sont pas entièrement traduits ou remaniés par le lot des listes.
+Les formulaires métier, leurs validations et leurs notifications utilisent également le français. Pendant un enregistrement, la saisie et les actions sont protégées ; après erreur, la saisie reste disponible pour correction et reprise. Un membre créé avant un échec d’association conserve son identité pour éviter de le recréer.

@@ -86,6 +86,9 @@ func resolveLegacyGoogleIdentity(ctx context.Context, subject, email string) (*U
 			if err := tx.Create(&user).Error; err != nil {
 				return err
 			}
+			if err := tx.Create(&AccessRequest{UserID: user.ID, Status: "pending"}).Error; err != nil {
+				return err
+			}
 		} else if err != nil {
 			return err
 		}
@@ -122,6 +125,9 @@ func resolveIdentity(ctx context.Context, issuer, subject, email string) (*User,
 		user = *NewUser(email, false, false, nil)
 		if err := tx.Create(&user).Error; err != nil {
 			return fmt.Errorf("account requires an explicit identity link")
+		}
+		if err := tx.Create(&AccessRequest{UserID: user.ID, Status: "pending"}).Error; err != nil {
+			return err
 		}
 		return tx.Create(&Identity{Issuer: issuer, Subject: subject, UserID: user.ID}).Error
 	})

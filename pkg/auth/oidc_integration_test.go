@@ -205,6 +205,10 @@ func TestOIDCSessionIntegration(t *testing.T) {
 	if stored.TokenHash != hex.EncodeToString(hash[:]) || stored.CSRFHash == csrf.Value {
 		t.Fatal("raw session/CSRF tokens were persisted")
 	}
+	var request auth.AccessRequest
+	if err := conn.First(&request, "user_id = ?", user.ID).Error; err != nil || request.Status != "pending" {
+		t.Fatalf("verified new OIDC account must create pending access request: %+v %v", request, err)
+	}
 	// Authentication and rights are looked up for every request, not copied from ID token roles.
 	if err := conn.Model(&auth.User{}).Where("id = ?", user.ID).Updates(map[string]interface{}{"enabled": true, "actions": pq.StringArray{"budget.CreatePayment"}}).Error; err != nil {
 		t.Fatal(err)

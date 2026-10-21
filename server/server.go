@@ -105,6 +105,8 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), tonic.Handler(_auth.UserInfos, http.StatusOK))
 
+		authGroup.GET("access-requests/summary", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.PendingAccessRequests, http.StatusOK))
+
 		authGroup.GET("actions", []fizz.OperationOption{
 			fizz.Summary("Get all the registered actions"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),

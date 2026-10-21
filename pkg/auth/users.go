@@ -13,6 +13,8 @@ type AccessLevel int
 // User represents an user which can open a session to the application
 type User struct {
 	db.Model
+	AccessStatus string         `json:"access_status" gorm:"-"`
+	Identities   []UserIdentity `json:"identities,omitempty" gorm:"-"`
 
 	Username string         `gorm:"uniqueIndex;notNull" json:"username"`
 	Enabled  bool           `gorm:"default:false;notNull" json:"enabled"`

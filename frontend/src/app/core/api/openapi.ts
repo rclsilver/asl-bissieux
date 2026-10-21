@@ -7,18 +7,25 @@ export type APISchemas = {
     Name?: string;
   };
   AddMemberUnitInput: { unit_id?: string };
+  AuthAccessRequestSummary: {
+    /* Format: int64 */
+    pending?: number;
+  };
   AuthPublicAuthConfig: { label?: string; login_url?: string; mode?: string };
   AuthUser: {
+    access_status?: string;
     actions?: Array<string>;
     admin?: boolean;
     /* Format: date-time */
     created_at?: string;
     enabled?: boolean;
     id?: string;
+    identities?: Array<APISchemas['AuthUserIdentity']>;
     /* Format: date-time */
     updated_at?: string;
     username?: string;
   };
+  AuthUserIdentity: { issuer?: string; subject?: string };
   CreateBudgetInput: { label?: string };
   CreateEmailCampaignInput: {
     data?: { [key: string]: unknown };
@@ -418,14 +425,21 @@ export type APISchemas = {
     share?: number;
   };
   UpdateUserInput: {
+    access_decision?: string;
     actions?: Array<string>;
     admin?: boolean;
     enabled?: boolean;
+    /* Format: date-time */
+    expected_updated_at?: null | string;
     username?: string;
   };
 };
 
 export type APIEndpoints = {
+  '/api/auth/access-requests/summary': {
+    responses: { get: APISchemas['AuthAccessRequestSummary'] };
+    requests: { method?: 'get' };
+  };
   '/api/auth/actions': {
     responses: { get: Array<string> };
     requests: { method?: 'get' };
@@ -448,7 +462,7 @@ export type APIEndpoints = {
       post: APISchemas['AuthUser'];
     };
     requests:
-      | { method?: 'get' }
+      | { method?: 'get'; query?: { status?: string } }
       | { method: 'post'; body: APISchemas['CreateUserInput'] };
   };
   '/api/auth/users/{user_id}': {

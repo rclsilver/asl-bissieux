@@ -14,6 +14,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AuthService } from '../core/services/auth.service';
+import { APISchemas } from '../core/api/openapi';
 import { DashboardModule } from './dashboard.module';
 import { DashboardComponent } from './dashboard.component';
 
@@ -86,13 +87,23 @@ describe('Dashboard scopes and recovery', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  function setup(emailFailure = false) {
+  function setup(
+    emailFailure = false,
+    choices?: APISchemas['ModelsBudgetResult'][],
+    budgetFailure = false
+  ) {
     const f = TestBed.createComponent(DashboardComponent);
     f.detectChanges();
-    http.expectOne('/api/budget').flush([
-      { id: 'a', label: 'Premier', draft: false },
-      { id: 'b', label: 'Deuxième', draft: false },
-    ]);
+    const budgets = http.expectOne('/api/budget');
+    if (budgetFailure)
+      budgets.flush({}, { status: 503, statusText: 'Unavailable' });
+    else
+      budgets.flush(
+        choices ?? [
+          { id: 'a', label: 'Premier', draft: false },
+          { id: 'b', label: 'Deuxième', draft: false },
+        ]
+      );
     http
       .expectOne('/api/unit')
       .flush([unit, { id: 'empty', number: 13, members: [] }]);
@@ -117,6 +128,70 @@ describe('Dashboard scopes and recovery', () => {
       });
     return f;
   }
+  const choices = [
+    {
+      id: 'newest',
+      label: 'Budget sans année',
+      draft: true,
+      created_at: '2026-10-20T12:00:00Z',
+    },
+    {
+      id: 'older',
+      label: 'Exercice 2030',
+      draft: false,
+      created_at: '2025-10-20T12:00:00Z',
+    },
+  ];
+  it('defaults to the most recently created budget regardless of array order, label or draft state', () => {
+    params.next(convertToParamMap({ year: '2026' }));
+    const f = setup(false, choices);
+    http
+      .expectOne('/api/budget/newest/dashboard?year=2026')
+      .flush(finance('newest', 'Budget par défaut'));
+    f.detectChanges();
+    expect(f.componentInstance.budgetId).toBe('newest');
+    expect(f.nativeElement.textContent).toContain('Budget par défaut');
+    http.expectNone('/api/budget/older/dashboard?year=2026');
+  });
+  it('keeps an explicit URL selection, including deliberately choosing no budget', () => {
+    params.next(convertToParamMap({ budget: 'older', year: '2026' }));
+    const f = setup(false, choices);
+    http
+      .expectOne('/api/budget/older/dashboard?year=2026')
+      .flush(finance('older', 'Choix explicite'));
+    params.next(convertToParamMap({ budget: '', year: '2026' }));
+    f.detectChanges();
+    expect(f.componentInstance.budgetId).toBe('');
+    http.expectNone('/api/budget/newest/dashboard?year=2026');
+  });
+  it('leaves an empty catalogue unselected and defaults only after a successful retry', () => {
+    params.next(convertToParamMap({ year: '2026' }));
+    const f = setup(false, [], true);
+    expect(f.componentInstance.budgetId).toBe('');
+    http.expectNone((r) => r.url.startsWith('/api/budget/'));
+    f.componentInstance.retry('budgets');
+    http.expectOne('/api/budget').flush([]);
+    expect(f.componentInstance.budgetId).toBe('');
+    f.componentInstance.retry('budgets');
+    http.expectOne('/api/budget').flush(choices);
+    http
+      .expectOne('/api/budget/newest/dashboard?year=2026')
+      .flush(finance('newest', 'Chargé'));
+    expect(f.componentInstance.budgetId).toBe('newest');
+  });
+  it('does not replace a missing explicit budget with an unrelated latest budget', () => {
+    params.next(convertToParamMap({ budget: 'missing', year: '2026' }));
+    const f = setup(false, choices);
+    http
+      .expectOne('/api/budget/missing/dashboard?year=2026')
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    f.detectChanges();
+    expect(f.componentInstance.budgetId).toBe('missing');
+    expect(f.nativeElement.textContent).toContain(
+      'Impossible de charger ce budget'
+    );
+    http.expectNone('/api/budget/newest/dashboard?year=2026');
+  });
   it('defers the no-call diagnostic until the lot catalogue has loaded', () => {
     params.next(convertToParamMap({ budget: 'a', year: '2026', lot: '13' }));
     const f = TestBed.createComponent(DashboardComponent);
@@ -163,20 +238,18 @@ describe('Dashboard scopes and recovery', () => {
     expect(() => old.flush(finance('a', 'Ancien budget'))).toThrow();
     expect(f.nativeElement.textContent).not.toContain('Ancien budget');
     f.componentInstance.retry('emails');
-    http
-      .expectOne('/api/dashboard/emails')
-      .flush({
-        counts: {
-          total: 0,
-          waiting: 0,
-          sending: 0,
-          successful: 0,
-          error: 0,
-          unknown: 0,
-        },
-        recent: [],
-        campaigns: 0,
-      });
+    http.expectOne('/api/dashboard/emails').flush({
+      counts: {
+        total: 0,
+        waiting: 0,
+        sending: 0,
+        successful: 0,
+        error: 0,
+        unknown: 0,
+      },
+      recent: [],
+      campaigns: 0,
+    });
     http.expectNone('/api/auth/access-requests/summary');
   });
   it('requests and displays access counts only while the user is an administrator', () => {
@@ -212,16 +285,14 @@ describe('Dashboard scopes and recovery', () => {
     expect(f.nativeElement.textContent).toContain('Bob Fixture');
     expect(f.nativeElement.textContent).toContain('Trop-perçu à rembourser');
     f.componentInstance.retry('payments');
-    http
-      .expectOne('/api/budget/a/cotisations/call-a/payments')
-      .flush([
-        {
-          id: 'p',
-          date: '2026-01-31T23:30:00Z',
-          amount: 120,
-          comment: 'Paiement fictif',
-        },
-      ]);
+    http.expectOne('/api/budget/a/cotisations/call-a/payments').flush([
+      {
+        id: 'p',
+        date: '2026-01-31T23:30:00Z',
+        amount: 120,
+        comment: 'Paiement fictif',
+      },
+    ]);
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('01/02/2026');
     params.next(convertToParamMap({ budget: 'a', year: '2026', lot: '13' }));
@@ -233,28 +304,26 @@ describe('Dashboard scopes and recovery', () => {
   });
   it('keeps a draft provisional and treats a zero reference without a misleading percentage', () => {
     const f = setup();
-    http
-      .expectOne('/api/budget/a/dashboard?year=2026')
-      .flush({
-        budget: {
-          id: 'a',
-          label: 'Brouillon',
-          draft: true,
+    http.expectOne('/api/budget/a/dashboard?year=2026').flush({
+      budget: {
+        id: 'a',
+        label: 'Brouillon',
+        draft: true,
+        amount: 120,
+        preview: {
           amount: 120,
-          preview: {
-            amount: 120,
-            total_shares: 4,
-            months: 12,
-            annual_per_share: 30,
-            monthly_per_share: 2.5,
-            ready: true,
-          },
+          total_shares: 4,
+          months: 12,
+          annual_per_share: 30,
+          monthly_per_share: 2.5,
+          ready: true,
         },
-        recovery: { called: 0, rate: null },
-        cotisations: [],
-        months: [],
-        years: [2026],
-      });
+      },
+      recovery: { called: 0, rate: null },
+      cotisations: [],
+      months: [],
+      years: [2026],
+    });
     params.next(
       convertToParamMap({ budget: 'a', year: '2026', reference: 'b' })
     );

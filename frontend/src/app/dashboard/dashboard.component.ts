@@ -79,8 +79,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly reloadEmails$ = new Subject<void>();
   private readonly reloadAccess$ = new Subject<void>();
   private readonly reloadPayments$ = new Subject<void>();
-  private readonly selection$ = this.route.queryParamMap.pipe(
-    map((p) => {
+  private readonly budgetChoices$ = new BehaviorSubject<
+    APISchemas['ModelsBudgetResult'][]
+  >([]);
+  private readonly selection$ = combineLatest([
+    this.route.queryParamMap,
+    this.budgetChoices$,
+  ]).pipe(
+    map(([p, budgets]) => {
       const rawYear = p.get('year');
       const year =
         rawYear && /^\d{1,4}$/.test(rawYear) && Number(rawYear) > 0
@@ -88,7 +94,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           : currentParisYear();
       const rawLot = p.get('lot');
       return {
-        budget: p.get('budget') ?? '',
+        budget: p.has('budget')
+          ? (p.get('budget') ?? '')
+          : this.latestBudgetId(budgets),
         reference: p.get('reference') ?? '',
         year,
         lot:
@@ -136,7 +144,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.bind(
       this.reloadBudgets$,
       () => this.api.listBudgets(),
-      (v) => (this.budgets = v)
+      (v) => {
+        this.budgets = v;
+        if (v.value) this.budgetChoices$.next(v.value);
+      }
     );
     this.bind(
       this.reloadUnits$,
@@ -315,8 +326,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       payments: this.reloadPayments$,
     })[scope].next();
   }
+  private latestBudgetId(budgets: APISchemas['ModelsBudgetResult'][]) {
+    return (
+      budgets
+        .filter(
+          (budget) =>
+            budget.id && Number.isFinite(Date.parse(budget.created_at ?? ''))
+        )
+        .sort(
+          (a, b) =>
+            Date.parse(b.created_at!) - Date.parse(a.created_at!) ||
+            a.id!.localeCompare(b.id!)
+        )[0]?.id ?? ''
+    );
+  }
   selectBudget(id: string) {
-    this.navigate({ budget: id || null, reference: null, lot: null });
+    this.navigate({ budget: id, reference: null, lot: null });
   }
   selectYear(year: number) {
     this.navigate({ year });
@@ -437,5 +462,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.financeData$.complete();
+    this.budgetChoices$.complete();
   }
 }

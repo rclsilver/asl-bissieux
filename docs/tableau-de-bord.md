@@ -1,6 +1,6 @@
 # Accueil et tableau de bord
 
-L’accueil authentifié `/dashboard` réunit le suivi d’un budget explicitement choisi et des synthèses globales. Aucun budget n’est déduit de son libellé ni de sa date de création. Budget, année civile, référence de comparaison et lot sélectionné sont conservés dans l’URL. Changer de contexte annule les lectures précédentes. Chaque module a sa reprise après erreur ; une valeur indisponible reste « — ».
+L’accueil authentifié `/dashboard` réunit le suivi d’un budget et des synthèses globales. Sans choix dans l’URL, le budget créé le plus récemment est sélectionné automatiquement, brouillon compris ; les dates de création valides sont comparées et les égalités départagées par identifiant. Un choix explicite dans l’URL reste prioritaire, même s’il ne désigne plus un budget disponible. Le choix vide reste possible. L’exercice annuel et la référence de comparaison ne sont jamais déduits du libellé ou de la création. Les choix explicites de budget, année, référence et lot sont conservés dans l’URL. Changer de contexte annule les lectures précédentes. Chaque module a sa reprise après erreur ; une valeur indisponible reste « — ». Les liens utilisent la couleur de texte du thème Material, identique après visite, avec soulignement et focus visibles.
 
 ## Budget publié : recouvrement toutes dates
 

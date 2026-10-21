@@ -53,6 +53,46 @@ services:
         - CMD-SHELL
         - nc -z -v localhost 2024
 
+  # Development-only state for the Smocker proxy; no database or OVH access.
+  ovh-fixture:
+    image: 'local/asl-bissieux'
+    build:
+      context: .
+      target: server-devel
+    entrypoint: ['go', 'run', './dev/ovh-fixture']
+    command: ['-listen', ':8182', '-delay', '1s']
+    working_dir: /go/src/github.com/rclsilver/asl-bissieux
+    volumes:
+      - go-pkg:/go/pkg
+      - .:/go/src/github.com/rclsilver/asl-bissieux:ro
+    healthcheck:
+      start_period: 60s
+      interval: 5s
+      retries: 10
+      test: ['CMD', 'curl', '--fail', 'http://localhost:8182/health']
+
+  smocker:
+    image: ghcr.io/smocker-dev/smocker:1.0.0@sha256:4cc38db5e8b10a826d38496f2f63781f16a81f0837fa8776be24b9deb726642e
+    entrypoint: ['/bin/sh', '/etc/smocker/start.sh']
+    environment:
+      SMOCKER_MOCK_SERVER_LISTEN_PORT: '8180'
+      SMOCKER_CONFIG_LISTEN_PORT: '8181'
+      SMOCKER_LOG_LEVEL: 'warning'
+    volumes:
+      - ./dev/smocker/start.sh:/etc/smocker/start.sh:ro
+      - ./dev/smocker/ovh.json:/etc/smocker/ovh.json:ro
+    ports:
+      - '127.0.0.1:8180:8180'
+      - '127.0.0.1:8181:8181'
+    depends_on:
+      ovh-fixture:
+        condition: service_healthy
+    healthcheck:
+      start_period: 20s
+      interval: 5s
+      retries: 10
+      test: ['CMD-SHELL', 'wget -q -O - http://127.0.0.1:8181/mocks | grep -q /auth/time']
+
   server:
     image: 'local/asl-bissieux'
     build:
@@ -63,13 +103,13 @@ services:
       - -v
     environment:
       APP_AUTH_GOOGLE_CLIENT_ID: '174839262039-tg9jv57eod93r2a578hlkcjvq6p4g0hn.apps.googleusercontent.com'
-      OVH_ENDPOINT: '${OVH_ENDPOINT:-}'
-      OVH_APPLICATION_KEY: '${OVH_APPLICATION_KEY:-}'
-      OVH_APPLICATION_SECRET: '${OVH_APPLICATION_SECRET:-}'
-      OVH_CONSUMER_KEY: '${OVH_CONSUMER_KEY:-}'
-      APP_ML_DOMAIN: '${APP_ML_DOMAIN:-}'
-      APP_ML_MEMBERS: '${APP_ML_MEMBERS:-}'
-      APP_ML_BUREAU: '${APP_ML_BUREAU:-}'
+      OVH_ENDPOINT: 'http://smocker:8180'
+      OVH_APPLICATION_KEY: 'smocker-development-key'
+      OVH_APPLICATION_SECRET: 'smocker-development-secret'
+      OVH_CONSUMER_KEY: 'smocker-development-consumer'
+      APP_ML_DOMAIN: 'example.invalid'
+      APP_ML_MEMBERS: 'membres'
+      APP_ML_BUREAU: 'bureau'
       APP_AUTH_PROVIDER: 'oidc'
       APP_AUTH_OIDC_ISSUER: 'http://localhost:9080/realms/asl-dev'
       APP_AUTH_OIDC_BACKCHANNEL_URL: 'http://keycloak:9080'
@@ -90,6 +130,8 @@ services:
       postgresql:
         condition: service_healthy
       smtp-mock:
+        condition: service_healthy
+      smocker:
         condition: service_healthy
     healthcheck:
       start_period: 120s

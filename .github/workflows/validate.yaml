@@ -44,12 +44,24 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Go tests including isolated PostgreSQL integration tests
+      - name: Start disposable Smocker for OVH contract tests
+        run: |
+          docker run -d --name smocker-contract --network host \
+            -e SMOCKER_MOCK_SERVER_LISTEN_PORT=8280 \
+            -e SMOCKER_CONFIG_LISTEN_PORT=8281 \
+            -e SMOCKER_LOG_LEVEL=warning \
+            ghcr.io/smocker-dev/smocker:1.0.0@sha256:4cc38db5e8b10a826d38496f2f63781f16a81f0837fa8776be24b9deb726642e
+          curl --fail --silent --show-error --retry 15 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:8281/version
+      - name: Go tests including PostgreSQL and Smocker integration tests
         env:
           TEST_DATABASE_URL: postgres://test:test@localhost:5432/test?sslmode=disable
+          TEST_SMOCKER: '1'
         run: |
           go test -count=1 ./...
           go test -race -count=1 ./pkg/auth
+      - name: Stop disposable Smocker
+        if: always()
+        run: docker rm -f smocker-contract || true
       - name: Check Go module integrity and known vulnerabilities
         run: |
           go mod verify

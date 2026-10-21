@@ -1,5 +1,20 @@
 <h2>Membres</h2>
 <p>Retrouve un membre, ses coordonnées et les lots qui lui sont associés.</p>
+<mat-form-field subscriptSizing="dynamic"
+  ><mat-label>Informations à compléter</mat-label
+  ><mat-select [value]="quality" (selectionChange)="filterQuality($event.value)"
+    ><mat-option value="">Tous les membres</mat-option
+    ><mat-option value="missing_email"
+      >Sans adresse e-mail</mat-option
+    ></mat-select
+  ></mat-form-field
+>
+@if (quality) {
+  <p>
+    Une adresse manquante peut être volontaire ; complète seulement les
+    coordonnées disponibles.
+  </p>
+}
 <div class="directory-toolbar">
   <mat-form-field subscriptSizing="dynamic" class="directory-search">
     <mat-label>Rechercher un membre ou un lot</mat-label>

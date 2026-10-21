@@ -21,6 +21,10 @@ import { compareMembers, memberMatches } from '../member-directory';
 export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
   private readonly api = inject(ApiService);
   private readonly disconnected = new Subject<void>();
+  private readonly quality = new BehaviorSubject('');
+  setQuality(quality: string) {
+    this.quality.next(quality);
+  }
   private readonly query = new BehaviorSubject('');
   private readonly units = new BehaviorSubject<APISchemas['ModelsUnit'][]>([]);
   private readonly unitsError = new BehaviorSubject<unknown>(undefined);
@@ -32,9 +36,13 @@ export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
     return super.results$;
   }
   override get results$() {
-    return combineLatest([super.results$, this.query]).pipe(
-      map(([members, query]) =>
-        members.filter((member) => memberMatches(member, query))
+    return combineLatest([super.results$, this.query, this.quality]).pipe(
+      map(([members, query, quality]) =>
+        members.filter(
+          (member) =>
+            (!quality || !(member.email ?? '').trim()) &&
+            memberMatches(member, query)
+        )
       )
     );
   }
@@ -75,6 +83,7 @@ export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
     this.disconnected.next();
     this.disconnected.complete();
     this.query.complete();
+    this.quality.complete();
     this.units.complete();
     this.unitsError.complete();
     this.unitsLoading.complete();

@@ -93,6 +93,11 @@ describe('Member directory and map', () => {
     return fixture;
   }
 
+  it('applies the missing-email link filter while retaining full member and coowner context', () => {
+    params.next(convertToParamMap({quality:'missing_email'}));const fixture=setup();const page=fixture.componentInstance;expect(page.quality).toBe('missing_email');expect(page.filteredMembers.map(m=>m.id)).toEqual([bob.id,zoe.id]);expect(page.members).toHaveLength(3);
+    page.query.setValue('Bob');expect(page.filteredMembers.map(m=>m.id)).toEqual([bob.id]);params.next(convertToParamMap({}));page.query.setValue('');expect(page.filteredMembers).toHaveLength(3);
+    const allowed=vi.spyOn(TestBed.inject(AuthService),'allowed$');page.canEdit(bob);expect(allowed).toHaveBeenCalledWith('member.UpdateMember');
+  });
   it('shares accent-insensitive search across views without reloading or disconnecting the table', () => {
     const fixture = setup();
     const page = fixture.componentInstance;

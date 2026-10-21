@@ -6,7 +6,7 @@ import {
   inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   BehaviorSubject,
   EMPTY,
@@ -41,6 +41,16 @@ import { PaymentState, paymentState, paymentClass } from '../../payment-state';
   standalone: false,
 })
 export class BudgetDetailsComponent implements OnInit, OnDestroy {
+  coverage = '';
+  cotisationFilter = '';
+  readonly coverageLabels: Record<string, string> = {
+    received: 'Avec encaissement net',
+    remaining: 'Reste à encaisser',
+    settled: 'Lots à jour',
+    partial: 'Partiellement réglés',
+    unpaid: 'Sans paiement',
+    overpaid: 'Trop-perçus',
+  };
   selectedMapUnit: number | null = null;
   private readonly _destroy$ = new Subject<void>();
   private readonly _refresh$ = new BehaviorSubject<void>(undefined);
@@ -68,6 +78,14 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
   private readonly _route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  filterCoverage(coverage: string) {
+    this.router.navigate([], {
+      relativeTo: this._route,
+      queryParams: { coverage: coverage || null, cotisation: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   private readonly _notifications = inject(NotificationsService);
 
   private _budget$ = new BehaviorSubject<
@@ -274,7 +292,9 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
     map((ds) =>
       ds ? ds : new EmptyDataSource<APISchemas['ModelsCotisationResult']>()
     ),
-    switchMap((ds) => ds.results$),
+    switchMap((ds) =>
+      ds instanceof CotisationDataSource ? ds.allResults$ : ds.results$
+    ),
     map(
       (cotisations) =>
         cotisations
@@ -334,6 +354,14 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    combineLatest([this._route.queryParamMap, this.cotisations$])
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(([p, source]) => {
+        const scope = p.get('coverage') ?? '';
+        this.coverage = Object.hasOwn(this.coverageLabels, scope) ? scope : '';
+        this.cotisationFilter = p.get('cotisation') ?? '';
+        source?.setScope(this.coverage, this.cotisationFilter);
+      });
     combineLatest([this._route.paramMap, this._refresh$])
       .pipe(
         switchMap(([params]) =>

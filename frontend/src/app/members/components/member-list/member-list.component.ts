@@ -49,6 +49,14 @@ export class MemberListComponent implements OnInit, OnDestroy {
   readonly query = new FormControl('', { nonNullable: true });
   readonly memberName = memberName;
   readonly memberUnits = sortedMemberUnits;
+  quality = '';
+  filterQuality(quality: string) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { quality: quality || null },
+      queryParamsHandling: 'merge',
+    });
+  }
   view: 'list' | 'map' = 'list';
   members: APISchemas['ModelsMember'][] = [];
   filteredMembers: APISchemas['ModelsMember'][] = [];
@@ -107,6 +115,9 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.route.queryParamMap
       .pipe(takeUntil(this.destroyed$))
       .subscribe((params) => {
+        this.quality =
+          params.get('quality') === 'missing_email' ? 'missing_email' : '';
+        this.datasource.setQuality(this.quality);
         this.view = params.get('view') === 'map' ? 'map' : 'list';
         const lot = params.get('lot');
         this.invalidSelection =
@@ -306,7 +317,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
 
   canEdit(_: APISchemas['ModelsMember']) {
-    return this._auth.allowed$('member.MemberUnit');
+    return this._auth.allowed$('member.UpdateMember');
   }
 
   canDelete(_: APISchemas['ModelsMember']) {

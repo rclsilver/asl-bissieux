@@ -1,4 +1,12 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  OnInit,
+  OnDestroy,
+  Component,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -15,7 +23,32 @@ import { Column } from 'src/app/shared/models/column.model';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UnitListComponent {
+export class UnitListComponent implements OnInit, OnDestroy {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
+  quality = '';
+  ngOnInit() {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((p) => {
+      const quality = p.get('quality') ?? '';
+      this.quality = ['no_member', 'invalid_shares'].includes(quality)
+        ? quality
+        : '';
+      this.datasource.setQuality(this.quality);
+    });
+  }
+  filterQuality(quality: string) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { quality: quality || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _notifications = inject(NotificationsService);

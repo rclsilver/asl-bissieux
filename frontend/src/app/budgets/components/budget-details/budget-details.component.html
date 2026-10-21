@@ -72,6 +72,27 @@
         </p>
       </section>
     }
+    @if (!budget.draft) {
+      <mat-form-field subscriptSizing="dynamic"
+        ><mat-label>Situation des cotisations</mat-label
+        ><mat-select
+          [value]="coverage"
+          (selectionChange)="filterCoverage($event.value)"
+          ><mat-option value="">Toutes les cotisations</mat-option>
+          @for (item of coverageLabels | keyvalue; track item.key) {
+            <mat-option [value]="item.key">{{ item.value }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      @if (cotisationFilter) {
+        <p>
+          Une cotisation sélectionnée depuis l’accueil.
+          <button mat-button type="button" (click)="filterCoverage('')">
+            Afficher toutes les cotisations
+          </button>
+        </p>
+      }
+    }
     <mat-tab-group>
       @if (cotisations$ | async; as cotisations) {
         <mat-tab label="Cotisations">

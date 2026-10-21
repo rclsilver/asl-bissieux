@@ -75,6 +75,19 @@ export class ApiService {
       }
     );
   }
+  getBudgetDashboard(budgetId: string, year: number) {
+    return this.request('/api/budget/{budget_id}/dashboard', {
+      method: 'get',
+      urlParams: { budget_id: budgetId },
+      query: { year },
+    });
+  }
+  getDirectoryQuality() {
+    return this.request('/api/dashboard/directory', { method: 'get' });
+  }
+  getEmailDashboard() {
+    return this.request('/api/dashboard/emails', { method: 'get' });
+  }
   listBudgets() {
     return this.request('/api/budget', {
       method: 'get',

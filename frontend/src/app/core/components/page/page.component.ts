@@ -32,6 +32,12 @@ export class PageComponent {
     allowed$: Observable<boolean>;
   }[] = [
     {
+      label: 'Accueil',
+      path: '/dashboard',
+      icon: 'dashboard',
+      allowed$: this.active$,
+    },
+    {
       label: 'Budgets',
       path: '/budgets',
       icon: 'account_balance_wallet',
@@ -104,12 +110,10 @@ export class PageComponent {
   refreshAccess() {
     if (this.checkingAccess) return;
     this.checkingAccess = true;
-    this._auth
-      .refresh()
-      .subscribe({
-        next: () => (this.checkingAccess = false),
-        error: () => (this.checkingAccess = false),
-      });
+    this._auth.refresh().subscribe({
+      next: () => (this.checkingAccess = false),
+      error: () => (this.checkingAccess = false),
+    });
   }
   loginLabel(label?: string): string {
     const provider = label?.trim();

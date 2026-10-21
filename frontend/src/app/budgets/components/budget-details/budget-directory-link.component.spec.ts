@@ -20,8 +20,10 @@ import { BudgetDetailsComponent } from './budget-details.component';
 
 describe('Budget map directory link', () => {
   let http: HttpTestingController;
+  let routeParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   beforeEach(async () => {
+    routeParams = new BehaviorSubject(convertToParamMap({ id: 'budget-test' }));
     queryParams = new BehaviorSubject(convertToParamMap({}));
     await TestBed.configureTestingModule({
       imports: [BudgetsModule, NoopAnimationsModule],
@@ -33,7 +35,7 @@ describe('Budget map directory link', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            paramMap: of(convertToParamMap({ id: 'budget-test' })),
+            paramMap: routeParams,
             queryParamMap: queryParams,
           },
         },
@@ -47,6 +49,35 @@ describe('Budget map directory link', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('clears the previous budget while navigating and exposes a retryable failure', () => {
+    const f = TestBed.createComponent(BudgetDetailsComponent);
+    f.detectChanges();
+    http
+      .expectOne('/api/budget/budget-test')
+      .flush({ id: 'budget-test', label: 'Ancien budget', draft: true });
+    f.detectChanges();
+    for (const r of http.match((r) =>
+      r.url.startsWith('/api/budget/budget-test/')
+    ))
+      r.flush([]);
+    routeParams.next(convertToParamMap({ id: 'new' }));
+    f.detectChanges();
+    expect(f.nativeElement.textContent).not.toContain('Ancien budget');
+    http
+      .expectOne('/api/budget/new')
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Réessayer le budget');
+    expect(f.nativeElement.querySelector('mat-progress-spinner')).toBeNull();
+    f.componentInstance.refreshBudget();
+    http
+      .expectOne('/api/budget/new')
+      .flush({ id: 'new', label: 'Nouveau budget', draft: true });
+    f.detectChanges();
+    for (const r of http.match((r) => r.url.startsWith('/api/budget/new/')))
+      r.flush([]);
+    expect(f.nativeElement.textContent).toContain('Nouveau budget');
+  });
   it('applies a recovery filter while keeping all financial states on the map', async () => {
     queryParams.next(convertToParamMap({ coverage: 'remaining' }));
     const f = TestBed.createComponent(BudgetDetailsComponent);

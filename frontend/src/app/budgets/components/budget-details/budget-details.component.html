@@ -219,8 +219,17 @@
     </mat-tab-group>
   </div>
 }
-@if (!(budget$ | async)) {
-  <div class="loading">
+@if (budgetError) {
+  <p role="alert">
+    Le budget est indisponible. Vérifie son existence et ton accès, puis
+    réessaie.
+  </p>
+  <button mat-stroked-button type="button" (click)="refreshBudget()">
+    Réessayer le budget
+  </button>
+}
+@if (budgetLoading) {
+  <div class="loading" role="status" aria-label="Chargement du budget">
     <mat-progress-spinner
       color="primary"
       mode="indeterminate"

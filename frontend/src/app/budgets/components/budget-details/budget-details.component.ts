@@ -9,7 +9,8 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   BehaviorSubject,
-  EMPTY,
+  of,
+  tap,
   Subject,
   catchError,
   combineLatest,
@@ -41,6 +42,8 @@ import { PaymentState, paymentState, paymentClass } from '../../payment-state';
   standalone: false,
 })
 export class BudgetDetailsComponent implements OnInit, OnDestroy {
+  budgetLoading = true;
+  budgetError = false;
   coverage = '';
   cotisationFilter = '';
   readonly coverageLabels: Record<string, string> = {
@@ -150,28 +153,33 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
   }
 
   deleteExpense(expense: APISchemas['ModelsExpense']) {
+    const budget = this._budget$.value;
+    if (!budget?.id || !budget.draft) return;
     this._notifications
       .showConfirm({
-        title: 'Delete an expense',
-        message: `Are you sure to delete the expense ${expense.label}?`,
+        title: 'Supprimer une dépense',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer la dépense ${expense.label} ?`,
         class: 'warn',
       })
       .afterClosed()
       .subscribe((confirm) => {
-        if (confirm) {
-          this._api
-            .deleteExpense(this._budget$.value?.id!, expense.id!)
-            .subscribe({
-              next: () => {
-                this.refreshExpenses();
-                this._notifications.showDialog({
-                  title: 'Info',
-                  message: `The expense ${expense.label} has been deleted`,
-                  level: NotificationDialogLevel.Info,
-                });
-              },
-              error: this._api.handleError('Unable to delete the expense'),
-            });
+        if (
+          confirm &&
+          this._budget$.value?.id === budget.id &&
+          this._budget$.value?.draft
+        ) {
+          this._api.deleteExpense(budget.id!, expense.id!).subscribe({
+            next: () => {
+              this.refreshExpenses();
+              this._notifications.showDialog({
+                title: 'Info',
+                message: `La dépense ${expense.label} a été supprimée`,
+                level: NotificationDialogLevel.Info,
+              });
+            },
+            error: this._api.handleError('Impossible de supprimer la dépense'),
+          });
         }
       });
   }
@@ -364,17 +372,26 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
       });
     combineLatest([this._route.paramMap, this._refresh$])
       .pipe(
+        tap(() => {
+          this.budgetLoading = true;
+          this.budgetError = false;
+          this._budget$.next(null);
+          this.selectedMapUnit = null;
+        }),
         switchMap(([params]) =>
           this._api.getBudget(params.get('id')!).pipe(
-            catchError((error) => {
-              this._api.handleError('Impossible d’actualiser le budget')(error);
-              return EMPTY;
+            catchError(() => {
+              this.budgetError = true;
+              return of(null);
             })
           )
         ),
         takeUntil(this._destroy$)
       )
-      .subscribe((budget) => this._budget$.next(budget));
+      .subscribe((budget) => {
+        this.budgetLoading = false;
+        this._budget$.next(budget);
+      });
   }
 
   @HostListener('window:focus')

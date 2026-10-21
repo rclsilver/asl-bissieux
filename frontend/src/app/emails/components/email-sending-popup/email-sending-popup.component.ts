@@ -94,8 +94,10 @@ export class EmailSendingPopupComponent implements AfterViewInit, OnDestroy {
   abort() {
     this._notifications
       .showConfirm({
-        title: 'Abort',
-        message: 'Are you sure you want to stop the email sending?',
+        title: 'Arrêter les envois restants',
+        confirmLabel: 'Arrêter les envois restants',
+        message:
+          'Arrêter les envois restants ? Les messages déjà envoyés restent envoyés et la requête en cours peut encore aboutir. Vérifie les états avant toute relance.',
         class: 'warn',
       })
       .afterClosed()

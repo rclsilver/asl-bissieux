@@ -1,34 +1,39 @@
 <h1 mat-dialog-title>
   @if (!data.unit) {
-    Create unit
+    Ajouter un lot
   }
   @if (data.unit) {
-    Update unit
+    Modifier un lot
   }
 </h1>
 <form [formGroup]="form" (submit)="submit()">
-  <div mat-dialog-content class="content">
+  <div
+    mat-dialog-content
+    class="content"
+    [attr.inert]="saving ? '' : null"
+    [attr.aria-busy]="saving"
+  >
     <mat-form-field appearance="fill">
-      <mat-label>Number</mat-label>
+      <mat-label>Numéro du lot</mat-label>
       <input
         matInput
         type="number"
         formControlName="number"
         [required]="true"
       />
-      @if (form.controls["number"].touched && form.controls["number"].invalid) {
+      @if (form.controls['number'].touched && form.controls['number'].invalid) {
         <mat-error>
-          @if (form.controls["number"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['number'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["number"].errors!["server"]) {
-            <span>{{ form.controls["number"].errors!["server"] }}</span>
+          @if (form.controls['number'].errors!['server']) {
+            <span>{{ form.controls['number'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="fill">
-      <mat-label>Share</mat-label>
+      <mat-label>Parts</mat-label>
       <input
         matInput
         type="number"
@@ -37,52 +42,58 @@
         formControlName="share"
         [required]="true"
       />
-      @if (form.controls["share"].touched && form.controls["share"].invalid) {
+      @if (form.controls['share'].touched && form.controls['share'].invalid) {
         <mat-error>
-          @if (form.controls["share"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['share'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
           @if (
-            form.controls["share"].errors!["min"] ||
-            form.controls["share"].errors!["pattern"]
+            form.controls['share'].errors!['min'] ||
+            form.controls['share'].errors!['pattern']
           ) {
             <span>Nombre entier de parts, positif ou nul.</span>
           }
-          @if (form.controls["share"].errors!["server"]) {
-            <span>{{ form.controls["share"].errors!["server"] }}</span>
+          @if (form.controls['share'].errors!['server']) {
+            <span>{{ form.controls['share'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="fill">
-      <mat-label>Address</mat-label>
+      <mat-label>Adresse</mat-label>
       <input matInput formControlName="address" [required]="true" />
       @if (
-        form.controls["address"].touched && form.controls["address"].invalid
+        form.controls['address'].touched && form.controls['address'].invalid
       ) {
         <mat-error>
-          @if (form.controls["address"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['address'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["address"].errors!["server"]) {
-            <span>{{ form.controls["address"].errors!["server"] }}</span>
+          @if (form.controls['address'].errors!['server']) {
+            <span>{{ form.controls['address'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
   </div>
   <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">
-      Cancel
+    <button
+      mat-button
+      color="secondary"
+      type="button"
+      (click)="cancel()"
+      [disabled]="saving"
+    >
+      Annuler
     </button>
     <div class="spacer"></div>
     <button
       mat-button
       color="primary"
       type="submit"
-      [disabled]="form.invalid || !form.touched"
+      [disabled]="saving || form.invalid || !form.touched"
     >
-      Submit
+      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
     </button>
   </div>
 </form>

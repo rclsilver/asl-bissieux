@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { finalize } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -25,6 +26,7 @@ export class EmailAttachmentFormComponent {
 
   file?: File;
 
+  saving = false;
   readonly form: FormGroup;
 
   constructor(
@@ -42,6 +44,8 @@ export class EmailAttachmentFormComponent {
 
   onFileSelected(file?: File) {
     if (file) {
+      this.form.markAsTouched();
+      this.form.markAsDirty();
       this.form.setValue({
         name: file.name,
         inline: false,
@@ -51,10 +55,17 @@ export class EmailAttachmentFormComponent {
   }
 
   cancel() {
+    if (this.saving) return;
     this._dialogRef.close(false);
   }
 
   submit() {
+    if (this.saving) return;
+    if (this.form.invalid || !this.file) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving = true;
     this._api
       .createEmailAttachment(
         this.data.template.id!,
@@ -62,16 +73,17 @@ export class EmailAttachmentFormComponent {
         this.form.value.inline,
         this.file!
       )
+      .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (result) => {
           this._dialogRef.close(true);
           this._notifications.showDialog({
-            title: 'Success',
-            message: `Attachment ${result?.name} has been created`,
+            title: 'Enregistrement terminé',
+            message: `Pièce jointe ${result?.name} a été créé(e)`,
             level: NotificationDialogLevel.Info,
           });
         },
-        error: this._api.handleError('Unable to create attachment'),
+        error: this._api.handleError('Impossible d’ajouter la pièce jointe'),
       });
   }
 }

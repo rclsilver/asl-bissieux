@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { finalize } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -23,6 +24,7 @@ export class BudgetFormComponent {
   private readonly _builder = inject(FormBuilder);
   private readonly _api = inject(ApiService);
 
+  saving = false;
   readonly form: FormGroup;
 
   constructor(
@@ -42,10 +44,16 @@ export class BudgetFormComponent {
   }
 
   cancel() {
+    if (this.saving) return;
     this._dialogRef.close(false);
   }
 
   submit() {
+    if (this.saving) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const payload: Partial<APISchemas['ModelsBudget']> = {
       label: this.form.value.label,
     };
@@ -54,21 +62,22 @@ export class BudgetFormComponent {
       ? this._api.createBudget(payload)
       : this._api.updateBudget(this.data.budget.id, payload);
 
-    result$.subscribe({
+    this.saving = true;
+    result$.pipe(finalize(() => (this.saving = false))).subscribe({
       next: (budget) => {
         this._dialogRef.close(true);
         this._notifications.showDialog({
-          title: 'Success',
+          title: 'Enregistrement terminé',
           message: this.data.budget?.id
-            ? `Budget ${budget?.label} has been updated`
-            : `Budget ${budget?.label} has been created`,
+            ? `Budget ${budget?.label} a été modifié(e)`
+            : `Budget ${budget?.label} a été créé(e)`,
           level: NotificationDialogLevel.Info,
         });
       },
       error: this._api.handleError(
         this.data.budget?.id
-          ? 'Unable to update budget'
-          : 'Unable to create budget'
+          ? 'Impossible de modifier le budget'
+          : 'Impossible de créer le budget'
       ),
     });
   }

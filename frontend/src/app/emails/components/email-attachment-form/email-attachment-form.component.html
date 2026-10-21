@@ -1,35 +1,48 @@
-<h1 mat-dialog-title>New attachment</h1>
+<h1 mat-dialog-title>Ajouter une pièce jointe</h1>
 <form [formGroup]="form" (submit)="submit()">
-  <div mat-dialog-content class="content">
+  <div
+    mat-dialog-content
+    class="content"
+    [attr.inert]="saving ? '' : null"
+    [attr.aria-busy]="saving"
+  >
     <mat-form-field appearance="fill">
-      <mat-label>Name</mat-label>
+      <mat-label>Nom</mat-label>
       <input matInput formControlName="name" [required]="true" />
-      @if (form.controls["name"].touched && form.controls["name"].invalid) {
+      @if (form.controls['name'].touched && form.controls['name'].invalid) {
         <mat-error>
-          @if (form.controls["name"].errors!["required"]) {
-            <span>This field is mandatory</span>
+          @if (form.controls['name'].errors!['required']) {
+            <span>Ce champ est obligatoire.</span>
           }
-          @if (form.controls["name"].errors!["server"]) {
-            <span>{{ form.controls["name"].errors!["server"] }}</span>
+          @if (form.controls['name'].errors!['server']) {
+            <span>{{ form.controls['name'].errors!['server'] }}</span>
           }
         </mat-error>
       }
     </mat-form-field>
-    <mat-checkbox matInput formControlName="inline">Inline</mat-checkbox>
+    <mat-checkbox matInput formControlName="inline"
+      >Intégrer au contenu du message</mat-checkbox
+    >
     <app-file-upload (selected)="onFileSelected($event)"></app-file-upload>
   </div>
   <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">
-      Cancel
+    <button
+      mat-button
+      color="secondary"
+      type="button"
+      (click)="cancel()"
+      [disabled]="saving"
+    >
+      Annuler
     </button>
     <div class="spacer"></div>
     <button
       mat-button
       color="primary"
       type="submit"
-      [disabled]="form.invalid || !form.touched || !file"
+      [disabled]="saving || form.invalid || !form.touched || !file"
     >
-      Submit
+      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
     </button>
   </div>
 </form>

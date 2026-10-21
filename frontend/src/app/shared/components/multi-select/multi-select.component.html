@@ -4,7 +4,7 @@
     @for (option of selected$ | async; track option) {
       <mat-chip-row (removed)="remove(option.value)">
         {{ option.display }}
-        <button matChipRemove [attr.aria-label]="'remove ' + option.display">
+        <button matChipRemove [attr.aria-label]="'Retirer ' + option.display">
           <mat-icon>cancel</mat-icon>
         </button>
       </mat-chip-row>
@@ -12,7 +12,7 @@
   </mat-chip-grid>
   <input
     #filterInput
-    placeholder="Select option..."
+    placeholder="Sélectionner une option…"
     [formControl]="filterInputCtrl"
     [matChipInputFor]="chipGrid"
     [matAutocomplete]="auto"

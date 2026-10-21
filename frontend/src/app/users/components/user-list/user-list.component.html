@@ -1,33 +1,40 @@
-<h2>Utilisateurs</h2>
-
-<app-crud-table
-  tableLabel="Utilisateurs"
-  createLabel="Ajouter un utilisateur"
-  [columns]="columns"
-  [dataSource]="datasource"
-  [canCreate]="canCreate$"
-  [canEdit]="canEdit.bind(this)"
-  (edit)="edit($event)"
-  [canDelete]="canDelete.bind(this)"
-  (delete)="delete($event)"
->
-  <ng-container matColumnDef="enabled">
-    <td mat-cell *matCellDef="let row">
-      <mat-checkbox
-        aria-label="Accès actif"
-        [checked]="row.columns.enabled.value"
-        disabled
-      ></mat-checkbox>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="admin">
-    <td mat-cell *matCellDef="let row">
-      <mat-checkbox
-        aria-label="Administrateur"
-        [checked]="row.columns.admin.value"
-        disabled
-      ></mat-checkbox>
-    </td>
-  </ng-container>
-</app-crud-table>
+<h2>Comptes et accès</h2>
+@if (administrator$ | async) {
+  <p>
+    Se connecter avec Google ou Keycloak vérifie une identité. L’accès à
+    l’application reste accordé manuellement par un administrateur. Les membres
+    de l’annuaire sont gérés séparément.
+  </p>
+  <mat-form-field subscriptSizing="dynamic"
+    ><mat-label>État de l’accès</mat-label
+    ><mat-select
+      [value]="status"
+      (selectionChange)="filter($event.value)"
+      [disabled]="busy"
+      ><mat-option value="">Tous les comptes</mat-option
+      ><mat-option value="pending">Demandes en attente</mat-option
+      ><mat-option value="active">Actifs</mat-option
+      ><mat-option value="rejected">Refusés</mat-option
+      ><mat-option value="disabled">Désactivés</mat-option></mat-select
+    ></mat-form-field
+  >
+  @if (message) {
+    <p role="status">{{ message }}</p>
+  }
+  @if (error) {
+    <p role="alert">{{ error }}</p>
+  }
+  <app-crud-table
+    tableLabel="Comptes et accès"
+    createLabel="Préparer un compte"
+    [columns]="columns"
+    [dataSource]="datasource"
+    [autoLoad]="false"
+    [canCreate]="administrator$"
+    [canEdit]="canEdit.bind(this)"
+    (edit)="edit($event)"
+    [rowActions]="rowActions"
+  ></app-crud-table>
+} @else {
+  <p role="alert">Cette page est réservée aux administrateurs actifs.</p>
+}

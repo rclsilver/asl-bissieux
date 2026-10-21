@@ -106,11 +106,20 @@
                   Vérification de la connexion…
                 </p>
               } @else if (authenticated$ | async) {
-                <h1 id="auth-title">Compte en attente d’activation</h1>
-                <p>
-                  Tu es connecté, mais un administrateur doit activer ton accès
-                  à l’ASL.
-                </p>
+                <h1 id="auth-title">
+                  {{ accessTitle((user$ | async)?.access_status) }}
+                </h1>
+                <p>{{ accessMessage((user$ | async)?.access_status) }}</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="refreshAccess()"
+                  [disabled]="checkingAccess"
+                >
+                  {{
+                    checkingAccess ? 'Vérification…' : 'Actualiser mon accès'
+                  }}
+                </button>
                 <p>Tu peux te déconnecter pour utiliser un autre compte.</p>
                 @if (message$ | async; as message) {
                   <p role="alert" class="auth-message">{{ message }}</p>

@@ -86,6 +86,31 @@ export class PageComponent {
     return this._auth.logout().subscribe({ error: () => {} });
   }
 
+  checkingAccess = false;
+  accessTitle(status?: string) {
+    return status === 'pending'
+      ? 'Compte en attente d’activation'
+      : status === 'rejected'
+        ? 'Accès refusé'
+        : 'Accès désactivé';
+  }
+  accessMessage(status?: string) {
+    return status === 'pending'
+      ? 'Ton identité est vérifiée. Un administrateur doit examiner ta demande d’accès.'
+      : status === 'rejected'
+        ? 'Un administrateur a refusé l’accès à l’application. Contacte le bureau de l’ASL pour faire le point.'
+        : 'Ton identité est vérifiée, mais l’accès à l’application est désactivé. Contacte un administrateur pour demander sa réactivation.';
+  }
+  refreshAccess() {
+    if (this.checkingAccess) return;
+    this.checkingAccess = true;
+    this._auth
+      .refresh()
+      .subscribe({
+        next: () => (this.checkingAccess = false),
+        error: () => (this.checkingAccess = false),
+      });
+  }
   loginLabel(label?: string): string {
     const provider = label?.trim();
     return provider && provider !== 'Se connecter'

@@ -1,52 +1,106 @@
 <h1 mat-dialog-title>
-  @if (!data.user) {
-    Create user
-  }
-  @if (data.user) {
-    Update user
-  }
+  {{ data.user ? 'Modifier les droits' : 'Préparer un compte' }}
 </h1>
-<form [formGroup]="form" (submit)="submit()">
+<form [formGroup]="form" (ngSubmit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>Username</mat-label>
-      <input matInput formControlName="username" [required]="true" />
-      @if (
-        form.controls["username"].touched && form.controls["username"].invalid
-      ) {
-        <mat-error>
-          @if (form.controls["username"].errors!["required"]) {
-            <span>This field is mandatory</span>
-          }
-          @if (form.controls["username"].errors!["server"]) {
-            <span>{{ form.controls["username"].errors!["server"] }}</span>
-          }
-        </mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field>
-      <mat-label>Actions</mat-label>
-      <mat-select formControlName="actions" multiple>
-        @for (action of actions$ | async; track action) {
-          <mat-option [value]="action">{{ action }}</mat-option>
+    <mat-form-field subscriptSizing="dynamic"
+      ><mat-label>Compte</mat-label
+      ><input
+        matInput
+        formControlName="username"
+        [readonly]="!!data.user"
+        maxlength="320"
+        required
+      /><mat-error
+        >Indique le compte (320 caractères maximum).</mat-error
+      ></mat-form-field
+    >
+    @if (data.user; as user) {
+      <p>{{ providerLabel(user) }} · {{ accessLabels[accessState(user)] }}</p>
+      <p>
+        Les droits ci-dessous sont indépendants de la décision d’accès. Ils ne
+        modifient pas l’identité de connexion.
+      </p>
+      <details>
+        <summary>Identité de connexion</summary>
+        @for (
+          identity of user.identities ?? [];
+          track identity.issuer + ':' + identity.subject
+        ) {
+          <dl>
+            <dt>Fournisseur (issuer)</dt>
+            <dd>{{ identity.issuer }}</dd>
+            <dt>Identifiant stable (subject)</dt>
+            <dd>{{ identity.subject }}</dd>
+          </dl>
         }
-      </mat-select>
-    </mat-form-field>
-    <mat-checkbox matInput formControlName="enabled">Enabled</mat-checkbox>
-    <mat-checkbox matInput formControlName="admin">Administrator</mat-checkbox>
+        @if (!user.identities?.length) {
+          <p>
+            Aucune identité associée. Une adresse identique ne suffit pas à
+            associer un compte OIDC.
+          </p>
+        }
+      </details>
+    } @else {
+      <p>
+        Ce compte sera créé sans accès actif ni identité de connexion associée.
+        Il faudra associer explicitement une identité vérifiée, puis activer
+        l’accès. Une adresse identique ne suffit pas.
+      </p>
+    }
+    <mat-checkbox formControlName="admin"
+      >Administrateur de l’application</mat-checkbox
+    >
+    <p>
+      Un administrateur actif possède tous les droits et gère les accès. Au
+      moins un administrateur actif doit être conservé.
+    </p>
+    @if (loadingActions) {
+      <p role="status">Chargement des autorisations…</p>
+    }
+    @if (actionsError) {
+      <p role="alert">
+        Impossible de charger les autorisations. Les droits existants sont
+        conservés.
+      </p>
+      <button mat-stroked-button type="button" (click)="loadActions()">
+        Réessayer
+      </button>
+    }
+    @if (!loadingActions && !actionsError) {
+      <mat-form-field subscriptSizing="dynamic"
+        ><mat-label>Autorisations particulières</mat-label
+        ><mat-select formControlName="actions" multiple>
+          @for (group of groups; track group.label) {
+            <mat-optgroup [label]="group.label">
+              @for (action of group.actions; track action) {
+                <mat-option [value]="action">{{
+                  permissionLabel(action)
+                }}</mat-option>
+              }
+            </mat-optgroup>
+          }</mat-select
+        ><mat-hint
+          >Ces autorisations s’appliquent quand le compte est actif et non
+          administrateur.</mat-hint
+        ></mat-form-field
+      >
+    }
+    @if (error) {
+      <p role="alert">{{ error }}</p>
+    }
   </div>
   <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">
-      Cancel
-    </button>
-    <div class="spacer"></div>
-    <button
-      mat-button
+    <button mat-button type="button" (click)="cancel()" [disabled]="saving">
+      Annuler</button
+    ><span class="spacer"></span
+    ><button
+      mat-flat-button
       color="primary"
       type="submit"
-      [disabled]="(saving$ | async) || form.invalid || !form.touched"
+      [disabled]="saving || form.invalid || loadingActions || actionsError"
     >
-      Submit
+      {{ saving ? 'Enregistrement…' : 'Enregistrer les droits' }}
     </button>
   </div>
 </form>

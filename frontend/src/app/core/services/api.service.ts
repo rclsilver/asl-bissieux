@@ -388,9 +388,14 @@ export class ApiService {
     }).pipe(map((r) => r ?? []));
   }
 
-  listUsers() {
+  getPendingAccessRequests() {
+    return this.request('/api/auth/access-requests/summary', { method: 'get' });
+  }
+
+  listUsers(query: APIRequest<'/api/auth/users', 'get'>['query'] = {}) {
     return this.request('/api/auth/users', {
       method: 'get',
+      query,
     }).pipe(map((r) => r ?? []));
   }
 

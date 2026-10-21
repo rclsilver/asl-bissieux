@@ -1,0 +1,11 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+p {
+  max-width: 75ch;
+}
+mat-form-field {
+  width: min(100%, 24rem);
+  margin-bottom: 1rem;
+}

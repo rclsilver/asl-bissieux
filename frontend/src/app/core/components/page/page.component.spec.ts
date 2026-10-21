@@ -112,6 +112,7 @@ describe('OIDC sign-in page', () => {
       .flush({ mode: 'oidc', login_url: '/api/auth/login' });
     http.expectOne('/api/auth/me').flush({
       username: 'pending@example.invalid',
+      access_status: 'pending',
       enabled: false,
       admin: false,
     });
@@ -130,6 +131,46 @@ describe('OIDC sign-in page', () => {
       )
     ).toBe(true);
   });
+  it.each([
+    ['disabled', 'Accès désactivé'],
+    ['rejected', 'Accès refusé'],
+  ])(
+    'distinguishes %s from pending approval and can refresh access',
+    async (status, title) => {
+      const fixture = TestBed.createComponent(PageComponent);
+      fixture.detectChanges();
+      http
+        .expectOne('/api/auth/config')
+        .flush({ mode: 'oidc', login_url: '/api/auth/login' });
+      http
+        .expectOne('/api/auth/me')
+        .flush({
+          username: 'inactive@example.invalid',
+          enabled: false,
+          admin: false,
+          access_status: status,
+        });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(fixture.nativeElement.textContent).toContain(title);
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Compte en attente'
+      );
+      fixture.componentInstance.refreshAccess();
+      fixture.componentInstance.refreshAccess();
+      http
+        .expectOne('/api/auth/me')
+        .flush({
+          username: 'inactive@example.invalid',
+          enabled: true,
+          admin: false,
+          access_status: 'active',
+        });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(fixture.nativeElement.querySelector('.auth-panel')).toBeNull();
+    }
+  );
   it('names Google while retaining the server-side OIDC sign-in path', async () => {
     const fixture = TestBed.createComponent(PageComponent);
     fixture.detectChanges();

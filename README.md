@@ -450,6 +450,7 @@ rien en production et ne modifie aucun client Google distant.
 
 ## Parcours livrés et documentation
 
+- [Fiche de validation à cocher — lots 1–18 et OVH](docs/fiche-validation.md), également disponible en [HTML interactif autonome](docs/fiche-validation.html).
 - [Démarrage local, ports et vérifications](docs/demarrage-local.md)
 - [Accueil : recouvrement, carte, encaissements et synthèses](docs/tableau-de-bord.md)
 - [Remboursements, ajustements et contre-écritures](docs/journal-financier.md)

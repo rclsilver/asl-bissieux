@@ -21,6 +21,10 @@ svg {
   stroke-width: 4px;
   vector-effect: non-scaling-stroke;
 }
+#units > g:focus {
+  // The polygon below already marks focus along the lot's actual boundary.
+  outline: none;
+}
 #units > g:focus > polygon {
   stroke: var(--mat-sys-primary, #1565c0);
   stroke-width: 4px;

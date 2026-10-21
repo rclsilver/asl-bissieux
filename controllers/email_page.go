@@ -52,7 +52,9 @@ func ListEmailPage(tx *gorm.DB, campaignID string, options EmailPageOptions) (*m
 				escaped := strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_").Replace(options.Query)
 				q = q.Where(`"to" ILIKE ?`, "%"+escaped+"%")
 			}
-			if options.State != "" {
+			if options.State == models.Unknown {
+				q = q.Where("state NOT IN ('WAITING','SENDING','SENT','READ','ERROR')")
+			} else if options.State != "" {
 				q = q.Where("state = ?", options.State)
 			}
 			return q

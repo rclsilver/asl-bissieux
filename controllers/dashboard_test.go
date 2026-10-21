@@ -159,4 +159,24 @@ func TestDashboardDirectoryAndEmailSummary(t *testing.T) {
 			t.Fatalf("filtered campaign %s: %+v %v", state, page, err)
 		}
 	}
+	var unknown models.Email
+	if err := tx.First(&unknown, "state = ?", models.Unknown).Error; err != nil {
+		t.Fatal(err)
+	}
+	var campaign models.EmailCampaign
+	tx.First(&campaign, "id = ?", unknown.EmailCampaignID)
+	legacy := models.NewEmail(&campaign, "legacy@example.invalid", map[string]any{})
+	legacy.State = "LEGACY_UNKNOWN"
+	if err := tx.Create(legacy).Error; err != nil {
+		t.Fatal(err)
+	}
+	page, err := ListEmailPage(tx, campaign.ID, EmailPageOptions{State: models.Unknown})
+	if err != nil || page.Total != 2 {
+		t.Fatalf("unknown states missing from detail: %+v %v", page, err)
+	}
+	summary, err = GetEmailDashboard(tx)
+	if err != nil || summary.Counts.Unknown != page.Total {
+		t.Fatal("summary and filtered details differ for unknown states")
+	}
+
 }

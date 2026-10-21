@@ -14,6 +14,7 @@ import (
 	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/internal/testdb"
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/config"
 )
 
 func completeTasks(f *fixture) {
@@ -104,6 +105,9 @@ func TestSynchronizationThroughSmocker(t *testing.T) {
 		"APP_ML_DOMAIN": "example.invalid", "APP_ML_MEMBERS": "membres", "APP_ML_BUREAU": "bureau",
 	} {
 		t.Setenv(name, value)
+	}
+	if err := config.Load(); err != nil {
+		t.Fatal(err)
 	}
 	alice := models.NewMember("Alice", "Fixture", "", "alice@example.invalid", "")
 	alice.Bureau = true

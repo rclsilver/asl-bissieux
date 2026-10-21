@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/rclsilver/asl-bissieux/pkg/config"
+	"github.com/spf13/pflag"
 )
 
 func TestPlanGroupsAndDeduplication(t *testing.T) {
@@ -36,7 +39,16 @@ func TestPlanGroupsAndDeduplication(t *testing.T) {
 		t.Fatal("incomplete source must block synchronization")
 	}
 }
-func TestEnvironmentConfigAndValidation(t *testing.T) {
+func TestViperMailingConfigAndOVHEnvironment(t *testing.T) {
+	previous := targets
+	t.Cleanup(func() { targets = previous })
+	load := func() (*Config, error) {
+		t.Helper()
+		if err := config.Load(); err != nil {
+			t.Fatal(err)
+		}
+		return LoadConfig()
+	}
 	values := map[string]string{
 		"OVH_ENDPOINT":           "ovh-eu",
 		"OVH_APPLICATION_KEY":    "fixture-key",
@@ -49,13 +61,13 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 	for name := range values {
 		t.Setenv(name, "")
 	}
-	if cfg, err := LoadConfig(); err != nil || cfg != nil {
+	if cfg, err := load(); err != nil || cfg != nil {
 		t.Fatalf("missing optional config: %v", err)
 	}
 	for name, value := range values {
 		t.Setenv(name, value)
 	}
-	if cfg, err := LoadConfig(); err != nil || cfg == nil || *cfg != (Config{Endpoint: "ovh-eu", ApplicationKey: "fixture-key", ApplicationSecret: "DO-NOT-LEAK", ConsumerKey: "fixture-consumer", Domain: "example.invalid", Members: "membres", Bureau: "bureau"}) {
+	if cfg, err := load(); err != nil || cfg == nil || *cfg != (Config{Endpoint: "ovh-eu", ApplicationKey: "fixture-key", ApplicationSecret: "DO-NOT-LEAK", ConsumerKey: "fixture-consumer", Domain: "example.invalid", Members: "membres", Bureau: "bureau"}) {
 		t.Fatalf("environment configuration not loaded: %v", err)
 	}
 	for _, bad := range []struct{ name, value string }{
@@ -72,7 +84,7 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 	} {
 		t.Run(bad.name+"="+bad.value, func(t *testing.T) {
 			t.Setenv(bad.name, bad.value)
-			if cfg, err := LoadConfig(); cfg != nil || err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
+			if cfg, err := load(); cfg != nil || err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
 				t.Fatal("invalid configuration must fail without exposing credentials")
 			}
 		})
@@ -80,7 +92,7 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 	for _, endpoint := range []string{"http://smocker:8180", "http://127.0.0.1:8180", "https://eu.api.ovh.com/1.0"} {
 		t.Run(endpoint, func(t *testing.T) {
 			t.Setenv("OVH_ENDPOINT", endpoint)
-			if cfg, err := LoadConfig(); err != nil || cfg == nil || cfg.Endpoint != endpoint {
+			if cfg, err := load(); err != nil || cfg == nil || cfg.Endpoint != endpoint {
 				t.Fatal("explicit SDK endpoint URL not accepted")
 			}
 		})
@@ -88,11 +100,27 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 	for name := range values {
 		t.Run("missing_"+name, func(t *testing.T) {
 			t.Setenv(name, "")
-			if cfg, err := LoadConfig(); cfg != nil || err == nil {
+			if cfg, err := load(); cfg != nil || err == nil {
 				t.Fatal("partial configuration must fail")
 			}
 		})
 	}
+	t.Run("Viper flag overrides environment", func(t *testing.T) {
+		flags := pflag.NewFlagSet("mailing-config", pflag.ContinueOnError)
+		config.SetFlags(flags)
+		flag := flags.Lookup("ml-members")
+		previousValue, previousChanged := flag.Value.String(), flag.Changed
+		t.Cleanup(func() {
+			flag.Value.Set(previousValue)
+			flag.Changed = previousChanged
+		})
+		if err := flags.Parse([]string{"--ml-members=members-from-flag"}); err != nil {
+			t.Fatal(err)
+		}
+		if cfg, err := load(); err != nil || cfg == nil || cfg.Members != "members-from-flag" {
+			t.Fatal("Viper command line selection did not override APP_ML_MEMBERS")
+		}
+	})
 }
 func TestOVHClientUsesScopedSignedSubscriberRoutes(t *testing.T) {
 	calls := []string{}

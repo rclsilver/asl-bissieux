@@ -7,7 +7,22 @@ import (
 	"strings"
 
 	"github.com/ovh/go-ovh/ovh"
+	"github.com/rclsilver/asl-bissieux/pkg/config"
 )
+
+type mailingConfig struct {
+	Domain  string
+	Members string
+	Bureau  string
+}
+
+func (c *mailingConfig) SetDefaults() { *c = mailingConfig{} }
+
+var targets mailingConfig
+
+func init() {
+	config.RegisterSection("ml", &targets)
+}
 
 type Config struct {
 	Endpoint          string `json:"endpoint"`
@@ -20,15 +35,16 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	// Require all credentials and targets from the process environment before SDK creation.
+	// Application targets use the shared Viper loader; client credentials keep
+	// the standard OVH environment names, outside Viper's APP prefix.
 	cfg := Config{
 		Endpoint:          os.Getenv("OVH_ENDPOINT"),
 		ApplicationKey:    os.Getenv("OVH_APPLICATION_KEY"),
 		ApplicationSecret: os.Getenv("OVH_APPLICATION_SECRET"),
 		ConsumerKey:       os.Getenv("OVH_CONSUMER_KEY"),
-		Domain:            os.Getenv("APP_ML_DOMAIN"),
-		Members:           os.Getenv("APP_ML_MEMBERS"),
-		Bureau:            os.Getenv("APP_ML_BUREAU"),
+		Domain:            targets.Domain,
+		Members:           targets.Members,
+		Bureau:            targets.Bureau,
 	}
 	if cfg == (Config{}) {
 		return nil, nil

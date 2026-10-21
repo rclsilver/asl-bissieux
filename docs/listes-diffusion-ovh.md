@@ -6,7 +6,16 @@ Les règles ont été confirmées par Thomas le 21 octobre 2026 : case Bureau, a
 
 ## Configuration côté serveur
 
-Les identifiants et cibles sont lus et validés dans l’environnement du processus serveur avant la création du client officiel OVH. La configuration historique Viper du reste de l’application conserve son fonctionnement.
+Les cibles des listes utilisent le chargeur **Viper** existant, dans la section `ml`. Elles peuvent être définies dans les fichiers YAML de l’application, via les variables `APP_ML_*` ou les options `--ml-domain`, `--ml-members`, `--ml-bureau`. La priorité habituelle est conservée : options de commande, environnement, puis YAML. Les identifiants du client officiel OVH conservent les noms standard `OVH_*` dans l’environnement, hors du préfixe applicatif `APP`.
+
+Exemple de section YAML (valeurs fictives) :
+
+```yaml
+ml:
+  domain: example.invalid
+  members: membres
+  bureau: bureau
+```
 
 | Variable | Valeur attendue |
 | --- | --- |
@@ -18,7 +27,7 @@ Les identifiants et cibles sont lus et validés dans l’environnement du proces
 | `APP_ML_MEMBERS` | Nom local de la liste Membres, par exemple `membres` |
 | `APP_ML_BUREAU` | Nom local de la liste Bureau, par exemple `bureau` |
 
-Les sept variables sont requises dès que l’une est renseignée. Une configuration partielle ou invalide bloque les opérations, sans afficher les valeurs secrètes. Si elles sont toutes absentes ou vides, la fonction reste non configurée et ne contacte pas OVH. L’endpoint n’a pas de valeur implicite. Les noms de listes sont **sans `@domaine`** et doivent être distincts. Une URL d’endpoint ne doit contenir ni identifiants, ni paramètres, ni fragment, ni barre oblique finale.
+Les sept paramètres sont requis dès que l’un est renseigné. Les trois cibles peuvent venir de Viper plutôt que de variables d’environnement. Une configuration partielle ou invalide bloque les opérations, sans afficher les valeurs secrètes. Si tous les paramètres sont absents ou vides, la fonction reste non configurée et ne contacte pas OVH. L’endpoint n’a pas de valeur implicite. Les noms de listes sont **sans `@domaine`** et doivent être distincts. Une URL d’endpoint ne doit contenir ni identifiants, ni paramètres, ni fragment, ni barre oblique finale.
 
 En production, définir directement les quatre variables standard du client Go OVH `OVH_*` et les trois variables applicatives `APP_ML_*` ci-dessus. Aucun `APP_ML_*` supplémentaire n’est nécessaire pour les identifiants ou le mode de simulation. `dev/ovh-mailing-lists.env.example` décrit cette configuration avec des valeurs fictives. Le chart accepte `mailingLists.existingSecret` : le Secret existant doit contenir les sept clés portant exactement ces noms. Elles sont injectées via `secretKeyRef` dans l’environnement, sans montage de fichier. Le Secret OIDC reste indépendant. **Helm étant absent du poste, lint et rendu du chart n’ont pas été exécutés.** Aucune configuration distante n’est créée par cette livraison.
 
@@ -86,6 +95,6 @@ docker compose run --rm --no-deps server mailing-lists check
 
 Cette commande utilise la même configuration et le même calcul que l’interface.
 Elle imprime uniquement des compteurs par groupe et le statut vérifié, jamais
-les identifiants ni les adresses. Sans variables OVH et APP_ML, elle retourne
+les identifiants ni les adresses. Sans configuration OVH ni cibles Viper, elle retourne
 `configured: false` et `verified: false` sans requête OVH. Elle n’applique aucun
 changement et peut servir à vérifier la configuration avant la première synchronisation.

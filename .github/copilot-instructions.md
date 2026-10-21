@@ -285,9 +285,11 @@ ledger (migration 0005), account decisions use explicit requests (0006); never m
 those histories to implement a UI shortcut. See `docs/demarrage-local.md` for the current
 machine's private network override versus the public Compose configuration.
 
-OVH mailing lists read only process environment: `OVH_ENDPOINT`,
+OVH mailing-list targets use the shared Viper `ml` section (YAML, flags,
+`APP_ML_DOMAIN`, `APP_ML_MEMBERS`, `APP_ML_BUREAU`). Client credentials use
+standard process environment: `OVH_ENDPOINT`,
 `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` for the
-client; `APP_ML_DOMAIN`, `APP_ML_MEMBERS`, `APP_ML_BUREAU` for list targets.
+client.
 Never expose credentials in API responses or logs. `member.bureau` (migration 0007)
 is an explicit association role, independent of application admin. Only admins
 can preview/apply list differences. OVH writes are asynchronous: pending tasks

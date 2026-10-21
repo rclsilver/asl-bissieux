@@ -810,7 +810,7 @@
       </g>
     </g>
     <g id="unit-24">
-      <rect class="cls-38" x="1069.08" y="277.19" width="135.14" height="95.06"
+      <polygon class="cls-38" points="1069.08 277.19 1204.22 277.19 1204.22 372.25 1069.08 372.25"
         transform="translate(728.17 1434.03) rotate(-85.73)" />
       <g id="label-19">
         <polyline class="cls-39"

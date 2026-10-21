@@ -57,6 +57,7 @@ export class MemberFormComponent {
       email: [this.data.member?.email, [Validators.required]],
       phone_number: [this.data.member?.phone_number],
       address: [this.data.member?.address],
+      bureau: [this.data.member?.bureau ?? false],
     });
 
     this.selectedUnits = this.data.member?.units ?? [];
@@ -109,6 +110,7 @@ export class MemberFormComponent {
       email: this.form.value.email,
       phone_number: this.form.value.phone_number,
       address: this.form.value.address,
+      bureau: this.form.value.bureau,
     };
 
     const result$ = !this.savedId

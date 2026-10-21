@@ -87,6 +87,11 @@
         </mat-error>
       }
     </mat-form-field>
+    <mat-checkbox formControlName="bureau">Membre du bureau</mat-checkbox>
+    <p>
+      Cette appartenance détermine la liste de diffusion Bureau. Elle ne donne
+      aucun droit d’administration.
+    </p>
     <app-multi-select
       label="Lots"
       [display]="displayUnit"

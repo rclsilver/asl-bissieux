@@ -37,6 +37,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./users/users.module').then((mod) => mod.UsersModule),
   },
+  {
+    path: 'mailing-lists',
+    loadChildren: () =>
+      import('./mailings/mailings.module').then((m) => m.MailingsModule),
+  },
 ];
 
 const config: ExtraOptions = {

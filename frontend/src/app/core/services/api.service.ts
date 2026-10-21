@@ -85,6 +85,15 @@ export class ApiService {
   getDirectoryQuality() {
     return this.request('/api/dashboard/directory', { method: 'get' });
   }
+  previewMailingLists() {
+    return this.request('/api/mailing-lists/preview', { method: 'get' });
+  }
+  syncMailingLists(token: string) {
+    return this.request('/api/mailing-lists/sync', {
+      method: 'post',
+      body: { token },
+    });
+  }
   getEmailDashboard() {
     return this.request('/api/dashboard/emails', { method: 'get' });
   }

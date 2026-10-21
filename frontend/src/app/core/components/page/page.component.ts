@@ -67,6 +67,12 @@ export class PageComponent {
       icon: 'manage_accounts',
       allowed$: this.administrator$,
     },
+    {
+      label: 'Listes de diffusion',
+      path: '/mailing-lists',
+      icon: 'contact_mail',
+      allowed$: this.administrator$,
+    },
   ];
 
   constructor(

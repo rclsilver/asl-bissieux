@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SharedModule } from '../shared/shared.module';
@@ -23,6 +24,7 @@ const material = [
   MatTableModule,
   MatButtonToggleModule,
   MatSelectModule,
+  MatCheckboxModule,
   MatIconModule,
   MatTooltipModule,
 ];

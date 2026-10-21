@@ -2,6 +2,7 @@ package mailings
 
 import (
 	"errors"
+	"net/url"
 	"os"
 	"strings"
 
@@ -32,10 +33,20 @@ func LoadConfig() (*Config, error) {
 	if cfg == (Config{}) {
 		return nil, nil
 	}
-	if _, ok := ovh.Endpoints[cfg.Endpoint]; !ok || cfg.ApplicationKey == "" || cfg.ApplicationSecret == "" || cfg.ConsumerKey == "" || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
+	if !validEndpoint(cfg.Endpoint) || cfg.ApplicationKey == "" || cfg.ApplicationSecret == "" || cfg.ConsumerKey == "" || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
 		return nil, errors.New("configuration OVH incomplète ou listes invalides")
 	}
 	return &cfg, nil
+}
+
+// Like the OVH SDK, accept official endpoint names or an explicit HTTP(S) URL.
+// In development the URL points to Smocker using the same OVH_ENDPOINT variable.
+func validEndpoint(endpoint string) bool {
+	if _, ok := ovh.Endpoints[endpoint]; ok {
+		return true
+	}
+	u, err := url.ParseRequestURI(endpoint)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Hostname() != "" && u.User == nil && u.RawQuery == "" && u.Fragment == "" && !strings.ContainsAny(endpoint, "#?\\ \t\r\n") && !strings.HasSuffix(endpoint, "/")
 }
 func validPart(s string) bool {
 	return s != "" && !strings.ContainsAny(s, "/\\?#@ \t\r\n") && s != "." && s != ".."

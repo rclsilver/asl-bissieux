@@ -60,7 +60,12 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 	}
 	for _, bad := range []struct{ name, value string }{
 		{"APP_ML_BUREAU", "membres"},
-		{"OVH_ENDPOINT", "http://localhost:1234"},
+		{"OVH_ENDPOINT", "not-an-endpoint"},
+		{"OVH_ENDPOINT", "file:///etc/ovh.conf"},
+		{"OVH_ENDPOINT", "http://user:password@localhost:8180"},
+		{"OVH_ENDPOINT", "http://localhost:8180?query=1"},
+		{"OVH_ENDPOINT", "http://localhost:8180/#fragment"},
+		{"OVH_ENDPOINT", "http://localhost:8180/"},
 		{"APP_ML_DOMAIN", "example.invalid/path"},
 		{"APP_ML_MEMBERS", "members@example.invalid"},
 		{"APP_ML_BUREAU", ".."},
@@ -69,6 +74,14 @@ func TestEnvironmentConfigAndValidation(t *testing.T) {
 			t.Setenv(bad.name, bad.value)
 			if cfg, err := LoadConfig(); cfg != nil || err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
 				t.Fatal("invalid configuration must fail without exposing credentials")
+			}
+		})
+	}
+	for _, endpoint := range []string{"http://smocker:8180", "http://127.0.0.1:8180", "https://eu.api.ovh.com/1.0"} {
+		t.Run(endpoint, func(t *testing.T) {
+			t.Setenv("OVH_ENDPOINT", endpoint)
+			if cfg, err := LoadConfig(); err != nil || cfg == nil || cfg.Endpoint != endpoint {
+				t.Fatal("explicit SDK endpoint URL not accepted")
 			}
 		})
 	}
@@ -107,11 +120,8 @@ func TestOVHClientUsesScopedSignedSubscriberRoutes(t *testing.T) {
 		}
 	}))
 	defer s.Close()
-	c, err := NewClient(&Config{Endpoint: "ovh-eu", ApplicationKey: "fixture-key", ApplicationSecret: "fixture-secret", ConsumerKey: "fixture-consumer", Domain: "example.invalid"})
+	c, err := NewClient(&Config{Endpoint: s.URL, ApplicationKey: "fixture-key", ApplicationSecret: "fixture-secret", ConsumerKey: "fixture-consumer", Domain: "example.invalid"})
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err := c.api.SetEndpoint(s.URL); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.Subscribers(context.Background(), "membres"); err != nil {

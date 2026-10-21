@@ -469,5 +469,9 @@ des droits applicatifs. Le client utilise `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`,
 `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` ; les cibles sont définies par
 `APP_ML_DOMAIN`, `APP_ML_MEMBERS`, `APP_ML_BUREAU`.
 Voir [configuration et vérification](docs/listes-diffusion-ovh.md).
+En développement, Compose configure automatiquement **Smocker** avec des
+identifiants fictifs ; les ajouts/retraits et les tâches asynchrones sont simulés.
+En production, définir les quatre variables `OVH_*` du client officiel et les
+trois cibles `APP_ML_*` ci-dessus. Le chart n’installe aucun simulateur.
 La migration 0007 initialise cette appartenance à faux. Sans configuration, aucune liste
 réelle n’est lue ou modifiée et l’écran indique que la connexion reste à configurer.

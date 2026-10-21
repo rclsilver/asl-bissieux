@@ -294,3 +294,13 @@ can preview/apply list differences. OVH writes are asynchronous: pending tasks
 block reapplication, and completion requires a fresh subscriber comparison.
 See `docs/listes-diffusion-ovh.md`; no real OVH validation is claimed without
 an actual configured secret.
+
+Development Compose always points OVH_ENDPOINT at Smocker, with fixed dummy
+OVH credentials and example.invalid/membres/bureau targets; never inherit real
+OVH credentials from the host. Smocker mocks in dev/smocker proxy only the fake
+list resources to dev/ovh-fixture, a development-only in-memory state server
+with asynchronous tasks. Neither simulator is part of the production binary
+or chart. The only app-specific mailing variables are APP_ML_DOMAIN,
+APP_ML_MEMBERS, APP_ML_BUREAU; reuse standard OVH_* for client credentials/URL.
+TEST_SMOCKER=1 runs the contract test on a disposable Smocker at 8280/8281
+and isolated TEST_DATABASE_URL; never reset the developer's 8180/8181 instance.

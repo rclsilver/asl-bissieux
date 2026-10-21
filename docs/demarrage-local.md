@@ -24,6 +24,8 @@ La première commande vérifie la définition publique ; les suivantes prennent 
 | Swagger | http://localhost:8081 | Service facultatif, non démarré pour la revue actuelle |
 | PostgreSQL | `postgresql:5432` dans Compose, sans port hôte | Réseau hôte, boucle locale `127.0.0.1:55432` |
 | SMTP simulé | `smtp-mock:2023`, consultation interne `:2024` | Réseau hôte, ports 2023/2024 |
+| API OVH simulée / Smocker | `smocker:8180`, publication `127.0.0.1:8180` | Réseau hôte, port 8180 |
+| Administration Smocker | `127.0.0.1:8181` | Réseau hôte, port 8181 |
 
 La configuration par défaut utilise le bridge Docker et Keycloak. Les comptes fictifs et mots de passe publics de développement sont dans README ; les droits applicatifs sont attribués par le seed, indépendamment des rôles du fournisseur. Les comptes existants ne sont jamais associés automatiquement par e-mail.
 
@@ -51,6 +53,13 @@ Les dépendances restent dans des volumes nommés. Après changement du lockfile
 Le SMTP simulé ne transmet aucun message à l’extérieur. Ses messages sont en mémoire et disparaissent à son redémarrage. La préparation crée des messages dans PostgreSQL ; **Envoyer** contacte le SMTP. Les statuts enregistrés ne prouvent pas une lecture humaine. Tester uniquement avec des données fictives et vérifier le fournisseur SMTP avant toute action d’envoi.
 
 ## Contrat et vérifications
+
+Les appels OVH sont simulés par Smocker en développement, avec des identifiants
+fictifs fixés par Compose. Un petit service interne garde les abonnés et les
+tâches en mémoire ; il ne lit pas la base applicative. Après application,
+actualiser au bout d’une seconde pour vérifier les listes. Voir
+`listes-diffusion-ovh.md` pour le parcours, les ports du poste actuel et les
+trois variables `APP_ML_*` à définir en production avec les identifiants `OVH_*`.
 
 Le serveur doit être à jour et le frontend démarré avant :
 

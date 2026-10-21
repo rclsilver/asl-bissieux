@@ -1,16 +1,12 @@
 package mailings
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
+	"os"
 	"strings"
 
-	"github.com/ovh/configstore"
 	"github.com/ovh/go-ovh/ovh"
 )
-
-const ConfigItem = "asl-bissieux-ovh-mailing-lists"
 
 type Config struct {
 	Endpoint          string `json:"endpoint"`
@@ -23,26 +19,18 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	value, err := configstore.GetItemValue(ConfigItem)
-	if err != nil {
-		var missing configstore.ErrItemNotFound
-		if errors.As(err, &missing) {
-			return nil, nil
-		}
-		return nil, errors.New("configuration OVH indisponible")
+	// Require all credentials and targets from the process environment before SDK creation.
+	cfg := Config{
+		Endpoint:          os.Getenv("OVH_ENDPOINT"),
+		ApplicationKey:    os.Getenv("OVH_APPLICATION_KEY"),
+		ApplicationSecret: os.Getenv("OVH_APPLICATION_SECRET"),
+		ConsumerKey:       os.Getenv("OVH_CONSUMER_KEY"),
+		Domain:            os.Getenv("APP_ML_DOMAIN"),
+		Members:           os.Getenv("APP_ML_MEMBERS"),
+		Bureau:            os.Getenv("APP_ML_BUREAU"),
 	}
-	return ParseConfig(value)
-}
-
-func ParseConfig(value string) (*Config, error) {
-	var cfg Config
-	dec := json.NewDecoder(strings.NewReader(value))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&cfg); err != nil {
-		return nil, errors.New("configuration OVH JSON invalide")
-	}
-	if err := dec.Decode(new(any)); err != io.EOF {
-		return nil, errors.New("configuration OVH JSON invalide")
+	if cfg == (Config{}) {
+		return nil, nil
 	}
 	if _, ok := ovh.Endpoints[cfg.Endpoint]; !ok || cfg.ApplicationKey == "" || cfg.ApplicationSecret == "" || cfg.ConsumerKey == "" || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
 		return nil, errors.New("configuration OVH incomplète ou listes invalides")

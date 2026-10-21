@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/ovh/configstore"
 )
 
 func TestPlanGroupsAndDeduplication(t *testing.T) {
@@ -38,22 +36,49 @@ func TestPlanGroupsAndDeduplication(t *testing.T) {
 		t.Fatal("incomplete source must block synchronization")
 	}
 }
-func TestConfigStoreSecretAndValidation(t *testing.T) {
-	old := configstore.DefaultStore
-	configstore.DefaultStore = configstore.NewStore()
-	defer func() { configstore.DefaultStore = old }()
+func TestEnvironmentConfigAndValidation(t *testing.T) {
+	values := map[string]string{
+		"OVH_ENDPOINT":           "ovh-eu",
+		"OVH_APPLICATION_KEY":    "fixture-key",
+		"OVH_APPLICATION_SECRET": "DO-NOT-LEAK",
+		"OVH_CONSUMER_KEY":       "fixture-consumer",
+		"APP_ML_DOMAIN":          "example.invalid",
+		"APP_ML_MEMBERS":         "membres",
+		"APP_ML_BUREAU":          "bureau",
+	}
+	for name := range values {
+		t.Setenv(name, "")
+	}
 	if cfg, err := LoadConfig(); err != nil || cfg != nil {
 		t.Fatalf("missing optional config: %v", err)
 	}
-	secret := `{"endpoint":"ovh-eu","application_key":"fixture-key","application_secret":"fixture-secret","consumer_key":"fixture-consumer","domain":"example.invalid","members_list":"membres","bureau_list":"bureau"}`
-	configstore.InMemory("test").Add(configstore.NewItem(ConfigItem, secret, 0))
-	if cfg, err := LoadConfig(); err != nil || cfg.Members != "membres" {
-		t.Fatalf("configstore: %v", err)
+	for name, value := range values {
+		t.Setenv(name, value)
 	}
-	for _, bad := range []string{`{"application_secret":"DO-NOT-LEAK",`, strings.Replace(secret, `"bureau_list":"bureau"`, `"bureau_list":"membres"`, 1), strings.Replace(secret, `"endpoint":"ovh-eu"`, `"endpoint":"http://localhost:1234"`, 1)} {
-		if _, err := ParseConfig(bad); err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
-			t.Fatal("unsafe config error")
-		}
+	if cfg, err := LoadConfig(); err != nil || cfg == nil || *cfg != (Config{Endpoint: "ovh-eu", ApplicationKey: "fixture-key", ApplicationSecret: "DO-NOT-LEAK", ConsumerKey: "fixture-consumer", Domain: "example.invalid", Members: "membres", Bureau: "bureau"}) {
+		t.Fatalf("environment configuration not loaded: %v", err)
+	}
+	for _, bad := range []struct{ name, value string }{
+		{"APP_ML_BUREAU", "membres"},
+		{"OVH_ENDPOINT", "http://localhost:1234"},
+		{"APP_ML_DOMAIN", "example.invalid/path"},
+		{"APP_ML_MEMBERS", "members@example.invalid"},
+		{"APP_ML_BUREAU", ".."},
+	} {
+		t.Run(bad.name+"="+bad.value, func(t *testing.T) {
+			t.Setenv(bad.name, bad.value)
+			if cfg, err := LoadConfig(); cfg != nil || err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
+				t.Fatal("invalid configuration must fail without exposing credentials")
+			}
+		})
+	}
+	for name := range values {
+		t.Run("missing_"+name, func(t *testing.T) {
+			t.Setenv(name, "")
+			if cfg, err := LoadConfig(); cfg != nil || err == nil {
+				t.Fatal("partial configuration must fail")
+			}
+		})
 	}
 }
 func TestOVHClientUsesScopedSignedSubscriberRoutes(t *testing.T) {

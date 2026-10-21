@@ -9,9 +9,11 @@ export class EmailDataSource extends PagedDataSource<
   private filterState = '';
   constructor(
     private readonly api: ApiService,
-    private readonly campaignId: string
+    private readonly campaignId: string,
+    initialState = ''
   ) {
     super();
+    this.filterState = initialState;
   }
   setState(state: string) {
     if (state === this.filterState) return;

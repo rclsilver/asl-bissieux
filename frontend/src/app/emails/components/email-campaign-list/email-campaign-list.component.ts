@@ -1,10 +1,19 @@
 import {
   Component,
+  OnInit,
+  OnDestroy,
   ViewChild,
   inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { combineLatest, map } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  Subject,
+  distinctUntilChanged,
+  takeUntil,
+  combineLatest,
+  map,
+} from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -24,7 +33,45 @@ import { EmailCampaignDataSource } from '../../datasources/campaign.datasource';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class EmailCampaignListComponent {
+export class EmailCampaignListComponent implements OnInit, OnDestroy {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
+  state = '';
+  readonly states = [
+    { value: 'WAITING', label: 'En attente' },
+    { value: 'SENDING', label: 'En cours d’envoi' },
+    { value: 'SUCCESSFUL', label: 'Envoyés (signaux d’ouverture inclus)' },
+    { value: 'ERROR', label: 'En erreur' },
+    { value: 'UNKNOWN', label: 'Envois à vérifier' },
+  ];
+  ngOnInit() {
+    this.route.queryParamMap
+      .pipe(
+        map((p) => {
+          const state = p.get('state') ?? '';
+          return this.states.some((s) => s.value === state) ? state : '';
+        }),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((state) => {
+        this.state = state;
+        this.datasource.setState(state);
+      });
+  }
+  filterState(state: string) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { state: state || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _notifications = inject(NotificationsService);

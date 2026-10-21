@@ -1,5 +1,20 @@
+<mat-form-field subscriptSizing="dynamic"
+  ><mat-label>Campagnes contenant des e-mails</mat-label
+  ><mat-select [value]="state" (selectionChange)="filterState($event.value)"
+    ><mat-option value="">Tous les états</mat-option>
+    @for (option of states; track option.value) {
+      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+    }
+  </mat-select></mat-form-field
+>
+<p>
+  Le filtre sélectionne les campagnes contenant au moins un message dans l’état
+  choisi. Les compteurs de chaque campagne couvrent tous ses messages actifs,
+  toutes dates.
+</p>
 <app-crud-table
   tableLabel="Campagnes d’e-mails"
+  [autoLoad]="false"
   [columns]="columns"
   [dataSource]="datasource"
   [canDelete]="canDelete.bind(this)"

@@ -6,10 +6,15 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatPaginator } from '@angular/material/paginator';
-import { of } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
@@ -39,12 +44,15 @@ const path = '/api/email/campaigns';
 
 describe('Server-paginated campaigns', () => {
   let http: HttpTestingController;
+  let routeParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   beforeEach(async () => {
+    routeParams = new BehaviorSubject(convertToParamMap({}));
     await TestBed.configureTestingModule({
       imports: [EmailsModule, NoopAnimationsModule],
       providers: [
         provideZoneChangeDetection(),
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParamMap: routeParams } },
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { allowed$: () => of(true) } },
@@ -58,6 +66,7 @@ describe('Server-paginated campaigns', () => {
       ],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
   afterEach(() => http.verify());
   function request() {
@@ -75,6 +84,19 @@ describe('Server-paginated campaigns', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('restores the dashboard state filter, resets pagination and cancels a superseded state', () => {
+    routeParams.next(convertToParamMap({ state: 'ERROR' }));
+    const f = TestBed.createComponent(EmailCampaignListComponent);
+    f.detectChanges();
+    const error = request();
+    expect(error.request.params.get('state')).toBe('ERROR');
+    routeParams.next(convertToParamMap({ state: 'WAITING' }));
+    expect(error.cancelled).toBe(true);
+    const waiting = request();
+    expect(waiting.request.params.get('state')).toBe('WAITING');
+    expect(waiting.request.params.get('page')).toBe('1');
+    waiting.flush({ items: [], page: 1, page_size: 25, total: 0 });
+  });
   it('uses the whole dataset for search and sort, resets pages and cancels obsolete responses', async () => {
     const fixture = setup(),
       component = fixture.componentInstance,

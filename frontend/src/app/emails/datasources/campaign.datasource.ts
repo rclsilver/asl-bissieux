@@ -7,10 +7,17 @@ import { PagedDataSource } from 'src/app/shared/datasources/paged.datasource';
 export class EmailCampaignDataSource extends PagedDataSource<
   APISchemas['ModelsEmailCampaignSummary']
 > {
+  private filterState = '';
+  setState(state: string) {
+    this.filterState = state;
+    this.pageIndex = 0;
+    this.load();
+  }
   private readonly api = inject(ApiService);
   protected override fetchPage() {
     return this.api
       .listEmailCampaigns({
+        state: this.filterState || undefined,
         page: this.pageIndex + 1,
         page_size: this.pageSize,
         query: this.query,

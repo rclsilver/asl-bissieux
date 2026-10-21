@@ -8,6 +8,7 @@ import {
 } from '@angular/common/http/testing';
 import {
   ActivatedRoute,
+  Router,
   convertToParamMap,
   provideRouter,
 } from '@angular/router';
@@ -49,6 +50,7 @@ describe('Paged email history and safe actions', () => {
     showDialog: ReturnType<typeof vi.fn>;
     show: ReturnType<typeof vi.fn>;
   };
+  let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let params: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   beforeEach(async () => {
     notifications = {
@@ -57,6 +59,7 @@ describe('Paged email history and safe actions', () => {
       showDialog: vi.fn(),
       show: vi.fn(),
     };
+    queryParams = new BehaviorSubject(convertToParamMap({}));
     params = new BehaviorSubject(convertToParamMap({ id: 'campaign-test' }));
     await TestBed.configureTestingModule({
       imports: [EmailsModule, NoopAnimationsModule],
@@ -67,13 +70,17 @@ describe('Paged email history and safe actions', () => {
         provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: params.asObservable() },
+          useValue: {
+            paramMap: params.asObservable(),
+            queryParamMap: queryParams,
+          },
         },
         { provide: AuthService, useValue: { allowed$: () => of(true) } },
         { provide: NotificationsService, useValue: notifications },
       ],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
   afterEach(() => http.verify());
   function request() {
@@ -96,6 +103,24 @@ describe('Paged email history and safe actions', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('restores an error filter from the dashboard URL and updates it without reloading campaign metadata', () => {
+    queryParams.next(convertToParamMap({ state: 'ERROR' }));
+    const f = TestBed.createComponent(EmailListComponent);
+    f.detectChanges();
+    http
+      .expectOne('/api/email/campaigns/campaign-test')
+      .flush({ id: 'campaign-test', title: 'Fixture' });
+    f.detectChanges();
+    const initial = request();
+    expect(initial.request.params.get('state')).toBe('ERROR');
+    initial.flush({ items: [], page: 1, page_size: 25, total: 0 });
+    f.detectChanges();
+    queryParams.next(convertToParamMap({ state: 'WAITING' }));
+    const filtered = request();
+    expect(filtered.request.params.get('state')).toBe('WAITING');
+    filtered.flush({ items: [], page: 1, page_size: 25, total: 0 });
+    http.expectNone('/api/email/campaigns/campaign-test');
+  });
   it('clears selection immediately and disables stale rows while changing page, state and recipient', async () => {
     const fixture = setup(),
       page = fixture.componentInstance,

@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  OnInit,
   Component,
   OnDestroy,
   ViewChild,
@@ -22,7 +23,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -55,13 +56,15 @@ type Email = APISchemas['ModelsEmailSummary'];
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class EmailListComponent implements AfterViewInit, OnDestroy {
+export class EmailListComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
   private readonly scopeChanged = new Subject<void>();
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private routeState = '';
   private readonly campaignReload = new BehaviorSubject(0);
   private readonly source = new BehaviorSubject<DataSource<Email>>(
     new EmptyDataSource<Email>()
@@ -159,6 +162,16 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
   @ViewChild(CrudTableComponent, { static: false })
   table!: CrudTableComponent<Email>;
 
+  ngOnInit() {
+    this.route.queryParamMap.pipe(takeUntil(this.destroyed)).subscribe((p) => {
+      const state = p.get('state') ?? '';
+      this.routeState = this.states.includes(state) ? state : '';
+      this.state = this.routeState;
+      const source = this.source.value;
+      if (source instanceof EmailDataSource) source.setState(this.state);
+    });
+  }
+
   ngAfterViewInit() {
     this.source
       .pipe(
@@ -201,12 +214,12 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
         this.toolbar.next(actions);
       });
     this.campaign$.pipe(takeUntil(this.destroyed)).subscribe((campaign) => {
-      this.state = '';
+      this.state = this.routeState;
       if (this.table.search.pattern)
         this.table.search.clear(new UIEvent('change'));
       this.source.next(
         campaign?.id
-          ? new EmailDataSource(this.api, campaign.id)
+          ? new EmailDataSource(this.api, campaign.id, this.state)
           : new EmptyDataSource<Email>()
       );
     });
@@ -228,6 +241,12 @@ export class EmailListComponent implements AfterViewInit, OnDestroy {
     if (this.alive) this.source.value.load();
   }
   setState(state: string) {
+    this.routeState = state;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { state: state || null },
+      queryParamsHandling: 'merge',
+    });
     this.state = state;
     const source = this.source.value;
     if (source instanceof EmailDataSource) source.setState(state);

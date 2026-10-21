@@ -14,6 +14,8 @@ require (
 	github.com/juju/errors v1.0.0
 	github.com/lib/pq v1.12.3
 	github.com/loopfz/gadgeto v0.11.6
+	github.com/ovh/configstore v0.8.2
+	github.com/ovh/go-ovh v1.9.0
 	github.com/shopspring/decimal v1.6.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/sloonz/go-mime-message v0.0.0-20210417175330-cb2e834a9b3b
@@ -42,6 +44,7 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
+	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gin-contrib/sse v1.1.2 // indirect
 	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
@@ -91,5 +94,7 @@ require (
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )

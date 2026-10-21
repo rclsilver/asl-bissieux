@@ -315,6 +315,10 @@ func (s *httpServer) Build() error {
 	dashboardGroup.GET("directory", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetDirectoryQuality, http.StatusOK))
 	dashboardGroup.GET("emails", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmailDashboard, http.StatusOK))
 
+	mailingGroup := router.Group("/api/mailing-lists", "08 - mailing lists", "OVH mailing list synchronization")
+	mailingGroup.GET("preview", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAdministrator(), tonic.Handler(handlers.PreviewMailingLists, http.StatusOK))
+	mailingGroup.POST("sync", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAdministrator(), tonic.Handler(handlers.SyncMailingLists, http.StatusOK))
+
 	emailGroup := router.Group("/api/email", "06 - email", "manages the emails")
 	{
 		emailGroup.GET("templates", []fizz.OperationOption{

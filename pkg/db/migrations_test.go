@@ -90,6 +90,17 @@ func applicationFingerprint(t *testing.T, conn *gorm.DB) map[string]string {
 func assertUpgradePreservesData(t *testing.T, conn *gorm.DB, before map[string]string) {
 	t.Helper()
 	after := applicationFingerprint(t, conn)
+	// Migration 0007 adds a role column. Compare all original member values,
+	// then independently require the new role to default to false.
+	var legacyMemberHash string
+	if err := conn.Raw("SELECT md5(COALESCE(jsonb_agg(to_jsonb(t) - 'bureau' ORDER BY (to_jsonb(t) - 'bureau')::text)::text, '[]')) FROM public.member t").Scan(&legacyMemberHash).Error; err != nil {
+		t.Fatal(err)
+	}
+	after["member"] = legacyMemberHash
+	var unexpectedBureau int64
+	if err := conn.Raw("SELECT count(*) FROM public.member WHERE bureau IS DISTINCT FROM false").Scan(&unexpectedBureau).Error; err != nil || unexpectedBureau != 0 {
+		t.Fatalf("existing members gained bureau status: %d, %v", unexpectedBureau, err)
+	}
 	for table := range after {
 		if _, exists := before[table]; !exists {
 			var count int64

@@ -55,6 +55,7 @@ export type APISchemas = {
   };
   CreateMemberInput: {
     address?: string;
+    bureau?: null | boolean;
     email?: string;
     first_name?: string;
     last_name?: string;
@@ -79,6 +80,30 @@ export type APISchemas = {
     admin?: boolean;
     enabled?: boolean;
     username?: string;
+  };
+  MailingsInvalidMember: { id?: string; reason?: string };
+  MailingsListPlan: {
+    add?: Array<string>;
+    current?: Array<string>;
+    expected?: Array<string>;
+    group?: string;
+    name?: string;
+    pending_tasks?: Array<number>;
+    remove?: Array<string>;
+  };
+  MailingsPlan: {
+    can_apply?: boolean;
+    configured?: boolean;
+    domain?: string;
+    invalid?: Array<APISchemas['MailingsInvalidMember']>;
+    lists?: Array<APISchemas['MailingsListPlan']>;
+    token?: string;
+  };
+  MailingsResult: {
+    message?: string;
+    partial?: boolean;
+    plan?: APISchemas['MailingsPlan'];
+    verified?: boolean;
   };
   ModelsAttachment: {
     content_type?: string;
@@ -336,6 +361,7 @@ export type APISchemas = {
   };
   ModelsMember: {
     address?: string;
+    bureau?: boolean;
     /* Format: date-time */
     created_at?: string;
     email?: string;
@@ -449,6 +475,7 @@ export type APISchemas = {
   };
   ServerLogoutResult: { redirect_url?: string };
   ServerPingOut: { message?: string; status?: string };
+  SyncMailingListsInput: { token?: string };
   TemplatesCustomField: { complex?: boolean; name?: string };
   TemplatesFieldDescription: {
     advanced?: boolean;
@@ -467,6 +494,7 @@ export type APISchemas = {
   };
   UpdateMemberInput: {
     address?: string;
+    bureau?: null | boolean;
     email?: string;
     first_name?: string;
     last_name?: string;
@@ -822,6 +850,14 @@ export type APIEndpoints = {
   '/api/email/{email_id}/tracker': {
     responses: { get: null };
     requests: { method?: 'get'; urlParams: { email_id: string } };
+  };
+  '/api/mailing-lists/preview': {
+    responses: { get: APISchemas['MailingsPlan'] };
+    requests: { method?: 'get' };
+  };
+  '/api/mailing-lists/sync': {
+    responses: { post: APISchemas['MailingsResult'] };
+    requests: { method: 'post'; body: APISchemas['SyncMailingListsInput'] };
   };
   '/api/member': {
     responses: {

@@ -284,3 +284,13 @@ aggregates. Its access-request counter is administrator-only. See
 ledger (migration 0005), account decisions use explicit requests (0006); never mutate
 those histories to implement a UI shortcut. See `docs/demarrage-local.md` for the current
 machine's private network override versus the public Compose configuration.
+
+OVH mailing lists use `github.com/ovh/configstore` initialized in `main.go`
+with `InitFromEnvironment()`, alongside existing Viper configuration. The JSON
+item `asl-bissieux-ovh-mailing-lists` contains credentials and two list targets;
+never expose its value in API responses or logs. `member.bureau` (migration 0007)
+is an explicit association role, independent of application admin. Only admins
+can preview/apply list differences. OVH writes are asynchronous: pending tasks
+block reapplication, and completion requires a fresh subscriber comparison.
+See `docs/listes-diffusion-ovh.md`; no real OVH validation is claimed without
+an actual configured secret.

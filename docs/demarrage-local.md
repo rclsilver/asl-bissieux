@@ -46,7 +46,7 @@ Les dépendances restent dans des volumes nommés. Après changement du lockfile
 
 ## Données et e-mails
 
-`postgresql-data` conserve les données métier et `keycloak-data` le realm local. `docker compose down` conserve ces volumes ; l’option `-v` les supprime et ne doit pas être utilisée pour cette revue. La base actuelle contient les migrations 0001 à 0006 ; le tableau de bord n’ajoute aucune migration.
+`postgresql-data` conserve les données métier et `keycloak-data` le realm local. `docker compose down` conserve ces volumes ; l’option `-v` les supprime et ne doit pas être utilisée pour cette revue. La base actuelle contient les migrations 0001 à 0007 ; le tableau de bord n’ajoute aucune migration.
 
 Le SMTP simulé ne transmet aucun message à l’extérieur. Ses messages sont en mémoire et disparaissent à son redémarrage. La préparation crée des messages dans PostgreSQL ; **Envoyer** contacte le SMTP. Les statuts enregistrés ne prouvent pas une lecture humaine. Tester uniquement avec des données fictives et vérifier le fournisseur SMTP avant toute action d’envoi.
 

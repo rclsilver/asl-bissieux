@@ -33,6 +33,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: [ server ]
           env:
+            {{- if .Values.mailingLists.existingSecret }}
+            - name: CONFIGURATION_FROM
+              value: filetree:/run/secrets/asl-configuration
+            {{- end }}
             - name: APP_DB_DIALECT
               value: "postgresql"
             - name: APP_DB_HOST
@@ -97,11 +101,18 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
+          {{- if or .Values.mailingLists.existingSecret (and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret) }}
           volumeMounts:
+            {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
             - name: oidc-client-secret
               mountPath: /run/secrets/asl-oidc
               readOnly: true
+            {{- end }}
+            {{- if .Values.mailingLists.existingSecret }}
+            - name: mailing-lists-secret
+              mountPath: /run/secrets/asl-configuration
+              readOnly: true
+            {{- end }}
           {{- end }}
           livenessProbe:
             httpGet:
@@ -117,8 +128,9 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
+      {{- if or .Values.mailingLists.existingSecret (and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret) }}
       volumes:
+        {{- if and (eq (.Values.auth.provider | default "google") "oidc") .Values.auth.oidc.existingSecret }}
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.auth.oidc.existingSecret | quote }}
@@ -126,6 +138,16 @@ spec:
             items:
               - key: {{ .Values.auth.oidc.secretKey | quote }}
                 path: client-secret
+        {{- end }}
+        {{- if .Values.mailingLists.existingSecret }}
+        - name: mailing-lists-secret
+          secret:
+            secretName: {{ .Values.mailingLists.existingSecret | quote }}
+            defaultMode: 0444
+            items:
+              - key: {{ .Values.mailingLists.secretKey | quote }}
+                path: asl-bissieux-ovh-mailing-lists
+        {{- end }}
       {{- end }}
       {{- with .Values.affinity }}
       affinity:

@@ -98,6 +98,11 @@ postgresql:
   timezone: 'Europe/Paris'
   existingSecret: asl-bissieux-postgresql
 
+# JSON item read by github.com/ovh/configstore, mounted only when configured.
+mailingLists:
+  existingSecret: ''
+  secretKey: 'ovh-mailing-lists'
+
 smtp:
   host: 'localhost'
   port: 25

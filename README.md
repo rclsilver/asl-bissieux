@@ -460,3 +460,12 @@ rien en production et ne modifie aucun client Google distant.
 
 Sur le poste de validation actuel, Google OIDC est actif dans l’override privé ;
 la description Keycloak ci-dessus reste celle du Compose public pour un nouveau clone.
+
+## Listes de diffusion OVH
+
+L’écran administrateur **Listes de diffusion** compare et synchronise les abonnés
+Membres et Bureau avec l’annuaire. La case **Membre du bureau** est indépendante
+des droits applicatifs. Le secret JSON est lu par ConfigStore après
+`configstore.InitFromEnvironment()` ; [configuration et vérification](docs/listes-diffusion-ovh.md).
+La migration 0007 initialise cette appartenance à faux. Sans secret, aucune liste
+réelle n’est lue ou modifiée et l’écran indique que la connexion reste à configurer.

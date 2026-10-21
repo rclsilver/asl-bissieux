@@ -1,0 +1,9 @@
+{
+  "endpoint": "ovh-eu",
+  "application_key": "REPLACE_WITH_APPLICATION_KEY",
+  "application_secret": "REPLACE_WITH_APPLICATION_SECRET",
+  "consumer_key": "REPLACE_WITH_CONSUMER_KEY",
+  "domain": "example.invalid",
+  "members_list": "membres",
+  "bureau_list": "bureau"
+}

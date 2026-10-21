@@ -81,7 +81,7 @@ export type APISchemas = {
     enabled?: boolean;
     username?: string;
   };
-  MailingsInvalidMember: { id?: string; reason?: string };
+  MailingsInvalidMember: { id?: string; name?: string; reason?: string };
   MailingsListPlan: {
     add?: Array<string>;
     current?: Array<string>;

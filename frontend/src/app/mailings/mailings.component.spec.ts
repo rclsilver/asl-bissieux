@@ -65,6 +65,27 @@ describe('Reviewed OVH list synchronization', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('identifies incomplete member records and prevents applying their plan', () => {
+    const f = TestBed.createComponent(MailingsComponent);
+    f.detectChanges();
+    http
+      .expectOne(preview)
+      .flush({
+        ...plan,
+        can_apply: false,
+        invalid: [
+          {
+            id: 'member',
+            name: 'Alice Fixture',
+            reason: 'E-mail absent ou invalide',
+          },
+        ],
+      });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Alice Fixture');
+    f.componentInstance.sync();
+    http.expectNone(sync);
+  });
   it('clears administrative data and cancels a read when access is revoked', () => {
     const f = TestBed.createComponent(MailingsComponent);
     f.detectChanges();

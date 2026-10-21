@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/juju/errors"
@@ -16,12 +17,12 @@ var newMailingProvider = func(cfg *mailings.Config) (mailings.Provider, error) {
 
 func mailingPlan(tx *gorm.DB, cfg *mailings.Config, provider mailings.Provider) (*mailings.Plan, error) {
 	var rows []models.Member
-	if err := tx.Select("id", "email", "bureau").Order("id").Find(&rows).Error; err != nil {
+	if err := tx.Select("id", "email", "bureau", "first_name", "last_name").Order("id").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	members := make([]mailings.Member, 0, len(rows))
 	for _, m := range rows {
-		members = append(members, mailings.Member{ID: m.ID, Email: m.Email, Bureau: m.Bureau})
+		members = append(members, mailings.Member{ID: m.ID, Email: m.Email, Bureau: m.Bureau, Name: strings.TrimSpace(m.FirstName + " " + m.LastName)})
 	}
 	current := map[string][]string{}
 	pending := map[string][]int64{}

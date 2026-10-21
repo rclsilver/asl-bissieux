@@ -48,6 +48,11 @@
         Corrige-les dans l’annuaire avant de synchroniser.
       </p>
       <a mat-button routerLink="/members">Ouvrir l’annuaire</a>
+      <ul>
+        @for (member of p.invalid ?? []; track member.id) {
+          <li>{{ member.name || 'Membre sans nom' }} — {{ member.reason }}</li>
+        }
+      </ul>
     }
     @if (pending) {
       <p role="status">

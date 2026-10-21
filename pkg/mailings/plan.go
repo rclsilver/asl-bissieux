@@ -13,9 +13,11 @@ type Member struct {
 	ID     string
 	Email  string
 	Bureau bool
+	Name   string
 }
 type InvalidMember struct {
 	ID     string `json:"id"`
+	Name   string `json:"name"`
 	Reason string `json:"reason"`
 }
 type ListPlan struct {
@@ -57,7 +59,7 @@ func BuildPlan(cfg *Config, members []Member, current map[string][]string, pendi
 	for _, m := range members {
 		email, ok := Canonical(m.Email)
 		if !ok {
-			plan.Invalid = append(plan.Invalid, InvalidMember{ID: m.ID, Reason: "E-mail absent ou invalide"})
+			plan.Invalid = append(plan.Invalid, InvalidMember{ID: m.ID, Name: m.Name, Reason: "E-mail absent ou invalide"})
 			continue
 		}
 		expected["membres"][email] = true

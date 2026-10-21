@@ -247,6 +247,8 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteBudgetAction), tonic.Handler(handlers.DeleteBudget, http.StatusNoContent))
 
+		budgetGroup.GET(":budget_id/dashboard", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetBudgetDashboard, http.StatusOK))
+
 		budgetGroup.GET(":budget_id/expenses", []fizz.OperationOption{
 			fizz.Summary("Get the expenses"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -308,6 +310,10 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.PreviewBudgetEmail, http.StatusOK))
 	}
+
+	dashboardGroup := router.Group("/api/dashboard", "07 - dashboard", "read-only dashboard summaries")
+	dashboardGroup.GET("directory", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetDirectoryQuality, http.StatusOK))
+	dashboardGroup.GET("emails", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmailDashboard, http.StatusOK))
 
 	emailGroup := router.Group("/api/email", "06 - email", "manages the emails")
 	{

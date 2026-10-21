@@ -43,14 +43,33 @@ func (o *PageOptions) normalize(allowedSorts ...string) error {
 
 // ListEmailCampaignPage returns only the requested summaries. No template,
 // context, recipient, message body or attachment is loaded by this endpoint.
-func ListEmailCampaignPage(tx *gorm.DB, options CampaignPageOptions) (*models.EmailCampaignPage, error) {
+func ListEmailCampaignPage(tx *gorm.DB, options CampaignPageOptions, filters ...string) (*models.EmailCampaignPage, error) {
 	if err := options.normalize("created_at", "title"); err != nil {
 		return nil, err
+	}
+	state := ""
+	if len(filters) > 0 {
+		state = filters[0]
+	}
+	if !slices.Contains([]string{"", "WAITING", "SENDING", "SUCCESSFUL", "ERROR", "UNKNOWN"}, state) {
+		return nil, errors.NewBadRequest(nil, "État de campagne invalide.")
 	}
 	result := &models.EmailCampaignPage{Items: []models.EmailCampaignSummary{}, Page: options.Page, PageSize: options.PageSize}
 	err := tx.Transaction(func(tx *gorm.DB) error {
 		query := func() *gorm.DB {
 			q := tx.Model(&models.EmailCampaign{})
+			if state != "" {
+				predicate := "e.state = ?"
+				args := []any{state}
+				if state == "SUCCESSFUL" {
+					predicate = "e.state IN ('SENT','READ')"
+					args = nil
+				} else if state == "UNKNOWN" {
+					predicate = "e.state NOT IN ('WAITING','SENDING','SENT','READ','ERROR')"
+					args = nil
+				}
+				q = q.Where("EXISTS (SELECT 1 FROM email e WHERE e.email_campaign_id=email_campaign.id AND e.deleted_at IS NULL AND "+predicate+")", args...)
+			}
 			if options.Query != "" {
 				escaped := strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_").Replace(options.Query)
 				q = q.Where("title ILIKE ?", "%"+escaped+"%")

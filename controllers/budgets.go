@@ -24,7 +24,7 @@ func ListBudgets(tx *gorm.DB) ([]*models.BudgetResult, error) {
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.budget_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.budget_id")
 
 	if err := tx.
@@ -57,7 +57,7 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.budget_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.budget_id")
 
 	if err := tx.
@@ -138,7 +138,7 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.id as cotisation_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.id")
 
 	if err := tx.

@@ -103,6 +103,16 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsBudgetDashboard: {
+    budget?: APISchemas['ModelsBudgetResult'];
+    cotisations?: Array<APISchemas['ModelsCotisationResult']>;
+    months?: Array<APISchemas['ModelsMonthlyCollection']>;
+    recovery?: APISchemas['ModelsRecoverySummary'];
+    timezone?: string;
+    /* Format: int32 */
+    year?: number;
+    years?: Array<number>;
+  };
   ModelsBudgetPreview: {
     /* Format: double */
     amount?: number;
@@ -180,6 +190,14 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsDirectoryQuality: {
+    /* Format: int64 */
+    invalid_shares?: number;
+    /* Format: int64 */
+    missing_email?: number;
+    /* Format: int64 */
+    no_member?: number;
+  };
   ModelsEmail: {
     campaign?: APISchemas['ModelsEmailCampaign'];
     campaign_id?: string;
@@ -236,6 +254,12 @@ export type APISchemas = {
     unknown?: number;
     /* Format: int64 */
     waiting?: number;
+  };
+  ModelsEmailDashboard: {
+    /* Format: int64 */
+    campaigns?: number;
+    counts?: APISchemas['ModelsEmailCounts'];
+    recent?: Array<APISchemas['ModelsEmailCampaignSummary']>;
   };
   ModelsEmailPage: {
     items?: Array<APISchemas['ModelsEmailSummary']>;
@@ -323,6 +347,18 @@ export type APISchemas = {
     /* Format: date-time */
     updated_at?: string;
   };
+  ModelsMonthlyCollection: {
+    /* Format: double */
+    cumulative?: number;
+    /* Format: int32 */
+    month?: number;
+    /* Format: double */
+    net?: number;
+    /* Format: double */
+    payments?: number;
+    /* Format: double */
+    refunds?: number;
+  };
   ModelsPayment: {
     /* Format: double */
     amount?: number;
@@ -338,6 +374,32 @@ export type APISchemas = {
     updated_at?: string;
     user?: APISchemas['AuthUser'];
     user_id?: string;
+  };
+  ModelsRecoverySummary: {
+    /* Format: double */
+    called?: number;
+    /* Format: double */
+    covered?: number;
+    /* Format: int32 */
+    lots?: number;
+    /* Format: int32 */
+    overpaid?: number;
+    /* Format: double */
+    paid?: number;
+    /* Format: int32 */
+    partial?: number;
+    /* Format: double */
+    rate?: null | number;
+    /* Format: double */
+    refunded?: number;
+    /* Format: double */
+    remaining?: number;
+    /* Format: int32 */
+    settled?: number;
+    /* Format: double */
+    surplus?: number;
+    /* Format: int32 */
+    unpaid?: number;
   };
   ModelsUnit: {
     address?: string;
@@ -569,6 +631,17 @@ export type APIEndpoints = {
           };
         };
   };
+  '/api/budget/{budget_id}/dashboard': {
+    responses: { get: APISchemas['ModelsBudgetDashboard'] };
+    requests: {
+      method?: 'get';
+      query?: {
+        /* Format: int32 */
+        year?: number;
+      };
+      urlParams: { budget_id: string };
+    };
+  };
   '/api/budget/{budget_id}/email': {
     responses: { post: null };
     requests: {
@@ -615,6 +688,14 @@ export type APIEndpoints = {
     responses: { post: APISchemas['ModelsBudgetResult'] };
     requests: { method: 'post'; urlParams: { budget_id: string } };
   };
+  '/api/dashboard/directory': {
+    responses: { get: APISchemas['ModelsDirectoryQuality'] };
+    requests: { method?: 'get' };
+  };
+  '/api/dashboard/emails': {
+    responses: { get: APISchemas['ModelsEmailDashboard'] };
+    requests: { method?: 'get' };
+  };
   '/api/email/campaigns': {
     responses: {
       get: APISchemas['ModelsEmailCampaignPage'];
@@ -631,6 +712,7 @@ export type APIEndpoints = {
             page_size?: number;
             query?: string;
             sort?: string;
+            state?: string;
           };
         }
       | { method: 'post'; body: APISchemas['CreateEmailCampaignInput'] };

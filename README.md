@@ -465,7 +465,9 @@ la description Keycloak ci-dessus reste celle du Compose public pour un nouveau 
 
 L’écran administrateur **Listes de diffusion** compare et synchronise les abonnés
 Membres et Bureau avec l’annuaire. La case **Membre du bureau** est indépendante
-des droits applicatifs. Le secret JSON est lu par ConfigStore après
-`configstore.InitFromEnvironment()` ; [configuration et vérification](docs/listes-diffusion-ovh.md).
-La migration 0007 initialise cette appartenance à faux. Sans secret, aucune liste
+des droits applicatifs. Le client utilise `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`,
+`OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` ; les cibles sont définies par
+`APP_ML_DOMAIN`, `APP_ML_MEMBERS`, `APP_ML_BUREAU`.
+Voir [configuration et vérification](docs/listes-diffusion-ovh.md).
+La migration 0007 initialise cette appartenance à faux. Sans configuration, aucune liste
 réelle n’est lue ou modifiée et l’écran indique que la connexion reste à configurer.

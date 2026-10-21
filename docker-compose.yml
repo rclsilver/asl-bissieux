@@ -63,6 +63,13 @@ services:
       - -v
     environment:
       APP_AUTH_GOOGLE_CLIENT_ID: '174839262039-tg9jv57eod93r2a578hlkcjvq6p4g0hn.apps.googleusercontent.com'
+      OVH_ENDPOINT: '${OVH_ENDPOINT:-}'
+      OVH_APPLICATION_KEY: '${OVH_APPLICATION_KEY:-}'
+      OVH_APPLICATION_SECRET: '${OVH_APPLICATION_SECRET:-}'
+      OVH_CONSUMER_KEY: '${OVH_CONSUMER_KEY:-}'
+      APP_ML_DOMAIN: '${APP_ML_DOMAIN:-}'
+      APP_ML_MEMBERS: '${APP_ML_MEMBERS:-}'
+      APP_ML_BUREAU: '${APP_ML_BUREAU:-}'
       APP_AUTH_PROVIDER: 'oidc'
       APP_AUTH_OIDC_ISSUER: 'http://localhost:9080/realms/asl-dev'
       APP_AUTH_OIDC_BACKCHANNEL_URL: 'http://keycloak:9080'

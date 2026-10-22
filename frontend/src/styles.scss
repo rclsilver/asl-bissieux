@@ -29,23 +29,33 @@
       )
     );
   }
-  .directory-search {
-    flex: 1 1 18rem;
-    min-inline-size: 0;
-  }
-  .directory-view-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    max-inline-size: 100%;
-  }
-  mat-button-toggle-group {
-    @include mat.button-toggle-overrides(
-      (
-        height: 48px,
-      )
-    );
-  }
+}
+.context-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.context-field {
+  max-inline-size: 100%;
+  background: var(--asl-surface);
+  border-radius: 10px;
+  @include mat.form-field-overrides(
+    (
+      container-height: 48px,
+      container-vertical-padding: 12px,
+      outlined-container-shape: 10px,
+    )
+  );
+}
+.context-controls .context-refresh {
+  flex-shrink: 0;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 1px solid var(--asl-muted);
+  border-radius: 10px;
+  background: var(--asl-surface);
+  color: var(--asl-ink);
 }
 .list-help,
 .list-note {

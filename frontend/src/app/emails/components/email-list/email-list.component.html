@@ -31,7 +31,11 @@
     [rowActions]="rowActions$ | async"
   >
     <div table-filters class="list-filters">
-      <mat-form-field subscriptSizing="dynamic" class="state-filter">
+      <mat-form-field
+        appearance="outline"
+        subscriptSizing="dynamic"
+        class="state-filter context-field"
+      >
         <mat-label>État des e-mails</mat-label>
         <mat-select
           [value]="state"

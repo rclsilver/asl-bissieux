@@ -241,6 +241,10 @@ summary {
   .selectors mat-form-field {
     width: 100%;
   }
+  .selectors mat-form-field {
+    width: auto;
+    flex: 1 1 12rem;
+  }
   .global-modules {
     gap: 0;
   }

@@ -4,12 +4,12 @@
       <h1>Accueil de l’ASL</h1>
       <p>Budget, paiements et vie de l’association.</p>
     </div>
-    <button mat-stroked-button type="button" (click)="refresh()">
-      <mat-icon aria-hidden="true">refresh</mat-icon>Actualiser les données
-    </button>
   </div>
-  <div class="selectors">
-    <mat-form-field subscriptSizing="dynamic"
+  <div class="selectors context-controls">
+    <mat-form-field
+      appearance="outline"
+      class="context-field"
+      subscriptSizing="dynamic"
       ><mat-label>Budget à consulter</mat-label
       ><mat-select
         [value]="budgetId"
@@ -24,6 +24,17 @@
         }
       </mat-select></mat-form-field
     >
+    <button
+      mat-icon-button
+      class="context-refresh"
+      type="button"
+      (click)="refresh()"
+      [disabled]="budgets.loading || finance.loading"
+      aria-label="Actualiser les données"
+      matTooltip="Actualiser les données"
+    >
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+    </button>
     @if (budgets.loading) {
       <p role="status">Chargement des budgets…</p>
     }
@@ -440,9 +451,7 @@
           }
           @if ((emails.value?.counts?.error ?? 0) > 0) {
             <li>
-              <a
-                routerLink="/emails/campaigns"
-                [queryParams]="{ state: 'ERROR' }"
+              <a routerLink="/emails/campaigns"
                 >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
                 toutes campagnes</a
               >
@@ -450,9 +459,7 @@
           }
           @if ((emails.value?.counts?.unknown ?? 0) > 0) {
             <li>
-              <a
-                routerLink="/emails/campaigns"
-                [queryParams]="{ state: 'UNKNOWN' }"
+              <a routerLink="/emails/campaigns"
                 >Vérifier {{ emails.value?.counts?.unknown }} envois incertains
                 — toutes campagnes</a
               >
@@ -460,9 +467,7 @@
           }
           @if ((directory.value?.invalid_shares ?? 0) > 0) {
             <li>
-              <a
-                routerLink="/units"
-                [queryParams]="{ quality: 'invalid_shares' }"
+              <a routerLink="/units"
                 >Vérifier les parts de
                 {{ directory.value?.invalid_shares }} lots</a
               >
@@ -515,7 +520,7 @@
       }
       @if ((emails.value?.counts?.error ?? 0) > 0) {
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'ERROR' }"
+          <a routerLink="/emails/campaigns"
             >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
             toutes campagnes</a
           >
@@ -523,7 +528,7 @@
       }
       @if ((emails.value?.counts?.unknown ?? 0) > 0) {
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'UNKNOWN' }"
+          <a routerLink="/emails/campaigns"
             >Vérifier {{ emails.value?.counts?.unknown }} envois incertains —
             toutes campagnes</a
           >
@@ -531,7 +536,7 @@
       }
       @if ((directory.value?.invalid_shares ?? 0) > 0) {
         <li>
-          <a routerLink="/units" [queryParams]="{ quality: 'invalid_shares' }"
+          <a routerLink="/units"
             >Vérifier les parts de {{ directory.value?.invalid_shares }} lots</a
           >
         </li>
@@ -649,17 +654,17 @@
     @if (directory.value; as data) {
       <ul>
         <li>
-          <a routerLink="/members" [queryParams]="{ quality: 'missing_email' }"
+          <a routerLink="/members"
             >{{ data.missing_email }} membres sans adresse e-mail</a
           >
         </li>
         <li>
-          <a routerLink="/units" [queryParams]="{ quality: 'no_member' }"
+          <a routerLink="/units"
             >{{ data.no_member }} lots sans membre associé</a
           >
         </li>
         <li>
-          <a routerLink="/units" [queryParams]="{ quality: 'invalid_shares' }"
+          <a routerLink="/units"
             >{{ data.invalid_shares }} lots sans parts positives</a
           >
         </li>
@@ -692,29 +697,27 @@
       </p>
       <ul>
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'WAITING' }"
+          <a routerLink="/emails/campaigns"
             >{{ data.counts?.waiting }} en attente</a
           >
         </li>
         <li>
-          <a
-            routerLink="/emails/campaigns"
-            [queryParams]="{ state: 'SUCCESSFUL' }"
+          <a routerLink="/emails/campaigns"
             >{{ data.counts?.successful }} envoyés</a
           >
         </li>
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'ERROR' }"
+          <a routerLink="/emails/campaigns"
             >{{ data.counts?.error }} en erreur</a
           >
         </li>
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'UNKNOWN' }"
+          <a routerLink="/emails/campaigns"
             >{{ data.counts?.unknown }} envois à vérifier</a
           >
         </li>
         <li>
-          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'SENDING' }"
+          <a routerLink="/emails/campaigns"
             >{{ data.counts?.sending }} en cours d’envoi</a
           >
         </li>

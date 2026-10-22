@@ -40,6 +40,6 @@ Le code métier et ses tests, les écrans de gestion en français et la carte SV
 - Conserver l’exactitude financière et les distinctions métier lors de toute simplification visuelle.
 - Offrir une interface cohérente sur ordinateur et mobile, utilisable au clavier.
 
-## Open Decisions
+## Brand Commitments
 
-La nouvelle identité visuelle reste à choisir sur une proposition concrète. Aucun remplacement de framework n’est imposé : son intérêt doit être justifié par le résultat et les contraintes existantes.
+Thomas a choisi « Bassin clair » pour le thème clair, souhaite aussi un thème sombre inspiré de « Graphite » et préfère le menu supérieur de « Repères ». Le choix du thème doit rester à l’utilisateur. Angular est conservé et les composants passent à Material 3 ; aucun remplacement de framework n’est nécessaire pour cette refonte.

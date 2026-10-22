@@ -358,11 +358,11 @@ describe('OIDC sign-in page', () => {
     expect(drawer.opened).toBe(true);
   });
 
-  it('keeps desktop navigation open after selecting a destination', async () => {
+  it('navigates from the top menu on desktop without opening the mobile drawer', async () => {
     const fixture = authenticated();
     await fixture.whenStable();
     const links = Array.from(
-      fixture.nativeElement.querySelectorAll('#left-menu a')
+      fixture.nativeElement.querySelectorAll('#top-navigation a')
     ) as HTMLAnchorElement[];
     const members = links.find((link) =>
       link.textContent?.includes('Membres')
@@ -374,7 +374,7 @@ describe('OIDC sign-in page', () => {
     expect(
       fixture.debugElement.query(By.directive(MatSidenav)).componentInstance
         .opened
-    ).toBe(true);
+    ).toBe(false);
     expect(
       fixture.nativeElement.querySelector(
         'button[aria-controls="primary-navigation"]'
@@ -435,7 +435,7 @@ describe('OIDC sign-in page', () => {
   it('shows the French administration entry only to an active administrator', async () => {
     const fixture = authenticated(true);
     await fixture.whenStable();
-    const text = fixture.nativeElement.querySelector('#left-menu').textContent;
+    const text = fixture.nativeElement.querySelector('#top-navigation').textContent;
     expect(text).toContain('Lots');
     expect(text).toContain('Membres');
     expect(text).toContain('Utilisateurs');

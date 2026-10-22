@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Observable, map, shareReplay } from 'rxjs';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-page',
@@ -11,8 +12,9 @@ import { AuthService } from '../../services/auth.service';
   standalone: false,
 })
 export class PageComponent {
+  readonly theme = inject(ThemeService);
   mobileMenuOpen = false;
-  readonly isHandset$ = this._breakpoints.observe(Breakpoints.Handset).pipe(
+  readonly isHandset$ = this._breakpoints.observe('(max-width: 1100px)').pipe(
     map((result) => result.matches),
     shareReplay()
   );

@@ -18,7 +18,24 @@
     </button>
   }
   <span class="brand">ASL Bissieux</span>
+  @if ((active$ | async) && (isHandset$ | async) === false) {
+    <nav id="top-navigation" aria-label="Menu principal">
+      @for (link of links; track link.path) {
+        @if (link.allowed$ | async) {
+          <a [routerLink]="link.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ link.label }}</a>
+        }
+      }
+    </nav>
+  }
   <span class="spacer"></span>
+  <button mat-icon-button type="button" [matMenuTriggerFor]="themeMenu" aria-label="Choisir le thème" class="theme-trigger">
+    <mat-icon aria-hidden="true">{{ theme.resolved() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+  <mat-menu #themeMenu="matMenu" xPosition="before">
+    <button mat-menu-item type="button" role="menuitemradio" [attr.aria-checked]="theme.preference() === 'light'" (click)="theme.setPreference('light')"><mat-icon aria-hidden="true">light_mode</mat-icon><span>Clair · Bassin clair</span></button>
+    <button mat-menu-item type="button" role="menuitemradio" [attr.aria-checked]="theme.preference() === 'dark'" (click)="theme.setPreference('dark')"><mat-icon aria-hidden="true">dark_mode</mat-icon><span>Sombre · Graphite</span></button>
+    <button mat-menu-item type="button" role="menuitemradio" [attr.aria-checked]="theme.preference() === 'system'" (click)="theme.setPreference('system')"><mat-icon aria-hidden="true">contrast</mat-icon><span>Suivre le système</span></button>
+  </mat-menu>
   @if (user$ | async; as user) {
     <div class="account-area">
       <span class="account-name">{{ user.username }}</span>
@@ -55,7 +72,7 @@
     [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
     [mode]="(isHandset$ | async) ? 'over' : 'side'"
     [opened]="
-      (active$ | async) && ((isHandset$ | async) === false || mobileMenuOpen)
+      (active$ | async) && (isHandset$ | async) && mobileMenuOpen
     "
     (closedStart)="mobileMenuOpen = false"
     [attr.aria-modal]="(isHandset$ | async) && drawer.opened ? true : null"

@@ -1,69 +1,91 @@
-// Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
 @use '@angular/material' as mat;
 @use 'normalize.css';
 @use 'app/core/core.theme' as core;
 @use 'app/shared/shared.theme' as shared;
 @use 'app/dashboard/dashboard.theme' as dashboard;
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
-@include mat.elevation-classes();
-@include mat.app-background();
-
-// Define dark theme
-$app-primary: mat.m2-define-palette(mat.$m2-blue-palette);
-$app-accent: mat.m2-define-palette(mat.$m2-grey-palette, A200, A100, A400);
-$app-warn: mat.m2-define-palette(mat.$m2-red-palette);
-
-$dark-theme: mat.m2-define-dark-theme(
-  (
-    color: (
-      primary: $app-primary,
-      accent: $app-accent,
-      warn: $app-warn,
-    ),
-    typography: mat.m2-define-typography-config(),
-    density: 0,
-  )
-);
-
-// Define light theme
-$light-theme: mat.m2-define-light-theme(
-  (
-    color: (
-      primary: $app-primary,
-      accent: $app-accent,
-      warn: $app-warn,
-    ),
-  )
-);
-
-// Apply the dark theme by default
-@include mat.all-component-themes($dark-theme);
-@include core.core-theme($dark-theme);
-@include shared.shared-theme($dark-theme);
-@include dashboard.dashboard-theme($dark-theme);
-
-// Apply the light theme only when the user prefers light themes.
-@media (prefers-color-scheme: light) {
-  @include mat.all-component-colors($light-theme);
-  @include core.core-theme($light-theme);
-  @include shared.shared-theme($light-theme);
-  @include dashboard.dashboard-theme($light-theme);
+@mixin graphite {
+  --asl-ground: #101821;
+  --asl-surface: #19232e;
+  --asl-raised: #22303e;
+  --asl-border: #3b4e60;
+  --asl-ink: #e5edf6;
+  --asl-muted: #adbdcf;
+  --asl-primary: #a8d8ff;
+  --asl-on-primary: #123149;
+  --asl-tint: #253b50;
+  --asl-header: #0c131b;
+  --asl-header-ink: #e5edf6;
+  --asl-nav-active: #273e54;
+  --asl-nav-ink: #b6dfff;
+  --asl-error: #ffb4ab;
+  --asl-error-tint: #512a2a;
+  --asl-shadow: 0 8px 26px rgb(0 0 0 / 18%);
 }
 
-// Common styles
-html,
-body {
-  height: 100%;
+html {
+  color-scheme: light dark;
+  --asl-ground: #eef6fa;
+  --asl-surface: #fff;
+  --asl-raised: #f4f8fc;
+  --asl-border: #cbdce8;
+  --asl-ink: #142b48;
+  --asl-muted: #52697d;
+  --asl-primary: #124dc5;
+  --asl-on-primary: #fff;
+  --asl-tint: #e5efff;
+  --asl-header: #1246ae;
+  --asl-header-ink: #fff;
+  --asl-nav-active: #fff;
+  --asl-nav-ink: #1244a8;
+  --asl-error: #a72d36;
+  --asl-error-tint: #ffedef;
+  --asl-shadow: 0 8px 26px rgb(20 43 72 / 7%);
+  --asl-radius: 16px;
+  @include mat.theme((color: mat.$azure-palette, typography: ('Segoe UI', Roboto, sans-serif), density: 0));
+  @include mat.theme-overrides((
+    primary: var(--asl-primary), on-primary: var(--asl-on-primary),
+    primary-container: var(--asl-tint), on-primary-container: var(--asl-ink),
+    surface: var(--asl-surface), surface-dim: var(--asl-ground),
+    surface-bright: var(--asl-surface), surface-container: var(--asl-raised),
+    surface-container-lowest: var(--asl-surface), surface-container-low: var(--asl-surface),
+    surface-container-high: var(--asl-raised), surface-container-highest: var(--asl-raised),
+    on-surface: var(--asl-ink), on-surface-variant: var(--asl-muted),
+    outline: var(--asl-muted), outline-variant: var(--asl-border),
+    error: var(--asl-error), error-container: var(--asl-error-tint),
+    on-error-container: var(--asl-error)
+  ));
+  @include mat.button-overrides((filled-container-shape: 10px, outlined-container-shape: 10px, text-container-shape: 10px));
+  @include mat.form-field-overrides((filled-container-shape: 10px, outlined-container-shape: 10px));
+  @include mat.dialog-overrides((container-shape: 20px));
 }
+html[data-theme='light'] { color-scheme: light; }
+html[data-theme='dark'] { color-scheme: dark; @include graphite; }
+@media (prefers-color-scheme: dark) { html:not([data-theme='light']) { @include graphite; } }
+@include core.core-theme(null);
+@include shared.shared-theme(null);
+@include dashboard.dashboard-theme(null);
 
-body {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-}
-
-.spacer {
-  flex: 1 1 auto;
-}
+html, body { height: 100%; }
+body { margin: 0; font: 16px/1.5 'Segoe UI', Roboto, sans-serif; background: var(--asl-ground); color: var(--asl-ink); }
+*, *::before, *::after { box-sizing: border-box; }
+::selection { color: var(--asl-on-primary); background: var(--asl-primary); }
+:focus-visible { outline: 2px solid var(--asl-primary); outline-offset: 3px; }
+input, textarea { caret-color: var(--asl-primary); }
+* { scrollbar-color: var(--asl-border) transparent; scrollbar-width: thin; }
+h1 { font-size: clamp(1.75rem, 2.6vw, 2.25rem); line-height: 1.2; letter-spacing: -.025em; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 1.4rem; line-height: 1.3; font-weight: 650; }
+h3 { font-size: 1.1rem; line-height: 1.4; font-weight: 650; }
+h1, h2, h3 { color: var(--asl-ink); }
+a, a:visited { color: var(--asl-primary); text-underline-offset: .22em; }
+a:hover { text-decoration-thickness: 2px; }
+.spacer { flex: 1 1 auto; }
+.mat-mdc-button-base { letter-spacing: 0; }
+.mat-mdc-dialog-content { line-height: 1.5; }
+.mat-mdc-dialog-title { letter-spacing: -.015em; }
+.mat-mdc-header-cell { font-weight: 650; color: var(--asl-muted); background: var(--asl-raised); }
+.mat-mdc-cell { border-bottom-color: var(--asl-border); }
+.mat-mdc-table { font-variant-numeric: tabular-nums; }
+.mat-mdc-paginator { border-top: 1px solid var(--asl-border); }
+.mat-mdc-snack-bar-container { --mat-snack-bar-container-shape: 12px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

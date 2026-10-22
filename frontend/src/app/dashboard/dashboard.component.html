@@ -1,40 +1,45 @@
-<div class="page-heading">
-  <h1>Accueil de l’ASL</h1>
-  <button mat-stroked-button type="button" (click)="refresh()">
-    Actualiser les données
-  </button>
-</div>
-<div class="selectors">
-  <mat-form-field subscriptSizing="dynamic"
-    ><mat-label>Budget à consulter</mat-label
-    ><mat-select
-      [value]="budgetId"
-      (selectionChange)="selectBudget($event.value)"
-      [disabled]="budgets.loading || budgets.error"
-      ><mat-option value="">Choisir un budget</mat-option>
-      @for (budget of budgets.value ?? []; track budget.id) {
-        <mat-option [value]="budget.id"
-          >{{ budget.label }} —
-          {{ budget.draft ? 'brouillon' : 'publié' }}</mat-option
-        >
-      }
-    </mat-select></mat-form-field
-  >
-  @if (budgets.loading) {
-    <p role="status">Chargement des budgets…</p>
-  }
-  @if (budgets.error) {
-    <p role="alert">La liste des budgets est indisponible.</p>
-    <button mat-button type="button" (click)="retry('budgets')">
-      Réessayer
+<div class="dashboard-heading">
+  <div class="page-heading">
+    <div>
+      <h1>Accueil de l’ASL</h1>
+      <p>Budget, paiements et vie de l’association.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="refresh()">
+      <mat-icon aria-hidden="true">refresh</mat-icon>Actualiser les données
     </button>
-  }
-  @if (!budgets.loading && !budgets.error && budgets.value?.length === 0) {
-    <p>
-      Aucun budget enregistré.
-      <a routerLink="/budgets">Consulter les budgets</a>
-    </p>
-  }
+  </div>
+  <div class="selectors">
+    <mat-form-field subscriptSizing="dynamic"
+      ><mat-label>Budget à consulter</mat-label
+      ><mat-select
+        [value]="budgetId"
+        (selectionChange)="selectBudget($event.value)"
+        [disabled]="budgets.loading || budgets.error"
+        ><mat-option value="">Choisir un budget</mat-option>
+        @for (budget of budgets.value ?? []; track budget.id) {
+          <mat-option [value]="budget.id"
+            >{{ budget.label }} —
+            {{ budget.draft ? "brouillon" : "publié" }}</mat-option
+          >
+        }
+      </mat-select></mat-form-field
+    >
+    @if (budgets.loading) {
+      <p role="status">Chargement des budgets…</p>
+    }
+    @if (budgets.error) {
+      <p role="alert">La liste des budgets est indisponible.</p>
+      <button mat-button type="button" (click)="retry('budgets')">
+        Réessayer
+      </button>
+    }
+    @if (!budgets.loading && !budgets.error && budgets.value?.length === 0) {
+      <p>
+        Aucun budget enregistré.
+        <a routerLink="/budgets">Consulter les budgets</a>
+      </p>
+    }
+  </div>
 </div>
 @if (!budgetId) {
   <p>
@@ -55,10 +60,10 @@
   </button>
 }
 @if (finance.value; as view) {
-  <h2>
+  <h2 class="budget-title">
     {{ view.budget?.label }}
     <span class="status-label">{{
-      view.budget?.draft ? 'Brouillon' : 'Publié'
+      view.budget?.draft ? "Brouillon" : "Publié"
     }}</span>
   </h2>
   <p>
@@ -103,19 +108,22 @@
         <dd>{{ rate(view.recovery?.rate) }}</dd>
       </div>
     </dl>
-    <p>
-      Situation actuelle, toutes dates. L’encaissé net déduit
-      {{ money(view.recovery?.refunded) }} de remboursements nets. Le reste
-      additionne les soldes positifs ; aucun trop-perçu ne couvre la dette d’un
-      autre lot.
-    </p>
-    <p>
-      Le taux mesure les appels couverts lot par lot, plafonnés au montant
-      appelé.
-      @if (view.recovery?.rate == null) {
-        Aucun montant appelé : taux indisponible.
-      }
-    </p>
+    <details class="calculation-note">
+      <summary>Comprendre les indicateurs</summary>
+      <p>
+        Situation actuelle, toutes dates. L’encaissé net déduit
+        {{ money(view.recovery?.refunded) }} de remboursements nets. Le reste
+        additionne les soldes positifs ; aucun trop-perçu ne couvre la dette
+        d’un autre lot.
+      </p>
+      <p>
+        Le taux mesure les appels couverts lot par lot, plafonnés au montant
+        appelé.
+        @if (view.recovery?.rate == null) {
+          Aucun montant appelé : taux indisponible.
+        }
+      </p>
+    </details>
     <ul class="inline-facts">
       <li>
         <a
@@ -167,13 +175,13 @@
       <div>
         <dt>Annuel par part</dt>
         <dd>
-          {{ preview.total_shares ? perShare(preview.annual_per_share) : '—' }}
+          {{ preview.total_shares ? perShare(preview.annual_per_share) : "—" }}
         </dd>
       </div>
       <div>
         <dt>Mensuel par part</dt>
         <dd>
-          {{ preview.total_shares ? perShare(preview.monthly_per_share) : '—' }}
+          {{ preview.total_shares ? perShare(preview.monthly_per_share) : "—" }}
         </dd>
       </div>
     </dl>
@@ -187,201 +195,290 @@
     }
   }
 }
-<section aria-labelledby="actions-title" class="section">
-  <h2 id="actions-title">À traiter</h2>
-  @if (!hasActions && actionsComplete) {
-    <p>Aucun point à traiter n’est signalé par les modules ci-dessous.</p>
-  }
-  @if (!actionsComplete) {
-    <p>La liste se complète lorsque les modules sont disponibles.</p>
-  }
-  <ul class="actions-list">
-    @if (
-      finance.value &&
-      !finance.value.budget?.draft &&
-      (finance.value.recovery?.remaining ?? 0) > 0
-    ) {
-      <li>
-        <a
-          [routerLink]="['/budgets', budgetId]"
-          [queryParams]="{ coverage: 'remaining' }"
-          >Consulter les lots avec un reste à encaisser :
-          {{ money(finance.value.recovery?.remaining) }}</a
-        >
-      </li>
-    }
-    @if ((finance.value?.recovery?.overpaid ?? 0) > 0) {
-      <li>
-        <a
-          [routerLink]="['/budgets', budgetId]"
-          [queryParams]="{ coverage: 'overpaid' }"
-          >Examiner les trop-perçus à rembourser</a
-        >
-      </li>
-    }
-    @if ((emails.value?.counts?.error ?? 0) > 0) {
-      <li>
-        <a routerLink="/emails/campaigns" [queryParams]="{ state: 'ERROR' }"
-          >Examiner {{ emails.value?.counts?.error }} e-mails en erreur — toutes
-          campagnes</a
-        >
-      </li>
-    }
-    @if ((emails.value?.counts?.unknown ?? 0) > 0) {
-      <li>
-        <a routerLink="/emails/campaigns" [queryParams]="{ state: 'UNKNOWN' }"
-          >Vérifier {{ emails.value?.counts?.unknown }} envois incertains —
-          toutes campagnes</a
-        >
-      </li>
-    }
-    @if ((directory.value?.invalid_shares ?? 0) > 0) {
-      <li>
-        <a routerLink="/units" [queryParams]="{ quality: 'invalid_shares' }"
-          >Vérifier les parts de {{ directory.value?.invalid_shares }} lots</a
-        >
-      </li>
-    }
-    @if (administrator && (access.value?.pending ?? 0) > 0) {
-      <li>
-        <a routerLink="/users" [queryParams]="{ status: 'pending' }"
-          >Examiner {{ access.value?.pending }} demandes d’accès</a
-        >
-      </li>
-    }
-  </ul>
-  <p>
-    Ces liens ouvrent les situations à examiner ; ils n’envoient aucun e-mail et
-    ne déclenchent aucun mouvement bancaire. Les modules ci-dessous indiquent
-    aussi leurs erreurs ou leur chargement.
-  </p>
-</section>
+
 @if (finance.value && !finance.value.budget?.draft) {
-  <section class="section" aria-labelledby="map-title">
-    <h2 id="map-title">Paiements des lots</h2>
-    <ul class="legend">
-      <li><span class="dot settled" aria-hidden="true"></span>Soldé</li>
-      <li>
-        <span class="dot partial" aria-hidden="true"></span>Partiellement réglé
-      </li>
-      <li><span class="dot unpaid" aria-hidden="true"></span>Sans paiement</li>
-      <li><span class="dot overpaid" aria-hidden="true"></span>Trop-perçu</li>
-      <li>
-        <span class="dot no-call" aria-hidden="true"></span>Sans cotisation ou
-        lot non référencé
-      </li>
-    </ul>
-    @if (units.loading) {
-      <p role="status">Chargement du catalogue des lots…</p>
-    }
-    @if (units.error) {
-      <p role="alert">
-        Le catalogue des lots est indisponible. Seules les cotisations connues
-        sont renseignées sur la carte.
-      </p>
-      <button mat-button type="button" (click)="retry('units')">
-        Réessayer les lots
-      </button>
-    }
-    <mat-form-field subscriptSizing="dynamic"
-      ><mat-label>Consulter un lot</mat-label
-      ><mat-select
-        [value]="selectedLot"
-        (selectionChange)="selectLot($event.value)"
-        ><mat-option [value]="null">Aucun lot sélectionné</mat-option>
-        @for (unit of units.value ?? []; track unit.id) {
-          <mat-option [value]="unit.number">Lot {{ unit.number }}</mat-option>
-        }
-      </mat-select></mat-form-field
-    >
-    <p>
-      Sur la carte : Tab, flèches, puis Entrée ou Espace pour sélectionner un
-      lot.
-    </p>
-    <app-interactive-map
-      label="Carte des paiements du budget sélectionné"
-      [showLabels]="true"
-      [unitClasses]="mapClasses"
-      [selectedUnit]="selectedLot"
-      (unitClick)="selectLot($event.unitId)"
-    ></app-interactive-map>
-    @if (selectedLot !== null) {
-      <section class="lot-detail" aria-label="Lot sélectionné">
-        <h3>Lot {{ selectedLot }}</h3>
-        <p role="status">
-          Lot {{ selectedLot }} sélectionné.
-          {{
-            selectedCotisation
-              ? state(selectedCotisation)
-              : 'Consulter sa situation ci-dessous.'
-          }}
-        </p>
-        @if (selectedUnit; as unit) {
-          <p>{{ unit.address }}</p>
-          <ul>
-            @for (member of unit.members ?? []; track member.id) {
-              <li>{{ member.first_name }} {{ member.last_name }}</li>
-            } @empty {
-              <li>Aucun membre associé à ce lot.</li>
-            }
-          </ul>
-        }
-        @if (selectedCotisation; as c) {
-          <p>
-            {{ state(c) }} · Appelé : {{ money(c.amount) }} · Encaissé net :
-            {{ money(c.paid) }} · Solde : {{ money(c.remaining) }}
-          </p>
-          <a
-            mat-stroked-button
-            [routerLink]="['/budgets', budgetId]"
-            [queryParams]="{ cotisation: c.id }"
-            >Consulter l’historique complet et les actions autorisées</a
+  <div class="map-workspace">
+    <section class="section map-panel" aria-labelledby="map-title">
+      <div class="map-heading">
+        <div>
+          <h2 id="map-title">Paiements des lots</h2>
+          <p>Chercher un membre ou un lot, puis consulter sa situation.</p>
+        </div>
+        <a
+          mat-stroked-button
+          routerLink="/members"
+          [queryParams]="{ view: 'map' }"
+          >Annuaire</a
+        >
+      </div>
+      <mat-form-field
+        class="map-search"
+        appearance="outline"
+        subscriptSizing="dynamic"
+      >
+        <mat-label>Rechercher sur la carte</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="search"
+          [value]="mapSearch"
+          (input)="searchMap($any($event.target).value)"
+          placeholder="Nom, lot, adresse, e-mail ou téléphone"
+          aria-describedby="map-search-help"
+        />
+        @if (mapSearch) {
+          <button
+            matSuffix
+            mat-icon-button
+            type="button"
+            (click)="searchMap('')"
+            aria-label="Effacer la recherche"
           >
-          @if (payments.loading) {
-            <p role="status">Chargement des paiements du lot…</p>
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <p id="map-search-help" class="map-help">
+        La recherche met les lots en évidence sans changer leur couleur de
+        paiement.
+      </p>
+      @if (mapSearch.trim() && !units.loading && !units.error) {
+        <div class="map-results">
+          <p role="status">
+            {{ matchingMapUnits.length }} lot{{
+              matchingMapUnits.length > 1 ? "s" : ""
+            }}
+            trouvé{{ matchingMapUnits.length > 1 ? "s" : "" }}.
+          </p>
+          <div class="result-buttons">
+            @for (unit of matchingMapUnits; track unit.id) {
+              <button
+                mat-stroked-button
+                type="button"
+                [attr.aria-pressed]="selectedLot === unit.number"
+                (click)="selectLot(unit.number ?? null)"
+              >
+                Lot {{ unit.number }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      <ul class="legend">
+        <li><span class="dot settled" aria-hidden="true"></span>Soldé</li>
+        <li>
+          <span class="dot partial" aria-hidden="true"></span>Partiellement
+          réglé
+        </li>
+        <li>
+          <span class="dot unpaid" aria-hidden="true"></span>Sans paiement
+        </li>
+        <li><span class="dot overpaid" aria-hidden="true"></span>Trop-perçu</li>
+        <li>
+          <span class="dot no-call" aria-hidden="true"></span>Sans cotisation ou
+          lot non référencé
+        </li>
+      </ul>
+      @if (units.loading) {
+        <p role="status">Chargement du catalogue des lots…</p>
+      }
+      @if (units.error) {
+        <p role="alert">
+          Le catalogue des lots est indisponible. Seules les cotisations connues
+          sont renseignées sur la carte.
+        </p>
+        <button mat-button type="button" (click)="retry('units')">
+          Réessayer les lots
+        </button>
+      }
+      <mat-form-field subscriptSizing="dynamic"
+        ><mat-label>Consulter un lot</mat-label
+        ><mat-select
+          [value]="selectedLot"
+          (selectionChange)="selectLot($event.value)"
+          ><mat-option [value]="null">Aucun lot sélectionné</mat-option>
+          @for (unit of units.value ?? []; track unit.id) {
+            <mat-option [value]="unit.number">Lot {{ unit.number }}</mat-option>
           }
-          @if (payments.error) {
-            <p role="alert">Impossible de charger les paiements de ce lot.</p>
-            <button mat-button type="button" (click)="retry('payments')">
-              Réessayer les paiements
-            </button>
-          }
-          @if (payments.value; as rows) {
-            <h4>Paiements reçus</h4>
+        </mat-select></mat-form-field
+      >
+      <p>
+        Sur la carte : Tab, flèches, puis Entrée ou Espace pour sélectionner un
+        lot.
+      </p>
+      <app-interactive-map
+        label="Carte des paiements du budget sélectionné"
+        [showLabels]="true"
+        [unitClasses]="mapClasses"
+        [highlightedUnits]="highlightedMapUnits"
+        [selectedUnit]="selectedLot"
+        (unitClick)="selectLot($event.unitId)"
+      ></app-interactive-map>
+    </section>
+    <aside class="map-context">
+      @if (selectedLot !== null) {
+        <section class="lot-detail" aria-label="Lot sélectionné">
+          <h3>Lot {{ selectedLot }}</h3>
+          <p role="status">
+            Lot {{ selectedLot }} sélectionné.
+            {{
+              selectedCotisation
+                ? state(selectedCotisation)
+                : "Consulter sa situation ci-dessous."
+            }}
+          </p>
+          @if (selectedUnit; as unit) {
+            <p>{{ unit.address }}</p>
             <ul>
-              @for (payment of rows; track payment.id) {
-                <li>
-                  {{ businessDate(payment.date) }} —
-                  {{ money(payment.amount) }} — {{ payment.comment }}
-                </li>
+              @for (member of unit.members ?? []; track member.id) {
+                <li>{{ member.first_name }} {{ member.last_name }}</li>
               } @empty {
-                <li>Aucun paiement enregistré.</li>
+                <li>Aucun membre associé à ce lot.</li>
               }
             </ul>
           }
-        } @else {
+          @if (selectedCotisation; as c) {
+            <p>
+              {{ state(c) }} · Appelé : {{ money(c.amount) }} · Encaissé net :
+              {{ money(c.paid) }} · Solde : {{ money(c.remaining) }}
+            </p>
+            <a
+              mat-stroked-button
+              [routerLink]="['/budgets', budgetId]"
+              [queryParams]="{ cotisation: c.id }"
+              >Consulter l’historique complet et les actions autorisées</a
+            >
+            @if (payments.loading) {
+              <p role="status">Chargement des paiements du lot…</p>
+            }
+            @if (payments.error) {
+              <p role="alert">Impossible de charger les paiements de ce lot.</p>
+              <button mat-button type="button" (click)="retry('payments')">
+                Réessayer les paiements
+              </button>
+            }
+            @if (payments.value; as rows) {
+              <h4>Paiements reçus</h4>
+              <ul>
+                @for (payment of rows; track payment.id) {
+                  <li>
+                    {{ businessDate(payment.date) }} —
+                    {{ money(payment.amount) }} — {{ payment.comment }}
+                  </li>
+                } @empty {
+                  <li>Aucun paiement enregistré.</li>
+                }
+              </ul>
+            }
+          } @else {
+            <p>
+              {{
+                units.loading
+                  ? "Chargement de la situation du lot…"
+                  : units.error
+                    ? "La situation de ce lot ne peut pas être confirmée sans le catalogue."
+                    : selectedUnit
+                      ? "Aucune cotisation pour ce lot dans le budget sélectionné."
+                      : "Ce numéro de la carte ne correspond pas à un lot actif du catalogue."
+              }}
+            </p>
+          }
+          @if (selectedUnit) {
+            <a
+              routerLink="/members"
+              [queryParams]="{ view: 'map', lot: selectedLot }"
+              >Consulter le lot et ses membres dans l’annuaire</a
+            >
+          }
+        </section>
+      }
+      @if (selectedLot === null) {
+        <section class="selection-prompt">
+          <h2>Consulter un lot</h2>
           <p>
-            {{
-              units.loading
-                ? 'Chargement de la situation du lot…'
-                : units.error
-                  ? 'La situation de ce lot ne peut pas être confirmée sans le catalogue.'
-                  : selectedUnit
-                    ? 'Aucune cotisation pour ce lot dans le budget sélectionné.'
-                    : 'Ce numéro de la carte ne correspond pas à un lot actif du catalogue.'
-            }}
+            Sélectionne un lot sur la carte ou dans les résultats pour retrouver
+            ses membres et ses paiements.
           </p>
+        </section>
+      }
+      <section aria-labelledby="actions-title" class="section">
+        <h2 id="actions-title">À traiter</h2>
+        @if (!hasActions && actionsComplete) {
+          <p>Aucun point à traiter n’est signalé par les modules ci-dessous.</p>
         }
-        @if (selectedUnit) {
-          <a
-            routerLink="/members"
-            [queryParams]="{ view: 'map', lot: selectedLot }"
-            >Consulter le lot et ses membres dans l’annuaire</a
-          >
+        @if (!actionsComplete) {
+          <p>La liste se complète lorsque les modules sont disponibles.</p>
         }
+        <ul class="actions-list">
+          @if (
+            finance.value &&
+            !finance.value.budget?.draft &&
+            (finance.value.recovery?.remaining ?? 0) > 0
+          ) {
+            <li>
+              <a
+                [routerLink]="['/budgets', budgetId]"
+                [queryParams]="{ coverage: 'remaining' }"
+                >Consulter les lots avec un reste à encaisser :
+                {{ money(finance.value.recovery?.remaining) }}</a
+              >
+            </li>
+          }
+          @if ((finance.value?.recovery?.overpaid ?? 0) > 0) {
+            <li>
+              <a
+                [routerLink]="['/budgets', budgetId]"
+                [queryParams]="{ coverage: 'overpaid' }"
+                >Examiner les trop-perçus à rembourser</a
+              >
+            </li>
+          }
+          @if ((emails.value?.counts?.error ?? 0) > 0) {
+            <li>
+              <a
+                routerLink="/emails/campaigns"
+                [queryParams]="{ state: 'ERROR' }"
+                >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
+                toutes campagnes</a
+              >
+            </li>
+          }
+          @if ((emails.value?.counts?.unknown ?? 0) > 0) {
+            <li>
+              <a
+                routerLink="/emails/campaigns"
+                [queryParams]="{ state: 'UNKNOWN' }"
+                >Vérifier {{ emails.value?.counts?.unknown }} envois incertains
+                — toutes campagnes</a
+              >
+            </li>
+          }
+          @if ((directory.value?.invalid_shares ?? 0) > 0) {
+            <li>
+              <a
+                routerLink="/units"
+                [queryParams]="{ quality: 'invalid_shares' }"
+                >Vérifier les parts de
+                {{ directory.value?.invalid_shares }} lots</a
+              >
+            </li>
+          }
+          @if (administrator && (access.value?.pending ?? 0) > 0) {
+            <li>
+              <a routerLink="/users" [queryParams]="{ status: 'pending' }"
+                >Examiner {{ access.value?.pending }} demandes d’accès</a
+              >
+            </li>
+          }
+        </ul>
+        <p>
+          Ces liens ouvrent les situations à examiner ; ils n’envoient aucun
+          e-mail et ne déclenchent aucun mouvement bancaire. Les modules
+          ci-dessous indiquent aussi leurs erreurs ou leur chargement.
+        </p>
       </section>
-    }
-  </section>
+    </aside>
+  </div>
   <section class="section" aria-labelledby="collections-title">
     <h2 id="collections-title">Encaissements mensuels</h2>
     <mat-form-field subscriptSizing="dynamic"
@@ -449,6 +546,78 @@
     </p>
   </section>
 }
+@if (!finance.value || finance.value.budget?.draft) {
+  <section aria-labelledby="actions-title" class="section">
+    <h2 id="actions-title">À traiter</h2>
+    @if (!hasActions && actionsComplete) {
+      <p>Aucun point à traiter n’est signalé par les modules ci-dessous.</p>
+    }
+    @if (!actionsComplete) {
+      <p>La liste se complète lorsque les modules sont disponibles.</p>
+    }
+    <ul class="actions-list">
+      @if (
+        finance.value &&
+        !finance.value.budget?.draft &&
+        (finance.value.recovery?.remaining ?? 0) > 0
+      ) {
+        <li>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'remaining' }"
+            >Consulter les lots avec un reste à encaisser :
+            {{ money(finance.value.recovery?.remaining) }}</a
+          >
+        </li>
+      }
+      @if ((finance.value?.recovery?.overpaid ?? 0) > 0) {
+        <li>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'overpaid' }"
+            >Examiner les trop-perçus à rembourser</a
+          >
+        </li>
+      }
+      @if ((emails.value?.counts?.error ?? 0) > 0) {
+        <li>
+          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'ERROR' }"
+            >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
+            toutes campagnes</a
+          >
+        </li>
+      }
+      @if ((emails.value?.counts?.unknown ?? 0) > 0) {
+        <li>
+          <a routerLink="/emails/campaigns" [queryParams]="{ state: 'UNKNOWN' }"
+            >Vérifier {{ emails.value?.counts?.unknown }} envois incertains —
+            toutes campagnes</a
+          >
+        </li>
+      }
+      @if ((directory.value?.invalid_shares ?? 0) > 0) {
+        <li>
+          <a routerLink="/units" [queryParams]="{ quality: 'invalid_shares' }"
+            >Vérifier les parts de {{ directory.value?.invalid_shares }} lots</a
+          >
+        </li>
+      }
+      @if (administrator && (access.value?.pending ?? 0) > 0) {
+        <li>
+          <a routerLink="/users" [queryParams]="{ status: 'pending' }"
+            >Examiner {{ access.value?.pending }} demandes d’accès</a
+          >
+        </li>
+      }
+    </ul>
+    <p>
+      Ces liens ouvrent les situations à examiner ; ils n’envoient aucun e-mail
+      et ne déclenchent aucun mouvement bancaire. Les modules ci-dessous
+      indiquent aussi leurs erreurs ou leur chargement.
+    </p>
+  </section>
+}
+
 @if (finance.value; as view) {
   <section class="section" aria-labelledby="comparison-title">
     <h2 id="comparison-title">Comparer les budgets annuels</h2>
@@ -456,8 +625,8 @@
       Comparaison des dépenses
       {{
         view.budget?.draft
-          ? 'prévisionnelles du brouillon'
-          : 'initiales publiées'
+          ? "prévisionnelles du brouillon"
+          : "initiales publiées"
       }}
       de « {{ view.budget?.label }} ». Les ajustements de cotisations ne
       réécrivent pas les dépenses initiales.
@@ -472,7 +641,7 @@
           @if (budget.id !== budgetId) {
             <mat-option [value]="budget.id"
               >{{ budget.label }} —
-              {{ budget.draft ? 'brouillon' : 'publié' }}</mat-option
+              {{ budget.draft ? "brouillon" : "publié" }}</mat-option
             >
           }
         }
@@ -498,12 +667,12 @@
         <div>
           <dt>
             {{ view.budget?.label }} —
-            {{ view.budget?.draft ? 'brouillon' : 'publié' }}
+            {{ view.budget?.draft ? "brouillon" : "publié" }}
           </dt>
           <dd>{{ money(view.budget?.amount) }}</dd>
         </div>
         <div>
-          <dt>{{ ref.label }} — {{ ref.draft ? 'brouillon' : 'publié' }}</dt>
+          <dt>{{ ref.label }} — {{ ref.draft ? "brouillon" : "publié" }}</dt>
           <dd>{{ money(ref.amount) }}</dd>
         </div>
         <div>
@@ -628,7 +797,7 @@
             <a [routerLink]="['/emails/campaigns', campaign.id]">{{
               campaign.title
             }}</a>
-            — {{ campaign.created_at | date: 'dd/MM/yyyy' }}
+            — {{ campaign.created_at | date: "dd/MM/yyyy" }}
             @if ((campaign.counts?.error ?? 0) > 0) {
               ·
               <a

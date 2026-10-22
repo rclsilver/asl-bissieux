@@ -4,8 +4,8 @@ import {
   OnDestroy,
   OnInit,
   inject,
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
 import {
   BehaviorSubject,
   Observable,
@@ -21,11 +21,12 @@ import {
   switchMap,
   takeUntil,
   tap,
-} from 'rxjs';
-import { APISchemas } from '../core/api/openapi';
-import { ApiService } from '../core/services/api.service';
-import { AuthService } from '../core/services/auth.service';
-import { paymentState, PaymentState } from '../budgets/payment-state';
+} from "rxjs";
+import { APISchemas } from "../core/api/openapi";
+import { ApiService } from "../core/services/api.service";
+import { AuthService } from "../core/services/auth.service";
+import { paymentState, PaymentState } from "../budgets/payment-state";
+import { memberMatches, unitMatches } from "../members/member-directory";
 
 type Remote<T> = { loading: boolean; error: boolean; value: T | null };
 const empty = <T>(): Remote<T> => ({
@@ -50,18 +51,18 @@ const failure = <T>(): Remote<T> => ({
 });
 const currentParisYear = () =>
   Number(
-    new Intl.DateTimeFormat('en', {
-      year: 'numeric',
-      timeZone: 'Europe/Paris',
-    }).format(new Date())
+    new Intl.DateTimeFormat("en", {
+      year: "numeric",
+      timeZone: "Europe/Paris",
+    }).format(new Date()),
   );
-type Finance = APISchemas['ModelsBudgetDashboard'];
+type Finance = APISchemas["ModelsBudgetDashboard"];
 
 @Component({
-  selector: 'app-dashboard',
+  selector: "app-dashboard",
   standalone: false,
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
+  templateUrl: "./dashboard.component.html",
+  styleUrls: ["./dashboard.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
@@ -80,25 +81,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly reloadAccess$ = new Subject<void>();
   private readonly reloadPayments$ = new Subject<void>();
   private readonly budgetChoices$ = new BehaviorSubject<
-    APISchemas['ModelsBudgetResult'][]
+    APISchemas["ModelsBudgetResult"][]
   >([]);
   private readonly selection$ = combineLatest([
     this.route.queryParamMap,
     this.budgetChoices$,
   ]).pipe(
     map(([p, budgets]) => {
-      const rawYear = p.get('year');
+      const rawYear = p.get("year");
       const year =
         rawYear && /^\d{1,4}$/.test(rawYear) && Number(rawYear) > 0
           ? Number(rawYear)
           : currentParisYear();
-      const rawLot = p.get('lot');
+      const rawLot = p.get("lot");
       return {
-        budget: p.has('budget')
-          ? (p.get('budget') ?? '')
+        budget: p.has("budget")
+          ? (p.get("budget") ?? "")
           : this.latestBudgetId(budgets),
-        reference: p.get('reference') ?? '',
+        reference: p.get("reference") ?? "",
         year,
+        search: p.get("search") ?? "",
         lot:
           rawLot && /^\d+$/.test(rawLot) && Number.isSafeInteger(Number(rawLot))
             ? Number(rawLot)
@@ -110,35 +112,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.referenceId = s.reference;
       this.year = s.year;
       this.selectedLot = s.lot;
+      this.mapSearch = s.search;
     }),
-    shareReplay({ bufferSize: 1, refCount: true })
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
-  budgets = loading<APISchemas['ModelsBudgetResult'][]>();
-  units = loading<APISchemas['ModelsUnit'][]>();
+  budgets = loading<APISchemas["ModelsBudgetResult"][]>();
+  units = loading<APISchemas["ModelsUnit"][]>();
   finance = empty<Finance>();
-  reference = empty<APISchemas['ModelsBudgetResult']>();
-  directory = loading<APISchemas['ModelsDirectoryQuality']>();
-  emails = loading<APISchemas['ModelsEmailDashboard']>();
-  access = empty<APISchemas['AuthAccessRequestSummary']>();
-  payments = empty<APISchemas['ModelsPayment'][]>();
-  budgetId = '';
-  referenceId = '';
+  reference = empty<APISchemas["ModelsBudgetResult"]>();
+  directory = loading<APISchemas["ModelsDirectoryQuality"]>();
+  emails = loading<APISchemas["ModelsEmailDashboard"]>();
+  access = empty<APISchemas["AuthAccessRequestSummary"]>();
+  payments = empty<APISchemas["ModelsPayment"][]>();
+  budgetId = "";
+  referenceId = "";
   year = currentParisYear();
   selectedLot: number | null = null;
+  mapSearch = "";
   administrator = false;
   readonly months = [
-    'Janvier',
-    'Février',
-    'Mars',
-    'Avril',
-    'Mai',
-    'Juin',
-    'Juillet',
-    'Août',
-    'Septembre',
-    'Octobre',
-    'Novembre',
-    'Décembre',
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
   ];
   ngOnInit() {
     this.bind(
@@ -147,29 +151,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (v) => {
         this.budgets = v;
         if (v.value) this.budgetChoices$.next(v.value);
-      }
+      },
     );
     this.bind(
       this.reloadUnits$,
       () => this.api.listUnits(),
-      (v) => (this.units = v)
+      (v) => (this.units = v),
     );
     this.bind(
       this.reloadDirectory$,
       () => this.api.getDirectoryQuality(),
-      (v) => (this.directory = v)
+      (v) => (this.directory = v),
     );
     this.bind(
       this.reloadEmails$,
       () => this.api.getEmailDashboard(),
-      (v) => (this.emails = v)
+      (v) => (this.emails = v),
     );
     combineLatest([
       this.selection$.pipe(
         map((s) => ({ budget: s.budget, year: s.year })),
         distinctUntilChanged(
-          (a, b) => a.budget === b.budget && a.year === b.year
-        )
+          (a, b) => a.budget === b.budget && a.year === b.year,
+        ),
       ),
       this.reloadFinance$.pipe(startWith(undefined)),
     ])
@@ -179,11 +183,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           s.budget
             ? this.api.getBudgetDashboard(s.budget, s.year).pipe(
                 map((v) => success(v)),
-                catchError(() => of(failure<Finance>()))
+                catchError(() => of(failure<Finance>())),
               )
-            : of(empty<Finance>())
+            : of(empty<Finance>()),
         ),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((v) => this.financeData$.next(v));
     this.financeData$
@@ -193,8 +197,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.selection$.pipe(
         map((s) => ({ budget: s.budget, reference: s.reference })),
         distinctUntilChanged(
-          (a, b) => a.budget === b.budget && a.reference === b.reference
-        )
+          (a, b) => a.budget === b.budget && a.reference === b.reference,
+        ),
       ),
       this.reloadReference$.pipe(startWith(undefined)),
     ])
@@ -202,19 +206,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
         tap(
           ([s]) =>
             (this.reference =
-              s.reference && s.reference !== s.budget ? loading() : empty())
+              s.reference && s.reference !== s.budget ? loading() : empty()),
         ),
         switchMap(([s]) =>
           s.reference && s.reference !== s.budget
             ? this.api.getBudget(s.reference).pipe(
                 map((v) => success(v)),
                 catchError(() =>
-                  of(failure<APISchemas['ModelsBudgetResult']>())
-                )
+                  of(failure<APISchemas["ModelsBudgetResult"]>()),
+                ),
               )
-            : of(empty<APISchemas['ModelsBudgetResult']>())
+            : of(empty<APISchemas["ModelsBudgetResult"]>()),
         ),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((v) => (this.reference = v));
     this.auth.administrator$
@@ -233,14 +237,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
                   this.api.getPendingAccessRequests().pipe(
                     map((v) => success(v)),
                     catchError(() =>
-                      of(failure<APISchemas['AuthAccessRequestSummary']>())
-                    )
-                  )
-                )
+                      of(failure<APISchemas["AuthAccessRequestSummary"]>()),
+                    ),
+                  ),
+                ),
               )
-            : of(empty<APISchemas['AuthAccessRequestSummary']>())
+            : of(empty<APISchemas["AuthAccessRequestSummary"]>()),
         ),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((v) => (this.access = v));
     combineLatest([
@@ -248,7 +252,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.financeData$,
       this.reloadPayments$.pipe(
         scan((n) => n + 1, 0),
-        startWith(0)
+        startWith(0),
       ),
     ])
       .pipe(
@@ -257,29 +261,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
           budget: s.budget,
           id:
             f.value?.cotisations?.find((c) => c.unit?.number === s.lot)?.id ??
-            '',
+            "",
         })),
         distinctUntilChanged(
           (a, b) =>
-            a.budget === b.budget && a.id === b.id && a.revision === b.revision
+            a.budget === b.budget && a.id === b.id && a.revision === b.revision,
         ),
         tap((s) => (this.payments = s.id ? loading() : empty())),
         switchMap((s) =>
           s.id
             ? this.api.listPayments(s.budget, s.id).pipe(
                 map((v) => success(v)),
-                catchError(() => of(failure<APISchemas['ModelsPayment'][]>()))
+                catchError(() => of(failure<APISchemas["ModelsPayment"][]>())),
               )
-            : of(empty<APISchemas['ModelsPayment'][]>())
+            : of(empty<APISchemas["ModelsPayment"][]>()),
         ),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((v) => (this.payments = v));
   }
   private bind<T>(
     reload: Subject<void>,
     fetch: () => Observable<T | null>,
-    set: (v: Remote<T>) => void
+    set: (v: Remote<T>) => void,
   ) {
     reload
       .pipe(
@@ -288,10 +292,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         switchMap(() =>
           fetch().pipe(
             map((v) => success(v)),
-            catchError(() => of(failure<T>()))
-          )
+            catchError(() => of(failure<T>())),
+          ),
         ),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe(set);
   }
@@ -306,14 +310,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   retry(
     scope:
-      | 'budgets'
-      | 'finance'
-      | 'reference'
-      | 'units'
-      | 'directory'
-      | 'emails'
-      | 'access'
-      | 'payments'
+      | "budgets"
+      | "finance"
+      | "reference"
+      | "units"
+      | "directory"
+      | "emails"
+      | "access"
+      | "payments",
   ) {
     ({
       budgets: this.reloadBudgets$,
@@ -326,18 +330,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       payments: this.reloadPayments$,
     })[scope].next();
   }
-  private latestBudgetId(budgets: APISchemas['ModelsBudgetResult'][]) {
+  private latestBudgetId(budgets: APISchemas["ModelsBudgetResult"][]) {
     return (
       budgets
         .filter(
           (budget) =>
-            budget.id && Number.isFinite(Date.parse(budget.created_at ?? ''))
+            budget.id && Number.isFinite(Date.parse(budget.created_at ?? "")),
         )
         .sort(
           (a, b) =>
             Date.parse(b.created_at!) - Date.parse(a.created_at!) ||
-            a.id!.localeCompare(b.id!)
-        )[0]?.id ?? ''
+            a.id!.localeCompare(b.id!),
+        )[0]?.id ?? ""
     );
   }
   selectBudget(id: string) {
@@ -352,39 +356,62 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectLot(lot: number | null) {
     this.navigate({ lot });
   }
-  private navigate(queryParams: Record<string, string | number | null>) {
+  searchMap(query: string) {
+    this.mapSearch = query;
+    this.navigate({ search: query.trim() ? query : null, lot: null }, true);
+  }
+  get matchingMapUnits() {
+    if (!this.mapSearch.trim()) return [];
+    return (this.units.value ?? []).filter(
+      (unit) =>
+        unitMatches(unit, this.mapSearch) ||
+        (unit.members ?? []).some((member) =>
+          memberMatches(member, this.mapSearch),
+        ),
+    );
+  }
+  get highlightedMapUnits() {
+    return this.matchingMapUnits.flatMap((unit) =>
+      unit.number === undefined ? [] : [unit.number],
+    );
+  }
+  private navigate(
+    queryParams: Record<string, string | number | null>,
+    replaceUrl = false,
+  ) {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
-      queryParamsHandling: 'merge',
+      queryParamsHandling: "merge",
+      replaceUrl,
     });
   }
   money(value?: number | null) {
     return value == null
-      ? '—'
-      : new Intl.NumberFormat('fr-FR', {
-          style: 'currency',
-          currency: 'EUR',
+      ? "—"
+      : new Intl.NumberFormat("fr-FR", {
+          style: "currency",
+          currency: "EUR",
         }).format(value);
   }
   rate(value?: number | null) {
     return value == null
-      ? '—'
-      : new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(
-          value
-        ) + ' %';
+      ? "—"
+      : new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(
+          value,
+        ) + " %";
   }
   perShare(value?: number | null) {
     return value == null
-      ? '—'
-      : new Intl.NumberFormat('fr-FR', {
+      ? "—"
+      : new Intl.NumberFormat("fr-FR", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 6,
-        }).format(value) + ' €';
+        }).format(value) + " €";
   }
   get selectedCotisation() {
     return this.finance.value?.cotisations?.find(
-      (c) => c.unit?.number === this.selectedLot
+      (c) => c.unit?.number === this.selectedLot,
     );
   }
   get selectedUnit() {
@@ -393,31 +420,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.selectedCotisation?.unit
     );
   }
-  state(c: APISchemas['ModelsCotisationResult']) {
+  state(c: APISchemas["ModelsCotisationResult"]) {
     const state = paymentState(c);
     return state === PaymentState.Overpaid
-      ? 'Trop-perçu à rembourser'
+      ? "Trop-perçu à rembourser"
       : state === PaymentState.Done
-        ? 'Soldé'
+        ? "Soldé"
         : (c.paid ?? 0) > 0
-          ? 'Partiellement réglé'
-          : 'Sans paiement';
+          ? "Partiellement réglé"
+          : "Sans paiement";
   }
   get mapClasses() {
     const result: Record<number, string> = {};
     for (const unit of this.units.value ?? [])
-      if (unit.number !== undefined) result[unit.number] = 'dashboard-no-call';
+      if (unit.number !== undefined) result[unit.number] = "dashboard-no-call";
     for (const c of this.finance.value?.cotisations ?? [])
       if (c.unit?.number !== undefined) {
         const state = paymentState(c);
         result[c.unit.number] =
           state === PaymentState.Overpaid
-            ? 'dashboard-overpaid'
+            ? "dashboard-overpaid"
             : state === PaymentState.Done
-              ? 'dashboard-settled'
+              ? "dashboard-settled"
               : (c.paid ?? 0) > 0
-                ? 'dashboard-partial'
-                : 'dashboard-unpaid';
+                ? "dashboard-partial"
+                : "dashboard-unpaid";
       }
     return result;
   }
@@ -453,10 +480,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   businessDate(value?: string) {
     return value
-      ? new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris' }).format(
-          new Date(value)
+      ? new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris" }).format(
+          new Date(value),
         )
-      : '—';
+      : "—";
   }
   ngOnDestroy() {
     this.destroy$.next();

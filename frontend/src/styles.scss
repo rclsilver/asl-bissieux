@@ -1,8 +1,8 @@
-@use '@angular/material' as mat;
-@use 'normalize.css';
-@use 'app/core/core.theme' as core;
-@use 'app/shared/shared.theme' as shared;
-@use 'app/dashboard/dashboard.theme' as dashboard;
+@use "@angular/material" as mat;
+@use "normalize.css";
+@use "app/core/core.theme" as core;
+@use "app/shared/shared.theme" as shared;
+@use "app/dashboard/dashboard.theme" as dashboard;
 
 @mixin graphite {
   --asl-ground: #101821;
@@ -20,6 +20,9 @@
   --asl-nav-ink: #b6dfff;
   --asl-error: #ffb4ab;
   --asl-error-tint: #512a2a;
+  --asl-warning: #f3c77e;
+  --asl-surplus: #d3b5ff;
+  --asl-surplus-tint: #342545;
   --asl-shadow: 0 8px 26px rgb(0 0 0 / 18%);
 }
 
@@ -40,52 +43,181 @@ html {
   --asl-nav-ink: #1244a8;
   --asl-error: #a72d36;
   --asl-error-tint: #ffedef;
+  --asl-warning: #855100;
+  --asl-surplus: #6d28d9;
+  --asl-surplus-tint: #f5f3ff;
   --asl-shadow: 0 8px 26px rgb(20 43 72 / 7%);
   --asl-radius: 16px;
-  @include mat.theme((color: mat.$azure-palette, typography: ('Segoe UI', Roboto, sans-serif), density: 0));
-  @include mat.theme-overrides((
-    primary: var(--asl-primary), on-primary: var(--asl-on-primary),
-    primary-container: var(--asl-tint), on-primary-container: var(--asl-ink),
-    surface: var(--asl-surface), surface-dim: var(--asl-ground),
-    surface-bright: var(--asl-surface), surface-container: var(--asl-raised),
-    surface-container-lowest: var(--asl-surface), surface-container-low: var(--asl-surface),
-    surface-container-high: var(--asl-raised), surface-container-highest: var(--asl-raised),
-    on-surface: var(--asl-ink), on-surface-variant: var(--asl-muted),
-    outline: var(--asl-muted), outline-variant: var(--asl-border),
-    error: var(--asl-error), error-container: var(--asl-error-tint),
-    on-error-container: var(--asl-error)
-  ));
-  @include mat.button-overrides((filled-container-shape: 10px, outlined-container-shape: 10px, text-container-shape: 10px));
-  @include mat.form-field-overrides((filled-container-shape: 10px, outlined-container-shape: 10px));
-  @include mat.dialog-overrides((container-shape: 20px));
+  --asl-map-settled: #a6ddba;
+  --asl-map-partial: #fac580;
+  --asl-map-unpaid: #ed9da7;
+  --asl-map-overpaid: #c4a3e8;
+  --asl-map-neutral: #d4dce2;
+  --asl-map-focus: #124dc5;
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: (
+        "Segoe UI",
+        Roboto,
+        sans-serif,
+      ),
+      density: 0,
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      primary: var(--asl-primary),
+      on-primary: var(--asl-on-primary),
+      primary-container: var(--asl-tint),
+      on-primary-container: var(--asl-ink),
+      surface: var(--asl-surface),
+      surface-dim: var(--asl-ground),
+      surface-bright: var(--asl-surface),
+      surface-container: var(--asl-raised),
+      surface-container-lowest: var(--asl-surface),
+      surface-container-low: var(--asl-surface),
+      surface-container-high: var(--asl-raised),
+      surface-container-highest: var(--asl-raised),
+      on-surface: var(--asl-ink),
+      on-surface-variant: var(--asl-muted),
+      outline: var(--asl-muted),
+      outline-variant: var(--asl-border),
+      error: var(--asl-error),
+      error-container: var(--asl-error-tint),
+      on-error-container: var(--asl-error),
+    )
+  );
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 10px,
+      outlined-container-shape: 10px,
+      text-container-shape: 10px,
+    )
+  );
+  @include mat.form-field-overrides(
+    (
+      filled-container-shape: 10px,
+      outlined-container-shape: 10px,
+    )
+  );
+  @include mat.dialog-overrides(
+    (
+      container-shape: 20px,
+    )
+  );
 }
-html[data-theme='light'] { color-scheme: light; }
-html[data-theme='dark'] { color-scheme: dark; @include graphite; }
-@media (prefers-color-scheme: dark) { html:not([data-theme='light']) { @include graphite; } }
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  @include graphite;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    @include graphite;
+  }
+}
 @include core.core-theme(null);
 @include shared.shared-theme(null);
 @include dashboard.dashboard-theme(null);
 
-html, body { height: 100%; }
-body { margin: 0; font: 16px/1.5 'Segoe UI', Roboto, sans-serif; background: var(--asl-ground); color: var(--asl-ink); }
-*, *::before, *::after { box-sizing: border-box; }
-::selection { color: var(--asl-on-primary); background: var(--asl-primary); }
-:focus-visible { outline: 2px solid var(--asl-primary); outline-offset: 3px; }
-input, textarea { caret-color: var(--asl-primary); }
-* { scrollbar-color: var(--asl-border) transparent; scrollbar-width: thin; }
-h1 { font-size: clamp(1.75rem, 2.6vw, 2.25rem); line-height: 1.2; letter-spacing: -.025em; font-weight: 700; text-wrap: balance; }
-h2 { font-size: 1.4rem; line-height: 1.3; font-weight: 650; }
-h3 { font-size: 1.1rem; line-height: 1.4; font-weight: 650; }
-h1, h2, h3 { color: var(--asl-ink); }
-a, a:visited { color: var(--asl-primary); text-underline-offset: .22em; }
-a:hover { text-decoration-thickness: 2px; }
-.spacer { flex: 1 1 auto; }
-.mat-mdc-button-base { letter-spacing: 0; }
-.mat-mdc-dialog-content { line-height: 1.5; }
-.mat-mdc-dialog-title { letter-spacing: -.015em; }
-.mat-mdc-header-cell { font-weight: 650; color: var(--asl-muted); background: var(--asl-raised); }
-.mat-mdc-cell { border-bottom-color: var(--asl-border); }
-.mat-mdc-table { font-variant-numeric: tabular-nums; }
-.mat-mdc-paginator { border-top: 1px solid var(--asl-border); }
-.mat-mdc-snack-bar-container { --mat-snack-bar-container-shape: 12px; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font:
+    16px/1.5 "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: var(--asl-ground);
+  color: var(--asl-ink);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+::selection {
+  color: var(--asl-on-primary);
+  background: var(--asl-primary);
+}
+:focus-visible {
+  outline: 2px solid var(--asl-primary);
+  outline-offset: 3px;
+}
+input,
+textarea {
+  caret-color: var(--asl-primary);
+}
+* {
+  scrollbar-color: var(--asl-border) transparent;
+  scrollbar-width: thin;
+}
+h1 {
+  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+h2 {
+  font-size: 1.4rem;
+  line-height: 1.3;
+  font-weight: 650;
+}
+h3 {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  font-weight: 650;
+}
+h1,
+h2,
+h3 {
+  color: var(--asl-ink);
+}
+a,
+a:visited {
+  color: var(--asl-primary);
+  text-underline-offset: 0.22em;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+.spacer {
+  flex: 1 1 auto;
+}
+.mat-mdc-button-base {
+  letter-spacing: 0;
+}
+.mat-mdc-dialog-content {
+  line-height: 1.5;
+}
+.mat-mdc-dialog-title {
+  letter-spacing: -0.015em;
+}
+.mat-mdc-header-cell {
+  font-weight: 650;
+  color: var(--asl-muted);
+  background: var(--asl-raised);
+}
+.mat-mdc-cell {
+  border-bottom-color: var(--asl-border);
+}
+.mat-mdc-table {
+  font-variant-numeric: tabular-nums;
+}
+.mat-mdc-paginator {
+  border-top: 1px solid var(--asl-border);
+}
+.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-shape: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

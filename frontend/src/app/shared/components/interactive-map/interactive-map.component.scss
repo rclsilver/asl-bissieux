@@ -5,6 +5,9 @@
 :host {
   display: block;
   max-inline-size: 100%;
+  // The geographic drawing stays light in both themes for readable roads and labels.
+  background: #f8fbfd;
+  border-radius: 12px;
 }
 svg {
   display: block;
@@ -12,12 +15,12 @@ svg {
   block-size: auto;
 }
 #units > g.unit-highlighted > polygon {
-  stroke: var(--mat-sys-primary, #1565c0);
+  stroke: var(--asl-map-focus, #124dc5);
   stroke-width: 2px;
   vector-effect: non-scaling-stroke;
 }
 #units > g.unit-selected > polygon {
-  stroke: var(--mat-sys-primary, #1565c0);
+  stroke: var(--asl-map-focus, #124dc5);
   stroke-width: 4px;
   vector-effect: non-scaling-stroke;
 }
@@ -26,7 +29,7 @@ svg {
   outline: none;
 }
 #units > g:focus > polygon {
-  stroke: var(--mat-sys-primary, #1565c0);
+  stroke: var(--asl-map-focus, #124dc5);
   stroke-width: 4px;
   stroke-dasharray: 5 3;
   vector-effect: non-scaling-stroke;
@@ -34,4 +37,37 @@ svg {
 
 .hidden * {
   display: none;
+}
+
+.cls-39 {
+  fill: #183b35;
+}
+#units > g > polygon {
+  transition:
+    stroke-width 140ms ease-out,
+    stroke 140ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  #units > g > polygon {
+    transition: none;
+  }
+}
+
+#units > g.dashboard-settled > polygon {
+  fill: var(--asl-map-settled);
+}
+#units > g.dashboard-partial > polygon {
+  fill: var(--asl-map-partial);
+}
+#units > g.dashboard-unpaid > polygon {
+  fill: var(--asl-map-unpaid);
+}
+#units > g.dashboard-overpaid > polygon {
+  fill: var(--asl-map-overpaid);
+}
+#units > g.dashboard-no-call > polygon {
+  fill: var(--asl-map-neutral);
+}
+#units > g[class*="dashboard-"] g[id^="label"] * {
+  fill: #183b35;
 }

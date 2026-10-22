@@ -4,7 +4,7 @@
   min-inline-size: 0;
   box-sizing: border-box;
   border: 1px solid var(--asl-border);
-  border-radius: var(--asl-radius);
+  border-radius: var(--asl-table-radius, var(--asl-radius));
   background: var(--asl-surface);
   overflow: hidden;
 }

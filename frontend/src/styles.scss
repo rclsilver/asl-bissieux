@@ -4,6 +4,12 @@
 @use "app/shared/shared.theme" as shared;
 @use "app/dashboard/dashboard.theme" as dashboard;
 
+// Join tables to tab headers; standalone lists retain all four rounded corners.
+mat-tab-group,
+mat-tab-nav-panel {
+  --asl-table-radius: 0 0 var(--asl-radius) var(--asl-radius);
+}
+
 // Projected list controls share the same layout as search, refresh and add.
 .list-filters {
   display: flex;

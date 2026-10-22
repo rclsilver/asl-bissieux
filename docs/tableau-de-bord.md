@@ -29,9 +29,9 @@ Les parts des anciens exercices n’étant pas historisées, aucun ancien taux p
 
 ## Modules globaux
 
-La qualité de l’annuaire compte les membres sans e-mail renseigné (espaces seuls compris), les lots sans membre actif et les lots dont les parts sont nulles ou négatives. Les liens ouvrent les listes avec le filtre affiché, sans correction automatique des données.
+La qualité de l’annuaire compte les membres sans e-mail renseigné (espaces seuls compris), les lots sans membre actif et les lots dont les parts sont nulles ou négatives. Les liens ouvrent les listes complètes, sans correction automatique des données. Les filtres de qualité sur Lots et Membres ont été retirés à la demande de Thomas ; les anciens paramètres d’URL sont ignorés.
 
-La synthèse des e-mails porte sur toutes les campagnes et tous les messages actifs, toutes dates. Les envois réussis incluent SENT et READ une seule fois. Le signal d’ouverture n’est pas une preuve de lecture humaine. Les états anciens inconnus sont regroupés dans « À vérifier ». Une campagne filtrée contient au moins un message de l’état demandé ; ses compteurs décrivent toujours l’ensemble de ses messages. Les cinq campagnes récentes et les agrégats SQL sont chargés sans corps ni pièces jointes.
+La synthèse des e-mails porte sur toutes les campagnes et tous les messages actifs, toutes dates. Les envois réussis incluent SENT et READ une seule fois. Le signal d’ouverture n’est pas une preuve de lecture humaine. Les états anciens inconnus sont regroupés dans « À vérifier ». La liste des campagnes ne propose plus de filtre d’état et ignore les anciens paramètres d’URL ; recherche, tri et pagination sont conservés. Le filtre d’état reste disponible dans les messages d’une campagne, avec des compteurs décrivant toujours l’ensemble de ses messages. Les cinq campagnes récentes et les agrégats SQL sont chargés sans corps ni pièces jointes.
 
 Seuls les administrateurs reçoivent le compteur des demandes d’accès en attente. Il réutilise la politique de gestion des comptes : refus et désactivation ne sont pas des demandes en attente. Les API contrôlent également les droits ; masquer un lien n’est pas leur protection.
 

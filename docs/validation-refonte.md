@@ -38,7 +38,7 @@ Préparation : tester sur une fenêtre large puis sur un téléphone ou une fen�
   Attendu : ouverture et fermeture correctes, destination accessible, contrôles utilisables sans débordement du bandeau.
 - [ ] **NAVR3 — Tableaux, formulaires et annuaire**
   Action : rechercher et trier une liste ; consulter l’annuaire puis la carte des membres ; ouvrir un formulaire et l’annuler.
-  Attendu : tableaux et contrôles cohérents avec le thème, boutons + compacts, recherche et boutons Annuaire/Carte toujours alignés ; aucune perte de fonction ni sauvegarde à l’annulation.
+  Attendu : tableaux et contrôles cohérents avec le thème, boutons + compacts, recherche commune aux listes et onglets Annuaire/Carte au-dessus des vues ; aucune perte de fonction ni sauvegarde à l’annulation.
 
 ## Carte et paiements
 
@@ -76,19 +76,25 @@ Préparation : répéter ces vérifications dans les deux thèmes. Cette séance
 
 ## Ajustements après la première revue
 
-Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
+Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2 et AJUST3 ont été révisés après le dernier retour et sont à rejouer ; AJUST5 et AJUST6 sont nouveaux. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
 
 - [ ] **AJUST1 — Arrivée sans clic dans le menu**
-  Action : avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec un filtre.
-  Attendu : l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre les membres avec le bon filtre ; le lien du menu correspondant est sélectionné sans clic préalable.
+  Action : avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné.
+  Attendu : l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre la bonne vue et le bon lot ; le lien du menu correspondant est sélectionné sans clic préalable.
 - [ ] **AJUST2 — Filtres intégrés aux listes**
-  Action : visiter Lots, Membres, Comptes et accès, les campagnes, les e-mails d’une campagne et les cotisations d’un budget publié ; modifier puis retirer un filtre.
-  Attendu : filtres, recherche, actualisation et ajout sont regroupés dans l’en-tête de la liste selon les droits et fonctions disponibles. Les filtres restent fonctionnels ; sur petit écran, les contrôles reviennent à la ligne sans faire déborder la page.
-- [ ] **AJUST3 — Annuaire et carte avec le même en-tête**
+  Action : visiter Comptes et accès, les e-mails d’une campagne et les cotisations d’un budget publié ; modifier puis retirer un filtre.
+  Attendu : les filtres conservés, la recherche, l’actualisation et l’ajout sont regroupés dans l’en-tête selon les fonctions et droits disponibles. Sur petit écran, les contrôles reviennent à la ligne sans débordement.
+- [ ] **AJUST3 — Recherche dans l’annuaire, clic dans la carte**
   Action : chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche.
-  Attendu : la recherche et les boutons Annuaire/Carte restent alignés et accessibles dans les deux vues ; les résultats sont conservés au changement de vue, puis rétablis après effacement.
+  Attendu : l’annuaire utilise la même loupe et le même champ repliable que les autres listes. Les onglets sont au-dessus des vues. La carte n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot affiche tous ses membres. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres.
 - [ ] **AJUST4 — Dashboard allégé**
   Action : ouvrir un budget publié sur l’accueil ; consulter la carte, ouvrir les aides et « Comparer les budgets annuels », puis choisir une référence et recharger.
   Attendu : aucun bloc Encaissements mensuels, graphique ou tableau mensuel ; indicateurs, carte, détails du lot et points à traiter conservés. Les aides et campagnes récentes se déplient à la demande. La comparaison est repliée sans référence et s’ouvre si une référence est présente dans l’adresse.
+- [ ] **AJUST5 — Contrôles cohérents dans les deux thèmes**
+  Action : changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails. Répéter en clair, sombre et sur petit écran.
+  Attendu : budget et filtre d’état utilisent des champs compacts à contour, sans fond décalé. L’actualisation du dashboard est un bouton icône à côté du budget, avec nom accessible et infobulle. Alignement, focus et textes restent lisibles ; les actions fonctionnent.
+- [ ] **AJUST6 — Filtres inutiles retirés**
+  Action : ouvrir Lots, Membres puis la liste des campagnes ; essayer aussi une ancienne adresse avec quality=missing_email, quality=no_member ou state=ERROR selon la liste concernée.
+  Attendu : aucun filtre de qualité sur Lots ou Membres, aucun filtre d’état dans la liste des campagnes. Ces anciens paramètres ne filtrent plus silencieusement les résultats. Le filtre d’état reste disponible à l’intérieur d’une campagne.
 
 **Résultat de la séance.** Noter les identifiants des cas en échec ou bloqués et le navigateur utilisé. La fiche HTML permet d’exporter un exemplaire rempli ou les résultats JSON. Aucun résultat n’est envoyé automatiquement et aucune case n’est précochée.

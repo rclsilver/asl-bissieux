@@ -93,7 +93,7 @@ Préparation : depuis le 22 octobre 2026, le suivi mensuel a été retiré à la
 
 - [ ] **DB05 — Retrouver les bons filtres depuis les indicateurs**
   Action : Ouvrir un indicateur de recouvrement, de qualité d’annuaire puis un état d’e-mails.
-  Attendu : Chaque destination affiche le filtre correspondant et permet de le retirer. Les compteurs et les résultats portent sur le même périmètre.
+  Attendu : Les indicateurs financiers ouvrent les cotisations avec le filtre correspondant. Depuis la revue du 22 octobre, les liens annuaire et campagnes ouvrent les listes complètes, sans filtre de qualité ni d’état ; le filtre d’état reste disponible à l’intérieur d’une campagne.
 
 - [ ] **DB06 — Séparer reste à encaisser et trop-perçus**
   Action : Sur un budget fictif publié, comparer les appels et règlements par lot avec les indicateurs, en incluant un lot débiteur et un lot en trop-perçu.
@@ -164,24 +164,24 @@ Lots : lot 13 et correction d’alignement demandée.
   Attendu : La recherche retrouve le même membre et le compteur correspond aux résultats ; des coordonnées absentes n’affichent pas une valeur technique.
 
 - [ ] **DIR02 — Conserver la recherche entre Annuaire et Carte**
-  Action : Saisir un filtre puis basculer entre Annuaire et Carte.
-  Attendu : La recherche reste appliquée dans les deux vues ; le champ et les boutons Annuaire/Carte sont alignés sur ordinateur et se réorganisent proprement sur mobile.
+  Action : Ouvrir la loupe de l’annuaire, saisir une recherche, passer à l’onglet Carte puis revenir à Annuaire.
+  Attendu : La recherche est réservée au tableau et reste mémorisée au retour. La carte permet de cliquer sur tous les lots, sans recherche ni listes de sélection. Les deux onglets restent lisibles sur mobile.
 
 - [ ] **DIR03 — Consulter multi-lots et copropriétaires**
   Action : Choisir un membre multi-lots, puis un lot ayant plusieurs membres associés.
   Attendu : Tous les lots du membre et tous les membres du lot sont accessibles, sans confusion entre copropriétaire et doublon.
 
 - [ ] **DIR04 — Rechercher directement un lot**
-  Action : Rechercher « lot N » pour un numéro représenté sur la carte, puis essayer un lot sans membre si le cas existe.
-  Attendu : Le bon lot est trouvé ; l’absence de membre est explicitement indiquée plutôt qu’assimilée à une erreur.
+  Action : Dans l’annuaire, rechercher « lot N » pour retrouver ses membres. Dans l’onglet Carte, cliquer sur un lot sans membre si le cas existe.
+  Attendu : L’annuaire retrouve les membres associés au numéro recherché ; la carte indique explicitement l’absence de membre pour un lot sans association.
 
 - [ ] **DIR05 — Utiliser la carte au clavier**
-  Action : Entrer dans la carte avec Tab, se déplacer avec les flèches, sélectionner avec Entrée ou Espace ; essayer aussi le sélecteur de lot.
+  Action : Entrer dans la carte avec Tab, se déplacer avec les flèches, sélectionner avec Entrée ou Espace.
   Attendu : Le lot sélectionné et ses informations sont identifiables sans souris ; la sélection ne dépend pas de la couleur seule.
 
 - [ ] **DIR06 — Passer d’un budget à l’annuaire du lot**
   Action : Dans la carte d’un budget, sélectionner un lot et utiliser le lien vers ses membres.
-  Attendu : L’annuaire s’ouvre sur le lot concerné avec son contexte visible ; un filtre peut être retiré pour revenir à l’ensemble.
+  Attendu : La carte de l’annuaire s’ouvre sur le lot concerné avec son contexte visible ; « Effacer la sélection » retire cette sélection.
 
 ## Budgets brouillons, publication et centimes
 

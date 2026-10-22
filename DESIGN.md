@@ -237,7 +237,9 @@ Le cadre de page est centré et limité à 1600px. Sa marge intérieure est de 1
 
 Le rythme récurrent associe 0.5rem entre petits contrôles, 1rem dans les groupes, 1.5rem entre panneaux et 2rem entre sections. Les indicateurs se répartissent automatiquement avec une base de 12rem puis passent sur deux colonnes à 600px. La carte et son contexte utilisent deux colonnes, dont une de 16 à 20rem ; elles s’empilent à 1050px. Cette composition appartient au tableau de bord, pas à toutes les pages.
 
-Les tables conservent leurs colonnes dans un conteneur défilant horizontalement et accessible au clavier. La barre CRUD intègre les filtres projetés dans l’emplacement `[table-filters]`, avec recherche, actualisation et ajout. Elle se répartit sur plusieurs lignes avec un padding de 0.5rem par 0.75rem ; les champs et boutons Annuaire/Carte mesurent 48px de haut. L’en-tête de l’annuaire reste affiché en vue carte ; le tableau est masqué sans déconnecter sa source. La pagination autorise le retour à la ligne et réorganise sa plage à une largeur de conteneur de 32rem. La densité Material globale reste à 0 ; les cibles d’action restent d’au moins 44px.
+Les tables conservent leurs colonnes dans un conteneur défilant horizontalement et accessible au clavier. La barre CRUD intègre les filtres encore utiles dans l’emplacement `[table-filters]`, avec recherche, actualisation et ajout. Elle se répartit sur plusieurs lignes avec un padding de 0.5rem par 0.75rem ; les champs compacts mesurent 48px de haut. Lots et Membres n’ont plus de filtre de qualité ; la liste des campagnes n’a plus de filtre d’état. La pagination autorise le retour à la ligne et réorganise sa plage à une largeur de conteneur de 32rem. La densité Material globale reste à 0 ; les cibles d’action restent d’au moins 44px.
+
+Les membres utilisent deux onglets Material, Annuaire et Carte. L’annuaire reprend la recherche partagée à loupe et champ repliable ; `searchFields` et `searchChange` permettent de conserver son moteur de recherche sans accents, par coordonnées ou lot. En vue carte, tout l’en-tête du tableau est masqué sans déconnecter sa source ; le clic sur un lot ouvre ses membres. Aucun champ de recherche ni sélecteur membre/lot ne surcharge la carte. Revenir à l’annuaire conserve sa recherche.
 
 L’accueil n’affiche plus de suivi mensuel : les indicateurs de recouvrement, la carte et les points à traiter portent la lecture principale. La comparaison est repliée sans référence dans l’URL ; les explications secondaires et les campagnes récentes se déplient à la demande. Erreurs et alertes restent visibles.
 
@@ -270,6 +272,8 @@ Panneaux de carte, détail et listes partagent surface, bordure fine et rayon de
 ### Inputs / Fields
 
 Les champs Material reçoivent les encres, contours et couleurs d’erreur des variables de thème ; leurs angles reprennent les boutons. Le fond des champs remplis conserve le rôle `surface-variant` de la palette azure générée par Material : il n’est pas remplacé par `--asl-raised`. La recherche de carte porte un vrai libellé et un bouton d’effacement nommé. Le curseur de saisie et le focus utilisent primaire ; les comportements flottants, erreurs et désactivations sont ceux de Material. La largeur de recherche suit le panneau, les sélecteurs s’étendent sur petit écran.
+
+Le budget de l’accueil et le filtre d’état dans une campagne utilisent `context-field` : apparence outline, fond surface, rayon 10px et hauteur 48px. L’actualisation de l’accueil est un bouton icône de même hauteur et rayon, contigu au choix de budget, avec libellé accessible et infobulle. Ces contrôles emploient les mêmes couleurs sémantiques dans Bassin clair et Graphite.
 
 ### Navigation
 

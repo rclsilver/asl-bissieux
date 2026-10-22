@@ -73,12 +73,14 @@ Préparation : compte administrateur ; membres de test avec adresses valides ; a
 
 Lots : lot 18, liens du dashboard et sélection du dernier budget.
 
+Préparation : depuis le 22 octobre 2026, le suivi mensuel a été retiré à la demande de Thomas. Le cas historique DB07 est sans objet ; les nouveaux contrôles sont décrits dans la fiche de refonte, section « Ajustements après la première revue ».
+
 - [ ] **DB01 — Sélectionner le dernier budget par défaut**
   Action : Créer deux budgets fictifs à la suite, dont le dernier reste brouillon ; ouvrir /#/dashboard sans paramètres budget.
   Attendu : Le budget créé le plus récemment est sélectionné, même brouillon. Le choix ne dépend pas du nom ou de l’année inscrite dans le libellé.
 
 - [ ] **DB02 — Conserver les choix explicites**
-  Action : Choisir un ancien budget, une année, une référence et éventuellement un lot ; recharger puis utiliser précédent/suivant du navigateur.
+  Action : Choisir un ancien budget, ouvrir la comparaison pour choisir une référence et éventuellement sélectionner un lot ; recharger puis utiliser précédent/suivant du navigateur.
   Attendu : L’URL conserve les choix et l’écran les restitue ; le budget récent ne remplace pas une sélection explicite. L’exercice et la référence ne sont pas déduits du budget.
 
 - [ ] **DB03 — Respecter un choix vide ou introuvable**
@@ -98,11 +100,11 @@ Lots : lot 18, liens du dashboard et sélection du dernier budget.
   Attendu : Un excédent ne compense pas la dette d’un autre lot. Exemple si deux lots appellent 100 € chacun et ont reçu 120 € et 0 € : reste 100 €, trop-perçu 20 €, recouvrement 50 %.
 
 - [ ] **DB07 — Comparer graphique et tableau mensuels**
-  Action : Choisir l’année d’un paiement fictif daté, puis une autre année ; comparer les douze mois du graphique et du tableau.
-  Attendu : Les montants se répartissent selon la date métier, dans Europe/Paris. Le cumul part de zéro en janvier ; changer l’année du graphique ne change pas les indicateurs de recouvrement toutes dates.
+  Action : Classer ce cas historique « Sans objet ». Le graphique, le sélecteur d’année et le tableau mensuels ont été retirés à la demande de Thomas le 22 octobre 2026.
+  Attendu : Aucun contrôle du suivi mensuel n’est requis. Vérifier le dashboard allégé avec le cas AJUST4 de la fiche de refonte ; conserver les anciens résultats à titre historique.
 
 - [ ] **DB08 — Consulter la carte et la comparaison de budgets**
-  Action : Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon et une référence de comparaison.
+  Action : Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon, ouvrir « Comparer les budgets annuels » et sélectionner une référence.
   Attendu : La légende distingue les états et les détails concernent le lot sélectionné. Le brouillon affiche son aperçu ; la comparaison indique l’écart de dépenses initiales sans inventer un ancien taux par part.
 
 ## Connexion Google et sessions

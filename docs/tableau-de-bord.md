@@ -15,11 +15,11 @@ Un excédent sur un lot ne compense jamais le manque d’un autre. Exemple : deu
 
 Les indicateurs ouvrent les cotisations avec un filtre visible. La carte conserve tous les états même si le tableau est filtré. La carte de l’accueil distingue soldé, partiel, sans paiement, trop-perçu et absence de cotisation ; la légende et le détail textuel complètent les couleurs. La sélection est possible au clavier ou avec le sélecteur de lot. Les paiements détaillés ne sont chargés que pour le lot choisi.
 
-## Encaissements mensuels
+## Accueil allégé
 
-Le graphique et le tableau représentent les mêmes douze mois de l’année civile sélectionnée, dans le fuseau **Europe/Paris**. La date métier du paiement est utilisée, jamais sa date de création technique. Un paiement modifié ou supprimé est reflété à l’actualisation. Les remboursements datés et leurs contre-écritures sont inclus avec leur signe.
+À la demande de Thomas le 22 octobre 2026, les encaissements mensuels, leur graphique, leur tableau et le sélecteur d’année ont été retirés de l’accueil. Les quatre indicateurs de recouvrement toutes dates et la carte des paiements sont conservés. Le contrat API reste compatible avec les anciennes adresses contenant `year` ; ce paramètre n’est plus proposé comme choix dans l’interface.
 
-Le cumul part de zéro en janvier de cette année ; il peut devenir négatif. Il ne représente pas une trésorerie bancaire. La ligne pointillée compare ce cumul à l’appelé actuel toutes dates : elle ne prétend pas reconstruire un appelé historique. Les indicateurs de recouvrement restent toutes dates et ne changent pas de période avec ce graphique.
+La comparaison des budgets est repliée tant qu’aucune référence n’est choisie ; une référence dans l’URL l’ouvre automatiquement. Le choix d’un lot par liste et l’aide clavier sont regroupés sous la carte dans un volet dépliable. Les campagnes récentes et les explications secondaires se consultent aussi à la demande. Les erreurs, avertissements et points à traiter restent visibles.
 
 ## Brouillons et comparaison
 

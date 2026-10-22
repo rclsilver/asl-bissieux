@@ -231,13 +231,15 @@ La hiérarchie reste sobre : titre principal fluide, titres de sections semi-gra
 
 ## Layout
 
-Le cadre de page est centré et limité à 1600px. Sa marge intérieure est de 2rem en haut, `clamp(1rem, 3vw, 3rem)` latéralement et 3rem en bas. Le bandeau supérieur mesure au moins 76px ; il descend à 64px lorsque la navigation se replie à 1100px. Le compte textuel est masqué sous 1500px, son menu reste accessible.
+Le cadre de page est centré et limité à 1600px. Sa marge intérieure est de 1.5rem en haut, `clamp(1rem, 3vw, 3rem)` latéralement et 2rem en bas. Le bandeau supérieur mesure au moins 76px ; il descend à 64px lorsque la navigation se replie à 1100px. Le compte textuel est masqué sous 1500px, son menu reste accessible.
 
 À 1100px et en dessous, un bouton ouvre un tiroir modal de navigation de 18rem, plafonné à la largeur d’écran moins 3rem. À 600px et en dessous, la page emploie des marges intérieures de 1.25rem, 1rem et 2rem ; les sélecteurs prennent toute la largeur et les panneaux de carte passent à 1rem de padding.
 
 Le rythme récurrent associe 0.5rem entre petits contrôles, 1rem dans les groupes, 1.5rem entre panneaux et 2rem entre sections. Les indicateurs se répartissent automatiquement avec une base de 12rem puis passent sur deux colonnes à 600px. La carte et son contexte utilisent deux colonnes, dont une de 16 à 20rem ; elles s’empilent à 1050px. Cette composition appartient au tableau de bord, pas à toutes les pages.
 
-Les tables conservent leurs colonnes dans un conteneur défilant horizontalement et accessible au clavier. La barre CRUD se répartit sur plusieurs lignes ; la pagination autorise le retour à la ligne et réorganise sa plage à une largeur de conteneur de 32rem. La densité Material reste à 0 ; ne pas réduire globalement les cibles pour compacter une liste.
+Les tables conservent leurs colonnes dans un conteneur défilant horizontalement et accessible au clavier. La barre CRUD intègre les filtres projetés dans l’emplacement `[table-filters]`, avec recherche, actualisation et ajout. Elle se répartit sur plusieurs lignes avec un padding de 0.5rem par 0.75rem ; les champs et boutons Annuaire/Carte mesurent 48px de haut. L’en-tête de l’annuaire reste affiché en vue carte ; le tableau est masqué sans déconnecter sa source. La pagination autorise le retour à la ligne et réorganise sa plage à une largeur de conteneur de 32rem. La densité Material globale reste à 0 ; les cibles d’action restent d’au moins 44px.
+
+L’accueil n’affiche plus de suivi mensuel : les indicateurs de recouvrement, la carte et les points à traiter portent la lecture principale. La comparaison est repliée sans référence dans l’URL ; les explications secondaires et les campagnes récentes se déplient à la demande. Erreurs et alertes restent visibles.
 
 ## Elevation & Depth
 

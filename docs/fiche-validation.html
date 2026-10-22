@@ -199,7 +199,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-OVH10" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article></section><section class="section" id="section-2" aria-labelledby="title-2"><h2 id="title-2">Tableau de bord et derniers correctifs</h2><p class="section-context">Lots : lot 18, liens du dashboard et sélection du dernier budget.</p><p class="section-count"></p><article class="test" data-test="DB01" data-search="DB01 Sélectionner le dernier budget par défaut Créer deux budgets fictifs à la suite, dont le dernier reste brouillon ; ouvrir /#/dashboard sans paramètres budget. Le budget créé le plus récemment est sélectionné, même brouillon. Le choix ne dépend pas du nom ou de l’année inscrite dans le libellé.">
+</article></section><section class="section" id="section-2" aria-labelledby="title-2"><h2 id="title-2">Tableau de bord et derniers correctifs</h2><p class="section-context">Lots : lot 18, liens du dashboard et sélection du dernier budget.</p><p class="section-context">Préparation : depuis le 22 octobre 2026, le suivi mensuel a été retiré à la demande de Thomas. Le cas historique DB07 est sans objet ; les nouveaux contrôles sont décrits dans la fiche de refonte, section « Ajustements après la première revue ».</p><p class="section-count"></p><article class="test" data-test="DB01" data-search="DB01 Sélectionner le dernier budget par défaut Créer deux budgets fictifs à la suite, dont le dernier reste brouillon ; ouvrir /#/dashboard sans paramètres budget. Le budget créé le plus récemment est sélectionné, même brouillon. Le choix ne dépend pas du nom ou de l’année inscrite dans le libellé.">
   <label class="test-title" for="check-DB01"><input id="check-DB01" type="checkbox"><span><span class="test-id">DB01</span> Sélectionner le dernier budget par défaut</span></label>
   <p><strong>Faire.</strong> Créer deux budgets fictifs à la suite, dont le dernier reste brouillon ; ouvrir /#/dashboard sans paramètres budget.</p>
   <p><strong>Attendu.</strong> Le budget créé le plus récemment est sélectionné, même brouillon. Le choix ne dépend pas du nom ou de l’année inscrite dans le libellé.</p>
@@ -211,9 +211,9 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-DB01" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="DB02" data-search="DB02 Conserver les choix explicites Choisir un ancien budget, une année, une référence et éventuellement un lot ; recharger puis utiliser précédent/suivant du navigateur. L’URL conserve les choix et l’écran les restitue ; le budget récent ne remplace pas une sélection explicite. L’exercice et la référence ne sont pas déduits du budget.">
+</article><article class="test" data-test="DB02" data-search="DB02 Conserver les choix explicites Choisir un ancien budget, ouvrir la comparaison pour choisir une référence et éventuellement sélectionner un lot ; recharger puis utiliser précédent/suivant du navigateur. L’URL conserve les choix et l’écran les restitue ; le budget récent ne remplace pas une sélection explicite. L’exercice et la référence ne sont pas déduits du budget.">
   <label class="test-title" for="check-DB02"><input id="check-DB02" type="checkbox"><span><span class="test-id">DB02</span> Conserver les choix explicites</span></label>
-  <p><strong>Faire.</strong> Choisir un ancien budget, une année, une référence et éventuellement un lot ; recharger puis utiliser précédent/suivant du navigateur.</p>
+  <p><strong>Faire.</strong> Choisir un ancien budget, ouvrir la comparaison pour choisir une référence et éventuellement sélectionner un lot ; recharger puis utiliser précédent/suivant du navigateur.</p>
   <p><strong>Attendu.</strong> L’URL conserve les choix et l’écran les restitue ; le budget récent ne remplace pas une sélection explicite. L’exercice et la référence ne sont pas déduits du budget.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
@@ -271,10 +271,10 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-DB06" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="DB07" data-search="DB07 Comparer graphique et tableau mensuels Choisir l’année d’un paiement fictif daté, puis une autre année ; comparer les douze mois du graphique et du tableau. Les montants se répartissent selon la date métier, dans Europe/Paris. Le cumul part de zéro en janvier ; changer l’année du graphique ne change pas les indicateurs de recouvrement toutes dates.">
+</article><article class="test" data-test="DB07" data-search="DB07 Comparer graphique et tableau mensuels Classer ce cas historique « Sans objet ». Le graphique, le sélecteur d’année et le tableau mensuels ont été retirés à la demande de Thomas le 22 octobre 2026. Aucun contrôle du suivi mensuel n’est requis. Vérifier le dashboard allégé avec le cas AJUST4 de la fiche de refonte ; conserver les anciens résultats à titre historique.">
   <label class="test-title" for="check-DB07"><input id="check-DB07" type="checkbox"><span><span class="test-id">DB07</span> Comparer graphique et tableau mensuels</span></label>
-  <p><strong>Faire.</strong> Choisir l’année d’un paiement fictif daté, puis une autre année ; comparer les douze mois du graphique et du tableau.</p>
-  <p><strong>Attendu.</strong> Les montants se répartissent selon la date métier, dans Europe/Paris. Le cumul part de zéro en janvier ; changer l’année du graphique ne change pas les indicateurs de recouvrement toutes dates.</p>
+  <p><strong>Faire.</strong> Classer ce cas historique « Sans objet ». Le graphique, le sélecteur d’année et le tableau mensuels ont été retirés à la demande de Thomas le 22 octobre 2026.</p>
+  <p><strong>Attendu.</strong> Aucun contrôle du suivi mensuel n’est requis. Vérifier le dashboard allégé avec le cas AJUST4 de la fiche de refonte ; conserver les anciens résultats à titre historique.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
     <label for="status-DB07">Autre résultat pour DB07</label>
@@ -283,9 +283,9 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-DB07" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="DB08" data-search="DB08 Consulter la carte et la comparaison de budgets Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon et une référence de comparaison. La légende distingue les états et les détails concernent le lot sélectionné. Le brouillon affiche son aperçu ; la comparaison indique l’écart de dépenses initiales sans inventer un ancien taux par part.">
+</article><article class="test" data-test="DB08" data-search="DB08 Consulter la carte et la comparaison de budgets Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon, ouvrir « Comparer les budgets annuels » et sélectionner une référence. La légende distingue les états et les détails concernent le lot sélectionné. Le brouillon affiche son aperçu ; la comparaison indique l’écart de dépenses initiales sans inventer un ancien taux par part.">
   <label class="test-title" for="check-DB08"><input id="check-DB08" type="checkbox"><span><span class="test-id">DB08</span> Consulter la carte et la comparaison de budgets</span></label>
-  <p><strong>Faire.</strong> Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon et une référence de comparaison.</p>
+  <p><strong>Faire.</strong> Sélectionner un lot sur la carte du dashboard ; puis choisir un brouillon, ouvrir « Comparer les budgets annuels » et sélectionner une référence.</p>
   <p><strong>Attendu.</strong> La légende distingue les états et les détails concernent le lot sélectionné. Le brouillon affiche son aperçu ; la comparaison indique l’écart de dépenses initiales sans inventer un ancien taux par part.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>

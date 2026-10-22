@@ -20,7 +20,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 <a class="skip" href="#tests">Aller aux tests</a>
 <header>
 <h1>Fiche de validation — ASL Bissieux</h1>
-<p class="muted">Refonte Bassin clair / Graphite · navigation supérieure et carte · Référence refonte-2026-10-v1 · 22 octobre 2026</p>
+<p class="muted">Refonte Bassin clair / Graphite — ajustements de navigation, listes et dashboard · Référence refonte-2026-10-v1 · 22 octobre 2026</p>
 <p>Coche une case après avoir effectué le test et obtenu le résultat attendu. Pour un échec, un blocage ou un cas sans objet, utilise « Noter un écart ou une réserve ». Rien n’est prévalidé.</p>
 <div class="session">
   <label for="reviewer">Validateur<input id="reviewer" autocomplete="name"></label>
@@ -36,10 +36,10 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 </div>
 <p id="storage-status" role="status">La sauvegarde automatique dépend du stockage autorisé par ton navigateur. Exporte la fiche pour conserver ou partager tes résultats.</p>
 <noscript><p>Les cases restent utilisables, mais le suivi automatique nécessite JavaScript. Utilise aussi la version Markdown jointe pour une recette sur papier.</p></noscript>
-<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 16 tests</p><progress id="progress" value="0" max="16" aria-label="Tests validés"></progress></div>
+<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 20 tests</p><progress id="progress" value="0" max="20" aria-label="Tests validés"></progress></div>
 </header>
 <div class="layout">
-<nav aria-label="Parcours de validation"><details open><summary>Parcours</summary><ul><li><a href="#section-0">Thèmes et connexion</a></li><li><a href="#section-1">Navigation et écrans de gestion</a></li><li><a href="#section-2">Carte et paiements</a></li><li><a href="#section-3">Confort et validation finale</a></li></ul></details></nav>
+<nav aria-label="Parcours de validation"><details open><summary>Parcours</summary><ul><li><a href="#section-0">Thèmes et connexion</a></li><li><a href="#section-1">Navigation et écrans de gestion</a></li><li><a href="#section-2">Carte et paiements</a></li><li><a href="#section-3">Confort et validation finale</a></li><li><a href="#section-4">Ajustements après la première revue</a></li></ul></details></nav>
 <main id="tests" tabindex="-1">
 <div class="filters"><label class="filter-search" for="search">Rechercher un test<input id="search" type="search" placeholder="Identifiant ou mots du test"></label><label for="filter">Afficher<select id="filter"><option value="all">Tous les résultats</option><option value="todo">À faire</option><option value="pass">Validés</option><option value="fail">Échecs</option><option value="blocked">Bloqués</option><option value="na">Sans objet</option></select></label></div>
 <p id="empty" hidden>Aucun test ne correspond. Efface la recherche ou change le filtre.</p>
@@ -223,16 +223,64 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-UIR2" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="UIR3" data-search="UIR3 Retour et rechargement copier l’adresse après une recherche ou une sélection, recharger, puis utiliser précédent/suivant. budget, année, recherche et sélection cohérents avec l’adresse ; préférence de thème conservée ; aucun e-mail ni paiement créé par la consultation.">
+</article><article class="test" data-test="UIR3" data-search="UIR3 Retour et rechargement copier l’adresse après une recherche ou une sélection, recharger, puis utiliser précédent/suivant. budget, recherche et sélection cohérents avec l’adresse ; préférence de thème conservée ; aucun e-mail ni paiement créé par la consultation.">
   <label class="test-title" for="check-UIR3"><input id="check-UIR3" type="checkbox"><span><span class="test-id">UIR3</span> Retour et rechargement</span></label>
   <p><strong>Faire.</strong> copier l’adresse après une recherche ou une sélection, recharger, puis utiliser précédent/suivant.</p>
-  <p><strong>Attendu.</strong> budget, année, recherche et sélection cohérents avec l’adresse ; préférence de thème conservée ; aucun e-mail ni paiement créé par la consultation.</p>
+  <p><strong>Attendu.</strong> budget, recherche et sélection cohérents avec l’adresse ; préférence de thème conservée ; aucun e-mail ni paiement créé par la consultation.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
     <label for="status-UIR3">Autre résultat pour UIR3</label>
     <select id="status-UIR3"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
     <label for="note-UIR3">Notes pour UIR3 : résultat observé, reproduction, réserve</label>
     <textarea id="note-UIR3" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article></section><section class="section" id="section-4" aria-labelledby="title-4"><h2 id="title-4">Ajustements après la première revue</h2><p class="section-context">Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.</p><p class="section-count"></p><article class="test" data-test="AJUST1" data-search="AJUST1 Arrivée sans clic dans le menu avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec un filtre. l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre les membres avec le bon filtre ; le lien du menu correspondant est sélectionné sans clic préalable.">
+  <label class="test-title" for="check-AJUST1"><input id="check-AJUST1" type="checkbox"><span><span class="test-id">AJUST1</span> Arrivée sans clic dans le menu</span></label>
+  <p><strong>Faire.</strong> avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec un filtre.</p>
+  <p><strong>Attendu.</strong> l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre les membres avec le bon filtre ; le lien du menu correspondant est sélectionné sans clic préalable.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST1">Autre résultat pour AJUST1</label>
+    <select id="status-AJUST1"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST1">Notes pour AJUST1 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST1" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST2" data-search="AJUST2 Filtres intégrés aux listes visiter Lots, Membres, Comptes et accès, les campagnes, les e-mails d’une campagne et les cotisations d’un budget publié ; modifier puis retirer un filtre. filtres, recherche, actualisation et ajout sont regroupés dans l’en-tête de la liste selon les droits et fonctions disponibles. Les filtres restent fonctionnels ; sur petit écran, les contrôles reviennent à la ligne sans faire déborder la page.">
+  <label class="test-title" for="check-AJUST2"><input id="check-AJUST2" type="checkbox"><span><span class="test-id">AJUST2</span> Filtres intégrés aux listes</span></label>
+  <p><strong>Faire.</strong> visiter Lots, Membres, Comptes et accès, les campagnes, les e-mails d’une campagne et les cotisations d’un budget publié ; modifier puis retirer un filtre.</p>
+  <p><strong>Attendu.</strong> filtres, recherche, actualisation et ajout sont regroupés dans l’en-tête de la liste selon les droits et fonctions disponibles. Les filtres restent fonctionnels ; sur petit écran, les contrôles reviennent à la ligne sans faire déborder la page.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST2">Autre résultat pour AJUST2</label>
+    <select id="status-AJUST2"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST2">Notes pour AJUST2 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST2" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST3" data-search="AJUST3 Annuaire et carte avec le même en-tête chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche. la recherche et les boutons Annuaire/Carte restent alignés et accessibles dans les deux vues ; les résultats sont conservés au changement de vue, puis rétablis après effacement.">
+  <label class="test-title" for="check-AJUST3"><input id="check-AJUST3" type="checkbox"><span><span class="test-id">AJUST3</span> Annuaire et carte avec le même en-tête</span></label>
+  <p><strong>Faire.</strong> chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche.</p>
+  <p><strong>Attendu.</strong> la recherche et les boutons Annuaire/Carte restent alignés et accessibles dans les deux vues ; les résultats sont conservés au changement de vue, puis rétablis après effacement.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST3">Autre résultat pour AJUST3</label>
+    <select id="status-AJUST3"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST3">Notes pour AJUST3 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST3" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST4" data-search="AJUST4 Dashboard allégé ouvrir un budget publié sur l’accueil ; consulter la carte, ouvrir les aides et « Comparer les budgets annuels », puis choisir une référence et recharger. aucun bloc Encaissements mensuels, graphique ou tableau mensuel ; indicateurs, carte, détails du lot et points à traiter conservés. Les aides et campagnes récentes se déplient à la demande. La comparaison est repliée sans référence et s’ouvre si une référence est présente dans l’adresse.">
+  <label class="test-title" for="check-AJUST4"><input id="check-AJUST4" type="checkbox"><span><span class="test-id">AJUST4</span> Dashboard allégé</span></label>
+  <p><strong>Faire.</strong> ouvrir un budget publié sur l’accueil ; consulter la carte, ouvrir les aides et « Comparer les budgets annuels », puis choisir une référence et recharger.</p>
+  <p><strong>Attendu.</strong> aucun bloc Encaissements mensuels, graphique ou tableau mensuel ; indicateurs, carte, détails du lot et points à traiter conservés. Les aides et campagnes récentes se déplient à la demande. La comparaison est repliée sans référence et s’ouvre si une référence est présente dans l’adresse.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST4">Autre résultat pour AJUST4</label>
+    <select id="status-AJUST4"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST4">Notes pour AJUST4 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST4" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
 </article></section>

@@ -98,6 +98,6 @@ Préparation : corrections du 22 octobre 2026. Les résultats des cas précéden
   Attendu : aucun filtre de qualité sur Lots ou Membres, aucun filtre d’état dans la liste des campagnes. Ces anciens paramètres ne filtrent plus silencieusement les résultats. Le filtre d’état reste disponible à l’intérieur d’une campagne.
 - [ ] **AJUST7 — Onglets contigus au contenu**
   Action : comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran.
-  Attendu : aucun espace vide ajouté entre les en-têtes d’onglets et leur tableau ou carte. Les tableaux sous les onglets ont des coins droits en haut et arrondis en bas ; les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet conservent leur comportement.
+  Attendu : les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet conservent leur comportement.
 
 **Résultat de la séance.** Noter les identifiants des cas en échec ou bloqués et le navigateur utilisé. La fiche HTML permet d’exporter un exemplaire rempli ou les résultats JSON. Aucun résultat n’est envoyé automatiquement et aucune case n’est précochée.

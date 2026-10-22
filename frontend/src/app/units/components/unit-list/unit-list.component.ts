@@ -1,91 +1,58 @@
-import {
-  OnInit,
-  OnDestroy,
-  Component,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
-import { APISchemas } from 'src/app/core/api/openapi';
-import { ApiService } from 'src/app/core/services/api.service';
-import { AuthService } from 'src/app/core/services/auth.service';
-import { NotificationsService } from 'src/app/shared/services/notifications.service';
-import { UnitDataSource } from '../../datasources/unit.datasource';
-import { UnitFormComponent } from '../unit-form/unit-form.component';
-import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
-import { Column } from 'src/app/shared/models/column.model';
+import { Component, inject, ChangeDetectionStrategy } from "@angular/core";
+import { APISchemas } from "src/app/core/api/openapi";
+import { ApiService } from "src/app/core/services/api.service";
+import { AuthService } from "src/app/core/services/auth.service";
+import { NotificationsService } from "src/app/shared/services/notifications.service";
+import { UnitDataSource } from "../../datasources/unit.datasource";
+import { UnitFormComponent } from "../unit-form/unit-form.component";
+import { NotificationDialogLevel } from "src/app/shared/components/notification-dialog/notification-dialog.component";
+import { Column } from "src/app/shared/models/column.model";
 
 @Component({
-  selector: 'app-unit-list',
-  templateUrl: './unit-list.component.html',
-  styleUrls: ['./unit-list.component.scss'],
+  selector: "app-unit-list",
+  templateUrl: "./unit-list.component.html",
+  styleUrls: ["./unit-list.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UnitListComponent implements OnInit, OnDestroy {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly destroy$ = new Subject<void>();
-  quality = '';
-  ngOnInit() {
-    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((p) => {
-      const quality = p.get('quality') ?? '';
-      this.quality = ['no_member', 'invalid_shares'].includes(quality)
-        ? quality
-        : '';
-      this.datasource.setQuality(this.quality);
-    });
-  }
-  filterQuality(quality: string) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { quality: quality || null },
-      queryParamsHandling: 'merge',
-    });
-  }
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
+export class UnitListComponent {
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _notifications = inject(NotificationsService);
 
   readonly columns = [
-    new Column('number', {
-      label: 'Numéro',
+    new Column("number", {
+      label: "Numéro",
       canSort: true,
       defaultSort: true,
       canFilter: true,
     }),
-    new Column('share', {
-      label: 'Parts',
+    new Column("share", {
+      label: "Parts",
       canSort: true,
     }),
-    new Column('address', {
-      label: 'Adresse',
+    new Column("address", {
+      label: "Adresse",
       canFilter: true,
     }),
   ];
   readonly datasource = new UnitDataSource();
 
-  readonly canCreate$ = this._auth.allowed$('unit.CreateUnit');
+  readonly canCreate$ = this._auth.allowed$("unit.CreateUnit");
 
   refresh() {
     this.datasource.load();
   }
 
-  canEdit(_: APISchemas['ModelsUnit']) {
-    return this._auth.allowed$('unit.UpdateUnit');
+  canEdit(_: APISchemas["ModelsUnit"]) {
+    return this._auth.allowed$("unit.UpdateUnit");
   }
 
-  canDelete(_: APISchemas['ModelsUnit']) {
-    return this._auth.allowed$('unit.DeleteUnit');
+  canDelete(_: APISchemas["ModelsUnit"]) {
+    return this._auth.allowed$("unit.DeleteUnit");
   }
 
-  edit(unit?: APISchemas['CreateUnitInput'] | APISchemas['UpdateUnitInput']) {
+  edit(unit?: APISchemas["CreateUnitInput"] | APISchemas["UpdateUnitInput"]) {
     this._notifications
       .showForm(UnitFormComponent, {
         data: {
@@ -100,13 +67,13 @@ export class UnitListComponent implements OnInit, OnDestroy {
       });
   }
 
-  delete(unit: APISchemas['ModelsUnit']) {
+  delete(unit: APISchemas["ModelsUnit"]) {
     this._notifications
       .showConfirm({
-        title: 'Supprimer un lot',
-        confirmLabel: 'Supprimer',
+        title: "Supprimer un lot",
+        confirmLabel: "Supprimer",
         message: `Supprimer le lot ${unit.number} ?`,
-        class: 'warn',
+        class: "warn",
       })
       .afterClosed()
       .subscribe((confirm) => {
@@ -115,12 +82,12 @@ export class UnitListComponent implements OnInit, OnDestroy {
             next: () => {
               this.refresh();
               this._notifications.showDialog({
-                title: 'Info',
+                title: "Info",
                 message: `Le lot ${unit.number} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Impossible de supprimer le lot'),
+            error: this._api.handleError("Impossible de supprimer le lot"),
           });
         }
       });

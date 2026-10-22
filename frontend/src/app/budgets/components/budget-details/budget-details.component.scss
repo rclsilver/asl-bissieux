@@ -7,10 +7,10 @@ div.loading {
 .budget-preview {
   margin: 1.5rem 0;
   padding: 1.25rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #172033;
+  border: 1px solid var(--asl-border);
+  border-radius: var(--asl-radius);
+  background: var(--asl-surface);
+  color: var(--asl-ink);
 
   .preview-heading {
     display: flex;
@@ -30,7 +30,7 @@ div.loading {
     gap: 1.25rem;
   }
   dt {
-    color: #475569;
+    color: var(--asl-muted);
   }
   dd {
     margin: 0.35rem 0 0;
@@ -40,11 +40,11 @@ div.loading {
   }
   .preview-note {
     font-size: 0.875rem;
-    color: #475569;
+    color: var(--asl-muted);
     line-height: 1.5;
   }
   .preview-message {
-    color: #92400e;
+    color: var(--asl-warning);
     font-weight: 600;
   }
 }
@@ -92,8 +92,8 @@ p {
 }
 
 .refund-amount {
-  color: #6d28d9;
-  background-color: #f5f3ff;
+  color: var(--asl-surplus);
+  background-color: var(--asl-surplus-tint);
   font-weight: 700;
   white-space: nowrap;
 }

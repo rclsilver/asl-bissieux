@@ -1,22 +1,22 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { Observable, map, shareReplay } from 'rxjs';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
+import { Component, ChangeDetectionStrategy, inject } from "@angular/core";
+import { Observable, map, shareReplay } from "rxjs";
+import { BreakpointObserver } from "@angular/cdk/layout";
+import { AuthService } from "../../services/auth.service";
+import { ThemeService } from "../../services/theme.service";
 
 @Component({
-  selector: 'app-page',
-  templateUrl: './page.component.html',
-  styleUrls: ['./page.component.scss'],
+  selector: "app-page",
+  templateUrl: "./page.component.html",
+  styleUrls: ["./page.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class PageComponent {
   readonly theme = inject(ThemeService);
   mobileMenuOpen = false;
-  readonly isHandset$ = this._breakpoints.observe('(max-width: 1100px)').pipe(
+  readonly isHandset$ = this._breakpoints.observe("(max-width: 1100px)").pipe(
     map((result) => result.matches),
-    shareReplay()
+    shareReplay(),
   );
 
   readonly authenticated$ = this._auth.authenticated$;
@@ -34,52 +34,52 @@ export class PageComponent {
     allowed$: Observable<boolean>;
   }[] = [
     {
-      label: 'Accueil',
-      path: '/dashboard',
-      icon: 'dashboard',
+      label: "Accueil",
+      path: "/dashboard",
+      icon: "dashboard",
       allowed$: this.active$,
     },
     {
-      label: 'Budgets',
-      path: '/budgets',
-      icon: 'account_balance_wallet',
+      label: "Budgets",
+      path: "/budgets",
+      icon: "account_balance_wallet",
       allowed$: this.active$,
     },
     {
-      label: 'Lots',
-      path: '/units',
-      icon: 'map',
+      label: "Lots",
+      path: "/units",
+      icon: "map",
       allowed$: this.active$,
     },
     {
-      label: 'Membres',
-      path: '/members',
-      icon: 'groups',
+      label: "Membres",
+      path: "/members",
+      icon: "groups",
       allowed$: this.active$,
     },
     {
-      label: 'E-mails',
-      path: '/emails',
-      icon: 'mail',
+      label: "E-mails",
+      path: "/emails",
+      icon: "mail",
       allowed$: this.active$,
     },
     {
-      label: 'Utilisateurs',
-      path: '/users',
-      icon: 'manage_accounts',
+      label: "Utilisateurs",
+      path: "/users",
+      icon: "manage_accounts",
       allowed$: this.administrator$,
     },
     {
-      label: 'Listes de diffusion',
-      path: '/mailing-lists',
-      icon: 'contact_mail',
+      label: "Listes de diffusion",
+      path: "/mailing-lists",
+      icon: "contact_mail",
       allowed$: this.administrator$,
     },
   ];
 
   constructor(
     private _breakpoints: BreakpointObserver,
-    private _auth: AuthService
+    private _auth: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -102,18 +102,18 @@ export class PageComponent {
 
   checkingAccess = false;
   accessTitle(status?: string) {
-    return status === 'pending'
-      ? 'Compte en attente d’activation'
-      : status === 'rejected'
-        ? 'Accès refusé'
-        : 'Accès désactivé';
+    return status === "pending"
+      ? "Compte en attente d’activation"
+      : status === "rejected"
+        ? "Accès refusé"
+        : "Accès désactivé";
   }
   accessMessage(status?: string) {
-    return status === 'pending'
-      ? 'Ton identité est vérifiée. Un administrateur doit examiner ta demande d’accès.'
-      : status === 'rejected'
-        ? 'Un administrateur a refusé l’accès à l’application. Contacte le bureau de l’ASL pour faire le point.'
-        : 'Ton identité est vérifiée, mais l’accès à l’application est désactivé. Contacte un administrateur pour demander sa réactivation.';
+    return status === "pending"
+      ? "Ton identité est vérifiée. Un administrateur doit examiner ta demande d’accès."
+      : status === "rejected"
+        ? "Un administrateur a refusé l’accès à l’application. Contacte le bureau de l’ASL pour faire le point."
+        : "Ton identité est vérifiée, mais l’accès à l’application est désactivé. Contacte un administrateur pour demander sa réactivation.";
   }
   refreshAccess() {
     if (this.checkingAccess) return;
@@ -125,9 +125,9 @@ export class PageComponent {
   }
   loginLabel(label?: string): string {
     const provider = label?.trim();
-    return provider && provider !== 'Se connecter'
+    return provider && provider !== "Se connecter"
       ? `Continuer avec ${provider}`
-      : 'Se connecter';
+      : "Se connecter";
   }
 
   reloadPage() {

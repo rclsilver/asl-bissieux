@@ -20,11 +20,11 @@
 }
 
 .sending {
-  color: #075985;
+  color: var(--asl-primary);
   font-style: italic;
 }
 .unknown {
-  color: #92400e;
+  color: var(--asl-warning);
   font-weight: bold;
 }
 

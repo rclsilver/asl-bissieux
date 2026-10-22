@@ -12,7 +12,7 @@ h2 {
   overflow-wrap: anywhere;
 }
 section {
-  border-top: 1px solid currentColor;
+  border-top: 1px solid var(--asl-border);
   margin-block: 1.5rem;
   padding-block: 1rem;
 }
@@ -28,6 +28,7 @@ button {
 }
 summary {
   cursor: pointer;
+  color: var(--asl-primary);
   padding-block: 0.5rem;
 }
 summary:focus-visible {

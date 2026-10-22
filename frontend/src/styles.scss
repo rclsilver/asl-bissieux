@@ -19,6 +19,7 @@
   --asl-nav-active: #273e54;
   --asl-nav-ink: #b6dfff;
   --asl-error: #ffb4ab;
+  --asl-on-error: #512a2a;
   --asl-error-tint: #512a2a;
   --asl-warning: #f3c77e;
   --asl-surplus: #d3b5ff;
@@ -42,6 +43,7 @@ html {
   --asl-nav-active: #fff;
   --asl-nav-ink: #1244a8;
   --asl-error: #a72d36;
+  --asl-on-error: #fff;
   --asl-error-tint: #ffedef;
   --asl-warning: #855100;
   --asl-surplus: #6d28d9;
@@ -84,6 +86,7 @@ html {
       outline: var(--asl-muted),
       outline-variant: var(--asl-border),
       error: var(--asl-error),
+      on-error: var(--asl-on-error),
       error-container: var(--asl-error-tint),
       on-error-container: var(--asl-error),
     )
@@ -192,6 +195,23 @@ a:hover {
 }
 .mat-mdc-button-base {
   letter-spacing: 0;
+}
+// M3 does not generate the former M2 warn/accent button variants automatically.
+button.mat-warn {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--asl-error),
+      filled-label-text-color: var(--mat-sys-on-error),
+    )
+  );
+}
+button.mat-accent {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--asl-raised),
+      filled-label-text-color: var(--asl-ink),
+    )
+  );
 }
 .mat-mdc-dialog-content {
   line-height: 1.5;

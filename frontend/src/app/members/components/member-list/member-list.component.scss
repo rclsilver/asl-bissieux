@@ -35,6 +35,8 @@ p {
 .map-pane,
 .selection-pane {
   min-inline-size: 0;
+  background: var(--asl-surface);
+  border-radius: var(--asl-radius);
 }
 .map-choices {
   display: flex;
@@ -50,9 +52,8 @@ p {
   overflow: auto;
 }
 .selection-pane {
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 1rem;
+  border: 1px solid var(--asl-border);
+  padding: 1.5rem;
   align-self: start;
 }
 h3 {
@@ -80,7 +81,7 @@ dd {
 .contact-details + .contact-details {
   margin-block-start: 1.5rem;
   padding-block-start: 0.5rem;
-  border-block-start: 1px solid currentColor;
+  border-block-start: 1px solid var(--asl-border);
 }
 .member-lots {
   display: flex;

@@ -3,14 +3,21 @@
   inline-size: 100%;
   min-inline-size: 0;
   box-sizing: border-box;
+  border: 1px solid var(--asl-border);
+  border-radius: var(--asl-radius);
+  background: var(--asl-surface);
+  overflow: hidden;
 }
 
 mat-toolbar {
+  background: var(--asl-surface);
+  color: var(--asl-ink);
+  border-bottom: 1px solid var(--asl-border);
   flex-wrap: wrap;
   block-size: auto;
   min-block-size: 64px;
   gap: 0.5rem 0.25rem;
-  padding-block: 0.5rem;
+  padding: 0.75rem 1rem;
 
   .spacer {
     flex: 0 0 0;
@@ -74,7 +81,7 @@ td.mat-cell:last-of-type {
 .no-result {
   display: flex;
   justify-content: center;
-  font-style: italic;
+  color: var(--asl-muted);
   padding: 1rem;
 }
 

@@ -1,10 +1,11 @@
 <mat-toolbar>
+  <ng-content select="[table-filters]"></ng-content>
   @if (selected.selected$ | async; as selection) {
     @if (selection.length) {
       <span class="selection-count" role="status"
         >{{ selection.length }}
         {{
-          selection.length === 1 ? 'ligne sélectionnée' : 'lignes sélectionnées'
+          selection.length === 1 ? "ligne sélectionnée" : "lignes sélectionnées"
         }}</span
       >
     }
@@ -63,7 +64,7 @@
   </button>
 </mat-toolbar>
 
-<div class="table-container">
+<div class="table-container" [hidden]="!tableVisible">
   <div
     class="table-scroll"
     [attr.inert]="remoteSource && (loading$ | async) ? '' : null"
@@ -99,12 +100,12 @@
             <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
           }
           <td mat-cell *matCellDef="let row">
-            @if (!row['columns'][column.name].route) {
-              <span>{{ row['columns'][column.name].display }}</span>
+            @if (!row["columns"][column.name].route) {
+              <span>{{ row["columns"][column.name].display }}</span>
             }
-            @if (row['columns'][column.name].route) {
+            @if (row["columns"][column.name].route) {
               <a [routerLink]="row['columns'][column.name].route">{{
-                row['columns'][column.name].display
+                row["columns"][column.name].display
               }}</a>
             }
           </td>
@@ -235,7 +236,7 @@
   }
 </div>
 
-@if (!(loaded$ | async)) {
+@if (tableVisible && !(loaded$ | async)) {
   <div class="loader">
     <p role="status">Chargement de la liste…</p>
     <mat-progress-spinner
@@ -245,7 +246,7 @@
   </div>
 }
 
-@if (remoteSource && !(error$ | async)) {
+@if (tableVisible && remoteSource && !(error$ | async)) {
   @if (remoteSource.page$ | async; as page) {
     <div class="pagination-shell">
       <mat-paginator

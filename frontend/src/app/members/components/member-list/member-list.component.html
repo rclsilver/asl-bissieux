@@ -1,93 +1,90 @@
 <h1>Membres</h1>
-<p>Retrouve un membre, ses coordonnées et les lots qui lui sont associés.</p>
-<mat-form-field subscriptSizing="dynamic"
-  ><mat-label>Informations à compléter</mat-label
-  ><mat-select [value]="quality" (selectionChange)="filterQuality($event.value)"
-    ><mat-option value="">Tous les membres</mat-option
-    ><mat-option value="missing_email"
-      >Sans adresse e-mail</mat-option
-    ></mat-select
-  ></mat-form-field
+
+<app-crud-table
+  tableLabel="Annuaire des membres"
+  [tableVisible]="view === 'list'"
+  createLabel="Ajouter un membre"
+  [columns]="columns"
+  [rowLabel]="rowLabel"
+  [dataSource]="datasource"
+  [autoLoad]="false"
+  [canRefresh]="false"
+  [canCreate]="canCreate$"
+  [canEdit]="canEdit.bind(this)"
+  (edit)="edit($event)"
+  [canDelete]="canDelete.bind(this)"
+  (delete)="delete($event)"
+  [rowActions]="rowActions"
 >
-@if (quality) {
-  <p>
-    Une adresse manquante peut être volontaire ; complète seulement les
-    coordonnées disponibles.
-  </p>
-}
-<div class="directory-toolbar">
-  <mat-form-field subscriptSizing="dynamic" class="directory-search">
-    <mat-label>Rechercher un membre ou un lot</mat-label>
-    <input
-      #directorySearch
-      matInput
-      [formControl]="query"
-      type="search"
-      autocomplete="off"
-    />
-    <mat-hint>Nom, prénom, coordonnées, adresse ou « lot 12 ».</mat-hint>
-    <button
-      mat-icon-button
-      matSuffix
-      type="button"
-      (click)="query.setValue('')"
-      [disabled]="!query.value"
-      aria-label="Effacer la recherche"
-      matTooltip="Effacer la recherche"
+  <div table-filters class="list-filters">
+    <mat-form-field subscriptSizing="dynamic"
+      ><mat-label>Informations à compléter</mat-label
+      ><mat-select
+        [value]="quality"
+        (selectionChange)="filterQuality($event.value)"
+        ><mat-option value="">Tous les membres</mat-option
+        ><mat-option value="missing_email"
+          >Sans adresse e-mail</mat-option
+        ></mat-select
+      ></mat-form-field
     >
-      <mat-icon aria-hidden="true">clear</mat-icon>
-    </button>
-  </mat-form-field>
-  <div class="directory-view-actions">
-    <mat-button-toggle-group
-      [value]="view"
-      (change)="setView($event.value)"
-      aria-label="Vue des membres"
-    >
-      <mat-button-toggle value="list">Annuaire</mat-button-toggle>
-      <mat-button-toggle value="map">Carte</mat-button-toggle>
-    </mat-button-toggle-group>
-    <button
-      mat-icon-button
-      type="button"
-      (click)="refresh()"
-      [disabled]="loading || unitsLoading"
-      aria-label="Actualiser les membres et les lots"
-      matTooltip="Actualiser les membres et les lots"
-    >
-      <mat-icon aria-hidden="true">refresh</mat-icon>
-    </button>
-  </div>
-</div>
+    <mat-form-field subscriptSizing="dynamic" class="directory-search">
+      <mat-label>Rechercher un membre ou un lot</mat-label>
+      <input
+        #directorySearch
+        matInput
+        [formControl]="query"
+        type="search"
+        autocomplete="off"
+        placeholder="Nom, coordonnées, adresse ou lot"
+      />
+
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="query.setValue('')"
+        [disabled]="!query.value"
+        aria-label="Effacer la recherche"
+        matTooltip="Effacer la recherche"
+      >
+        <mat-icon aria-hidden="true">clear</mat-icon>
+      </button>
+    </mat-form-field>
+    <div class="directory-view-actions">
+      <mat-button-toggle-group
+        [value]="view"
+        (change)="setView($event.value)"
+        aria-label="Vue des membres"
+      >
+        <mat-button-toggle value="list">Annuaire</mat-button-toggle>
+        <mat-button-toggle value="map">Carte</mat-button-toggle>
+      </mat-button-toggle-group>
+      <button
+        mat-icon-button
+        type="button"
+        (click)="refresh()"
+        [disabled]="loading || unitsLoading"
+        aria-label="Actualiser les membres et les lots"
+        matTooltip="Actualiser les membres et les lots"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+      </button>
+    </div>
+  </div></app-crud-table
+>
 @if (loaded && !loading && !error) {
   <p role="status">
     {{ filteredMembers.length }}
-    {{ filteredMembers.length === 1 ? 'membre trouvé' : 'membres trouvés' }} ·
+    {{ filteredMembers.length === 1 ? "membre trouvé" : "membres trouvés" }} ·
     {{ matchingUnits.length }}
     {{
       matchingUnits.length === 1
-        ? 'lot associé ou trouvé'
-        : 'lots associés ou trouvés'
+        ? "lot associé ou trouvé"
+        : "lots associés ou trouvés"
     }}.
   </p>
 }
-<div [hidden]="view !== 'list'">
-  <app-crud-table
-    tableLabel="Annuaire des membres"
-    createLabel="Ajouter un membre"
-    [columns]="columns"
-    [rowLabel]="rowLabel"
-    [dataSource]="datasource"
-    [autoLoad]="false"
-    [canRefresh]="false"
-    [canCreate]="canCreate$"
-    [canEdit]="canEdit.bind(this)"
-    (edit)="edit($event)"
-    [canDelete]="canDelete.bind(this)"
-    (delete)="delete($event)"
-    [rowActions]="rowActions"
-  ></app-crud-table>
-</div>
 <section
   class="directory-map"
   [hidden]="view !== 'map'"
@@ -115,7 +112,7 @@
         (click)="datasource.retryUnits()"
         [disabled]="unitsLoading"
       >
-        {{ unitsLoading ? 'Chargement des lots…' : 'Réessayer les lots' }}
+        {{ unitsLoading ? "Chargement des lots…" : "Réessayer les lots" }}
       </button>
     }
     <div class="map-choices">
@@ -143,7 +140,7 @@
           @for (unit of directoryUnits; track unit.id) {
             <mat-option [value]="unit.number"
               >Lot {{ unit.number }} —
-              {{ unit.address || 'Adresse non renseignée' }}</mat-option
+              {{ unit.address || "Adresse non renseignée" }}</mat-option
             >
           }
         </mat-select>
@@ -176,10 +173,10 @@
     <h3 #selectionHeading tabindex="-1">
       {{
         selectedUnit
-          ? 'Lot ' + selectedUnit.number
+          ? "Lot " + selectedUnit.number
           : selectedMember
             ? memberName(selectedMember)
-            : 'Consulter un membre ou un lot'
+            : "Consulter un membre ou un lot"
       }}
     </h3>
     @if (!loading && !error) {
@@ -187,7 +184,7 @@
         <p role="status">{{ selectionError }}</p>
       }
       @if (selectedUnit) {
-        <p>{{ selectedUnit.address || 'Adresse du lot non renseignée' }}</p>
+        <p>{{ selectedUnit.address || "Adresse du lot non renseignée" }}</p>
         @if (!selectionMembers.length) {
           <p>Aucun membre n’est associé à ce lot.</p>
         }
@@ -205,11 +202,11 @@
           }
           <dl>
             <dt>E-mail</dt>
-            <dd>{{ member.email || 'Non renseigné' }}</dd>
+            <dd>{{ member.email || "Non renseigné" }}</dd>
             <dt>Téléphone</dt>
-            <dd>{{ member.phone_number || 'Non renseigné' }}</dd>
+            <dd>{{ member.phone_number || "Non renseigné" }}</dd>
             <dt>Adresse</dt>
-            <dd>{{ member.address || 'Non renseignée' }}</dd>
+            <dd>{{ member.address || "Non renseignée" }}</dd>
           </dl>
           <p>Lots associés :</p>
           <div class="member-lots">

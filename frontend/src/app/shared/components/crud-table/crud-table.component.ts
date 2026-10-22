@@ -10,7 +10,7 @@ import {
   ViewChild,
   ViewChildren,
   ChangeDetectionStrategy,
-} from '@angular/core';
+} from "@angular/core";
 import {
   BehaviorSubject,
   NEVER,
@@ -24,25 +24,25 @@ import {
   switchMap,
   take,
   takeUntil,
-} from 'rxjs';
-import { DataSource } from '../../datasources';
-import { Column } from '../../models/column.model';
-import { MatColumnDef, MatTable } from '@angular/material/table';
-import { EmptyDataSource } from '../../datasources/empty.datasource';
+} from "rxjs";
+import { DataSource } from "../../datasources";
+import { Column } from "../../models/column.model";
+import { MatColumnDef, MatTable } from "@angular/material/table";
+import { EmptyDataSource } from "../../datasources/empty.datasource";
 import {
   CrudTableDataSource,
   CrudTableRow,
-} from '../../datasources/crud-table.datasource';
-import { MatSort } from '@angular/material/sort';
-import { MatPaginatorIntl } from '@angular/material/paginator';
-import { PagedDataSource } from '../../datasources/paged.datasource';
-import { frenchPaginator } from './french-paginator';
-import { SearchInputComponent } from '../search-input/search-input.component';
+} from "../../datasources/crud-table.datasource";
+import { MatSort } from "@angular/material/sort";
+import { MatPaginatorIntl } from "@angular/material/paginator";
+import { PagedDataSource } from "../../datasources/paged.datasource";
+import { frenchPaginator } from "./french-paginator";
+import { SearchInputComponent } from "../search-input/search-input.component";
 
 export class CustomAction {
   constructor(
     public readonly icon: string,
-    public readonly tooltip: string
+    public readonly tooltip: string,
   ) {}
 }
 
@@ -52,7 +52,7 @@ export class CustomToolbarAction extends CustomAction {
     tooltip: string,
     public readonly func: () => void,
     public readonly loading$?: Observable<boolean>,
-    public readonly loadingTooltip?: string
+    public readonly loadingTooltip?: string,
   ) {
     super(icon, tooltip);
   }
@@ -65,7 +65,7 @@ export class CustomRowAction<T> extends CustomAction {
     public readonly label: string,
     public readonly func: (row: T) => void,
     public readonly show: (row: T) => boolean = (_) => true,
-    public readonly disabled: (row: T) => boolean = (_) => false
+    public readonly disabled: (row: T) => boolean = (_) => false,
   ) {
     super(icon, tooltip);
   }
@@ -73,12 +73,12 @@ export class CustomRowAction<T> extends CustomAction {
 
 export class SelectionModel<T> {
   private readonly _selected$ = new BehaviorSubject<{ hash: string; row: T }[]>(
-    []
+    [],
   );
 
   readonly selected$ = this._selected$.pipe(
     map((items) => items.map((item) => item.row)),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
 
   private _getIndex(row: T): number {
@@ -94,7 +94,7 @@ export class SelectionModel<T> {
       this._selected$.next([...this._selected$.value, { hash, row }]);
     } else {
       this._selected$.next(
-        this._selected$.value.filter((item) => item.hash !== hash)
+        this._selected$.value.filter((item) => item.hash !== hash),
       );
     }
   }
@@ -113,16 +113,18 @@ export type CanEditFunction<T = any> = (row: T) => Observable<boolean>;
 export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
 
 @Component({
-  selector: 'app-crud-table',
+  selector: "app-crud-table",
   providers: [{ provide: MatPaginatorIntl, useFactory: frenchPaginator }],
-  templateUrl: './crud-table.component.html',
-  styleUrls: ['./crud-table.component.scss'],
+  templateUrl: "./crud-table.component.html",
+  styleUrls: ["./crud-table.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class CrudTableComponent<T extends {}>
   implements OnDestroy, AfterViewInit
 {
+  // Keep the table and its source alive when a directory switches to its map.
+  @Input() tableVisible = true;
   private _destroyed$ = new Subject<void>();
 
   private _rowActions$ = new BehaviorSubject<CustomRowAction<T>[]>([]);
@@ -130,7 +132,7 @@ export class CrudTableComponent<T extends {}>
   private _canSelect$ = new BehaviorSubject(false);
 
   @Input() set canSelect(canSelect: boolean | Observable<boolean>) {
-    if (typeof canSelect === 'boolean') {
+    if (typeof canSelect === "boolean") {
       this._canSelect$.next(canSelect);
     } else {
       canSelect
@@ -143,7 +145,7 @@ export class CrudTableComponent<T extends {}>
 
   private _canEdit$ = new BehaviorSubject(false);
   private _canEditFunc$ = new BehaviorSubject<CanEditFunction<T> | undefined>(
-    undefined
+    undefined,
   );
 
   canEditRow(row: T) {
@@ -180,8 +182,8 @@ export class CrudTableComponent<T extends {}>
         canDelete ||
         !!canEditFunc ||
         !!canDeleteFunc ||
-        rowActions.length > 0
-    )
+        rowActions.length > 0,
+    ),
   );
 
   @Input() rowClass: RowClassFunction<T> = (_) => undefined;
@@ -190,7 +192,7 @@ export class CrudTableComponent<T extends {}>
   readonly canCreate$ = this._canCreate$.asObservable();
 
   @Input() set canCreate(canCreate: Observable<boolean> | boolean) {
-    if (typeof canCreate === 'boolean') {
+    if (typeof canCreate === "boolean") {
       this._canCreate$.next(canCreate);
     } else {
       canCreate
@@ -201,7 +203,7 @@ export class CrudTableComponent<T extends {}>
 
   @Input() set canEdit(canEdit: boolean | CanEditFunction<T>) {
     if (canEdit) {
-      if (typeof canEdit === 'function') {
+      if (typeof canEdit === "function") {
         this._canEdit$.next(false);
         this._canEditFunc$.next(canEdit);
       } else {
@@ -216,7 +218,7 @@ export class CrudTableComponent<T extends {}>
 
   @Input() set canDelete(canDelete: boolean | CanDeleteFunction<T>) {
     if (canDelete) {
-      if (typeof canDelete === 'function') {
+      if (typeof canDelete === "function") {
         this._canDelete$.next(false);
         this._canDeleteFunc$.next(canDelete);
       } else {
@@ -229,19 +231,19 @@ export class CrudTableComponent<T extends {}>
     }
   }
 
-  @Input() createLabel = 'Ajouter';
-  @Input() tableLabel = 'Tableau de données';
+  @Input() createLabel = "Ajouter";
+  @Input() tableLabel = "Tableau de données";
   @Input() rowLabel?: (row: T) => string;
 
   describeRow(row: CrudTableRow<T>): string {
     const label = this.rowLabel?.(row.original);
     if (label) return label;
     const column = this.columns.find(
-      (column) => !column.hidden && column.label.trim()
+      (column) => !column.hidden && column.label.trim(),
     );
     const value = column && row.columns[column.name]?.display;
-    return value === undefined || value === null || value === ''
-      ? 'cette ligne'
+    return value === undefined || value === null || value === ""
+      ? "cette ligne"
       : String(value);
   }
 
@@ -274,17 +276,17 @@ export class CrudTableComponent<T extends {}>
   ]).pipe(
     map(([columnDefs, customColumnDefs, showActions, canSelect]) => {
       return [
-        canSelect ? ['_select_'] : [],
+        canSelect ? ["_select_"] : [],
         columnDefs.filter((c) => !c.hidden).map((c) => c.name),
         customColumnDefs.map((c) => c.name),
-        showActions ? ['_actions_'] : [],
+        showActions ? ["_actions_"] : [],
       ];
     }),
     map(([select, columns, customColumns, actions]) => {
       return [
         ...new Set([...select, ...columns, ...customColumns, ...actions]),
       ];
-    })
+    }),
   );
   readonly columnsCount$ = this.columns$.pipe(map((columns) => columns.length));
 
@@ -293,8 +295,8 @@ export class CrudTableComponent<T extends {}>
       new EmptyDataSource<T>(),
       this._columnDefs$,
       NEVER,
-      NEVER
-    )
+      NEVER,
+    ),
   );
 
   readonly loading$ = this._dataSource$.pipe(switchMap((ds) => ds.loading$));
@@ -323,8 +325,8 @@ export class CrudTableComponent<T extends {}>
         dataSource,
         this._columnDefs$,
         this.sort.sortChange,
-        this.search.onPatternChange.asObservable()
-      )
+        this.search.onPatternChange.asObservable(),
+      ),
     );
   }
 
@@ -340,7 +342,7 @@ export class CrudTableComponent<T extends {}>
   @Output() delete = new EventEmitter<T>();
 
   readonly filters$ = this._columnDefs$.pipe(
-    map((columns) => columns.filter((c) => c.canFilter))
+    map((columns) => columns.filter((c) => c.canFilter)),
   );
 
   ngOnInit() {
@@ -367,7 +369,7 @@ export class CrudTableComponent<T extends {}>
       ds.results$
         .pipe(
           takeUntil(this._destroyed$),
-          takeUntil(this._dataSource$.pipe(skip(1)))
+          takeUntil(this._dataSource$.pipe(skip(1))),
         )
         .subscribe((result) => {
           this.selected.selected$.pipe(first()).subscribe((rows) => {
@@ -375,7 +377,7 @@ export class CrudTableComponent<T extends {}>
               if (
                 result.findIndex(
                   (item) =>
-                    JSON.stringify(item.original) === JSON.stringify(row)
+                    JSON.stringify(item.original) === JSON.stringify(row),
                 ) === -1
               ) {
                 this.selected.toggle(row);
@@ -396,7 +398,7 @@ export class CrudTableComponent<T extends {}>
 
     this._columnDefs$.pipe(takeUntil(this._destroyed$)).subscribe((columns) => {
       if (this.remoteSource) return;
-      this.sort.active = '';
+      this.sort.active = "";
 
       // Define default active sort
       for (let column of columns!) {
@@ -418,7 +420,7 @@ export class CrudTableComponent<T extends {}>
 
     (this.customColumns ?? []).forEach((custom) => {
       const defaultColumn = (this.defaultColumns ?? []).filter(
-        (column) => column.name === custom.name
+        (column) => column.name === custom.name,
       )[0];
 
       if (defaultColumn) {
@@ -455,24 +457,24 @@ export class CrudTableComponent<T extends {}>
       combineLatest([this.selected.selected$, ds.results$]).pipe(
         map(
           ([selected, results]) =>
-            results.length > 0 && selected.length === results.length
-        )
-      )
-    )
+            results.length > 0 && selected.length === results.length,
+        ),
+      ),
+    ),
   );
 
   readonly someSelected$ = combineLatest([
     this.selected.selected$,
     this.allSelected$,
   ]).pipe(
-    map(([selected, allSelected]) => selected.length > 0 && !allSelected)
+    map(([selected, allSelected]) => selected.length > 0 && !allSelected),
   );
 
   toggleAll() {
     this.allSelected$
       .pipe(
         take(1),
-        map((allSelected) => !allSelected)
+        map((allSelected) => !allSelected),
       )
       .subscribe((r) =>
         this._dataSource$.value.results$.pipe(take(1)).subscribe((rows) =>
@@ -480,8 +482,8 @@ export class CrudTableComponent<T extends {}>
             if (this.selected.isSelected(row.original) !== r) {
               this.selected.toggle(row.original);
             }
-          })
-        )
+          }),
+        ),
       );
   }
 }

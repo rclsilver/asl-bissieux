@@ -13,23 +13,6 @@
   </button>
 }
 <div [hidden]="campaignLoading || campaignError">
-  <p>
-    Recherche par destinataire. La sélection porte uniquement sur la page
-    affichée.
-  </p>
-  <mat-form-field subscriptSizing="dynamic" class="state-filter">
-    <mat-label>État des e-mails</mat-label>
-    <mat-select
-      [value]="state"
-      (selectionChange)="setState($event.value)"
-      [disabled]="busyAction"
-    >
-      <mat-option value="">Tous les états</mat-option>
-      @for (state of states; track state) {
-        <mat-option [value]="state">{{ stateLabel(state) }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
   @if (previewingId) {
     <p role="status">Chargement du détail de l’e-mail…</p>
   }
@@ -47,6 +30,21 @@
     [toolbarActions]="toolbarActions$ | async"
     [rowActions]="rowActions$ | async"
   >
+    <div table-filters class="list-filters">
+      <mat-form-field subscriptSizing="dynamic" class="state-filter">
+        <mat-label>État des e-mails</mat-label>
+        <mat-select
+          [value]="state"
+          (selectionChange)="setState($event.value)"
+          [disabled]="busyAction"
+        >
+          <mat-option value="">Tous les états</mat-option>
+          @for (state of states; track state) {
+            <mat-option [value]="state">{{ stateLabel(state) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
     <ng-container matColumnDef="state">
       <td mat-cell *matCellDef="let email">
         <span class="{{ email.columns.state.value | lowercase }}">{{
@@ -81,4 +79,5 @@
       </td>
     </ng-container>
   </app-crud-table>
+  <p class="list-note">La sélection porte uniquement sur la page affichée.</p>
 </div>

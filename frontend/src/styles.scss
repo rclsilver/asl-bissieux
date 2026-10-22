@@ -4,6 +4,63 @@
 @use "app/shared/shared.theme" as shared;
 @use "app/dashboard/dashboard.theme" as dashboard;
 
+// Projected list controls share the same layout as search, refresh and add.
+.list-filters {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-size: 1rem;
+  font-weight: 400;
+  white-space: normal;
+
+  mat-form-field {
+    inline-size: 17rem;
+    max-inline-size: 100%;
+    @include mat.form-field-overrides(
+      (
+        container-height: 48px,
+        container-vertical-padding: 12px,
+        filled-with-label-container-padding-top: 20px,
+        filled-with-label-container-padding-bottom: 4px,
+      )
+    );
+  }
+  .directory-search {
+    flex: 1 1 18rem;
+    min-inline-size: 0;
+  }
+  .directory-view-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-inline-size: 100%;
+  }
+  mat-button-toggle-group {
+    @include mat.button-toggle-overrides(
+      (
+        height: 48px,
+      )
+    );
+  }
+}
+.list-help,
+.list-note {
+  margin-block: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--asl-muted);
+  max-inline-size: 75ch;
+}
+.list-help summary {
+  cursor: pointer;
+  min-block-size: 44px;
+  align-content: center;
+  color: var(--asl-primary);
+}
+
 @mixin graphite {
   --asl-ground: #101821;
   --asl-surface: #19232e;

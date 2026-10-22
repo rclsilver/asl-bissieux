@@ -40,7 +40,7 @@
               {{
                 preview.total_shares
                   ? formatRate(preview.annual_per_share ?? 0)
-                  : '—'
+                  : "—"
               }}
             </dd>
           </div>
@@ -50,7 +50,7 @@
               {{
                 preview.total_shares
                   ? formatRate(preview.monthly_per_share ?? 0)
-                  : '—'
+                  : "—"
               }}
             </dd>
           </div>
@@ -58,40 +58,22 @@
         @if (!preview.ready) {
           <p role="status" class="preview-message">{{ preview.message }}</p>
         }
-        <p class="preview-note">
-          Montants indicatifs arrondis à 6 décimales. À la publication, les
-          cotisations sont réparties au centime selon les parts ; les centimes
-          restants vont aux plus grands restes, puis aux numéros de lots
-          croissants en cas d’égalité.
-        </p>
-        <p class="preview-note">
-          Cet aperçu ne publie pas le budget et ne crée aucune cotisation. Il
-          s’actualise après chaque modification de dépense et au retour dans
-          cette fenêtre. Après modification des parts dans un autre écran,
-          utilise « Actualiser ».
-        </p>
+        <details class="list-help">
+          <summary>Répartition et actualisation de l’aperçu</summary>
+          <p class="preview-note">
+            Montants indicatifs arrondis à 6 décimales. À la publication, les
+            cotisations sont réparties au centime selon les parts ; les centimes
+            restants vont aux plus grands restes, puis aux numéros de lots
+            croissants en cas d’égalité.
+          </p>
+          <p class="preview-note">
+            Cet aperçu ne publie pas le budget et ne crée aucune cotisation. Il
+            s’actualise après chaque modification de dépense et au retour dans
+            cette fenêtre. Après modification des parts dans un autre écran,
+            utilise « Actualiser ».
+          </p>
+        </details>
       </section>
-    }
-    @if (!budget.draft) {
-      <mat-form-field subscriptSizing="dynamic"
-        ><mat-label>Situation des cotisations</mat-label
-        ><mat-select
-          [value]="coverage"
-          (selectionChange)="filterCoverage($event.value)"
-          ><mat-option value="">Toutes les cotisations</mat-option>
-          @for (item of coverageLabels | keyvalue; track item.key) {
-            <mat-option [value]="item.key">{{ item.value }}</mat-option>
-          }
-        </mat-select></mat-form-field
-      >
-      @if (cotisationFilter) {
-        <p>
-          Une cotisation sélectionnée depuis l’accueil.
-          <button mat-button type="button" (click)="filterCoverage('')">
-            Afficher toutes les cotisations
-          </button>
-        </p>
-      }
     }
     <mat-tab-group>
       @if (cotisations$ | async; as cotisations) {
@@ -103,6 +85,35 @@
             [dataSource]="cotisations"
             [rowActions]="cotisationsRowActions$ | async"
           >
+            <div table-filters class="list-filters">
+              @if (!budget.draft) {
+                <mat-form-field subscriptSizing="dynamic"
+                  ><mat-label>Situation des cotisations</mat-label
+                  ><mat-select
+                    [value]="coverage"
+                    (selectionChange)="filterCoverage($event.value)"
+                    ><mat-option value="">Toutes les cotisations</mat-option>
+                    @for (item of coverageLabels | keyvalue; track item.key) {
+                      <mat-option [value]="item.key">{{
+                        item.value
+                      }}</mat-option>
+                    }
+                  </mat-select></mat-form-field
+                >
+                @if (cotisationFilter) {
+                  <p>
+                    Une cotisation sélectionnée depuis l’accueil.
+                    <button
+                      mat-button
+                      type="button"
+                      (click)="filterCoverage('')"
+                    >
+                      Afficher toutes les cotisations
+                    </button>
+                  </p>
+                }
+              }
+            </div>
             <ng-container matColumnDef="state">
               <td mat-cell *matCellDef="let row">
                 @switch (row.columns.state.display) {

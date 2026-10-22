@@ -1,23 +1,5 @@
 <h1>Comptes et accès</h1>
 @if (administrator$ | async) {
-  <p>
-    Se connecter avec Google ou Keycloak vérifie une identité. L’accès à
-    l’application reste accordé manuellement par un administrateur. Les membres
-    de l’annuaire sont gérés séparément.
-  </p>
-  <mat-form-field subscriptSizing="dynamic"
-    ><mat-label>État de l’accès</mat-label
-    ><mat-select
-      [value]="status"
-      (selectionChange)="filter($event.value)"
-      [disabled]="busy"
-      ><mat-option value="">Tous les comptes</mat-option
-      ><mat-option value="pending">Demandes en attente</mat-option
-      ><mat-option value="active">Actifs</mat-option
-      ><mat-option value="rejected">Refusés</mat-option
-      ><mat-option value="disabled">Désactivés</mat-option></mat-select
-    ></mat-form-field
-  >
   @if (message) {
     <p role="status">{{ message }}</p>
   }
@@ -34,7 +16,31 @@
     [canEdit]="canEdit.bind(this)"
     (edit)="edit($event)"
     [rowActions]="rowActions"
-  ></app-crud-table>
+  >
+    <div table-filters class="list-filters">
+      <mat-form-field subscriptSizing="dynamic"
+        ><mat-label>État de l’accès</mat-label
+        ><mat-select
+          [value]="status"
+          (selectionChange)="filter($event.value)"
+          [disabled]="busy"
+          ><mat-option value="">Tous les comptes</mat-option
+          ><mat-option value="pending">Demandes en attente</mat-option
+          ><mat-option value="active">Actifs</mat-option
+          ><mat-option value="rejected">Refusés</mat-option
+          ><mat-option value="disabled">Désactivés</mat-option></mat-select
+        ></mat-form-field
+      >
+    </div></app-crud-table
+  >
+  <details class="list-help">
+    <summary>À propos des accès</summary>
+    <p>
+      Se connecter avec Google ou Keycloak vérifie une identité. L’accès à
+      l’application reste accordé manuellement par un administrateur. Les
+      membres de l’annuaire sont gérés séparément.
+    </p>
+  </details>
 } @else {
   <p role="alert">Cette page est réservée aux administrateurs actifs.</p>
 }

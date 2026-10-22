@@ -18,7 +18,10 @@
     [rowActions]="rowActions"
   >
     <div table-filters class="list-filters">
-      <mat-form-field subscriptSizing="dynamic"
+      <mat-form-field
+        appearance="outline"
+        class="context-field"
+        subscriptSizing="dynamic"
         ><mat-label>État de l’accès</mat-label
         ><mat-select
           [value]="status"

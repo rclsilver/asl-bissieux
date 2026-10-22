@@ -88,7 +88,8 @@ dd {
 summary {
   cursor: pointer;
   color: var(--asl-primary);
-  padding: 0.35rem 0;
+  min-height: 44px;
+  align-content: center;
 }
 .inline-facts,
 .legend {
@@ -100,12 +101,12 @@ summary {
   font-size: 0.875rem;
 }
 .inline-facts {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 .section {
   border-top: 1px solid var(--asl-border);
-  padding-top: 1.5rem;
-  margin-top: 2rem;
+  padding-top: 1rem;
+  margin-top: 1.5rem;
   min-width: 0;
 }
 .section h2 {
@@ -212,32 +213,6 @@ summary {
 .actions-list {
   padding-left: 1.25rem;
 }
-.table-scroll {
-  overflow-x: auto;
-  max-width: 100%;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-variant-numeric: tabular-nums;
-  background: var(--asl-surface);
-}
-th,
-td {
-  text-align: start;
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--asl-border);
-  white-space: nowrap;
-}
-th {
-  color: var(--asl-muted);
-  background: var(--asl-raised);
-}
-caption {
-  text-align: start;
-  padding-block: 0.75rem;
-  font-weight: 600;
-}
 .global-modules {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(25rem, 100%), 1fr));
@@ -274,4 +249,9 @@ caption {
   .lot-detail {
     transition: none;
   }
+}
+
+.comparison-section > summary {
+  font-size: 1.1rem;
+  font-weight: 650;
 }

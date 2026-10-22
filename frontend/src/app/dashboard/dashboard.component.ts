@@ -130,20 +130,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedLot: number | null = null;
   mapSearch = "";
   administrator = false;
-  readonly months = [
-    "Janvier",
-    "Février",
-    "Mars",
-    "Avril",
-    "Mai",
-    "Juin",
-    "Juillet",
-    "Août",
-    "Septembre",
-    "Octobre",
-    "Novembre",
-    "Décembre",
-  ];
   ngOnInit() {
     this.bind(
       this.reloadBudgets$,
@@ -346,9 +332,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   selectBudget(id: string) {
     this.navigate({ budget: id, reference: null, lot: null });
-  }
-  selectYear(year: number) {
-    this.navigate({ year });
   }
   selectReference(id: string) {
     this.navigate({ reference: id || null });

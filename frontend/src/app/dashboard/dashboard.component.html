@@ -43,9 +43,8 @@
 </div>
 @if (!budgetId) {
   <p>
-    Choisis un budget pour consulter sa situation, sa carte et ses
-    encaissements. Les modules Annuaire et E-mails portent sur toute
-    l’association.
+    Choisis un budget pour consulter sa situation et la carte des paiements. Les
+    modules Annuaire et E-mails portent sur toute l’association.
   </p>
 }
 @if (finance.loading) {
@@ -291,21 +290,7 @@
           Réessayer les lots
         </button>
       }
-      <mat-form-field subscriptSizing="dynamic"
-        ><mat-label>Consulter un lot</mat-label
-        ><mat-select
-          [value]="selectedLot"
-          (selectionChange)="selectLot($event.value)"
-          ><mat-option [value]="null">Aucun lot sélectionné</mat-option>
-          @for (unit of units.value ?? []; track unit.id) {
-            <mat-option [value]="unit.number">Lot {{ unit.number }}</mat-option>
-          }
-        </mat-select></mat-form-field
-      >
-      <p>
-        Sur la carte : Tab, flèches, puis Entrée ou Espace pour sélectionner un
-        lot.
-      </p>
+
       <app-interactive-map
         label="Carte des paiements du budget sélectionné"
         [showLabels]="true"
@@ -314,6 +299,26 @@
         [selectedUnit]="selectedLot"
         (unitClick)="selectLot($event.unitId)"
       ></app-interactive-map>
+      <details class="map-help">
+        <summary>Choisir un lot dans une liste ou utiliser le clavier</summary>
+        <mat-form-field subscriptSizing="dynamic"
+          ><mat-label>Consulter un lot</mat-label
+          ><mat-select
+            [value]="selectedLot"
+            (selectionChange)="selectLot($event.value)"
+            ><mat-option [value]="null">Aucun lot sélectionné</mat-option>
+            @for (unit of units.value ?? []; track unit.id) {
+              <mat-option [value]="unit.number"
+                >Lot {{ unit.number }}</mat-option
+              >
+            }
+          </mat-select></mat-form-field
+        >
+        <p>
+          Clavier : Tab, flèches, puis Entrée ou Espace pour sélectionner un
+          lot.
+        </p>
+      </details>
     </section>
     <aside class="map-context">
       @if (selectedLot !== null) {
@@ -471,80 +476,9 @@
             </li>
           }
         </ul>
-        <p>
-          Ces liens ouvrent les situations à examiner ; ils n’envoient aucun
-          e-mail et ne déclenchent aucun mouvement bancaire. Les modules
-          ci-dessous indiquent aussi leurs erreurs ou leur chargement.
-        </p>
       </section>
     </aside>
   </div>
-  <section class="section" aria-labelledby="collections-title">
-    <h2 id="collections-title">Encaissements mensuels</h2>
-    <mat-form-field subscriptSizing="dynamic"
-      ><mat-label>Année civile — Europe/Paris</mat-label
-      ><mat-select [value]="year" (selectionChange)="selectYear($event.value)">
-        @for (period of finance.value.years ?? []; track period) {
-          <mat-option [value]="period">{{ period }}</mat-option>
-        }
-      </mat-select></mat-form-field
-    >
-    <p>
-      Du 1er janvier au 31 décembre {{ year }}, dates métier en Europe/Paris. Le
-      cumul commence à zéro pour cette période. Les autres années restent
-      incluses dans les indicateurs toutes dates.
-    </p>
-    <app-collections-chart
-      [months]="finance.value.months ?? []"
-      [called]="finance.value.recovery?.called ?? 0"
-      [year]="year"
-    ></app-collections-chart>
-    <p>
-      Cumul net (trait plein) et appelé actuel, toutes dates (pointillés) :
-      {{ money(finance.value.recovery?.called) }}. Ce suivi ne représente pas la
-      trésorerie bancaire.
-    </p>
-    <div
-      class="table-scroll"
-      tabindex="0"
-      role="region"
-      aria-label="Encaissements des douze mois"
-    >
-      <table>
-        <caption>
-          Encaissements en
-          {{
-            year
-          }}
-          — Europe/Paris
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Mois</th>
-            <th scope="col">Paiements</th>
-            <th scope="col">Remboursements nets</th>
-            <th scope="col">Net du mois</th>
-            <th scope="col">Cumul de la période</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (month of finance.value.months ?? []; track month.month) {
-            <tr>
-              <th scope="row">{{ months[(month.month ?? 1) - 1] }}</th>
-              <td>{{ money(month.payments) }}</td>
-              <td>{{ money(month.refunds) }}</td>
-              <td>{{ money(month.net) }}</td>
-              <td>{{ money(month.cumulative) }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <p>
-      Les remboursements nets peuvent être négatifs lorsqu’une contre-écriture
-      annule un remboursement d’une période antérieure.
-    </p>
-  </section>
 }
 @if (!finance.value || finance.value.budget?.draft) {
   <section aria-labelledby="actions-title" class="section">
@@ -610,17 +544,13 @@
         </li>
       }
     </ul>
-    <p>
-      Ces liens ouvrent les situations à examiner ; ils n’envoient aucun e-mail
-      et ne déclenchent aucun mouvement bancaire. Les modules ci-dessous
-      indiquent aussi leurs erreurs ou leur chargement.
-    </p>
   </section>
 }
 
 @if (finance.value; as view) {
-  <section class="section" aria-labelledby="comparison-title">
-    <h2 id="comparison-title">Comparer les budgets annuels</h2>
+  <details class="section comparison-section" [open]="!!referenceId">
+    <summary id="comparison-title">Comparer les budgets annuels</summary>
+
     <p>
       Comparaison des dépenses
       {{
@@ -702,7 +632,7 @@
         }
       </p>
     }
-  </section>
+  </details>
 }
 <div class="global-modules">
   <section class="section" aria-labelledby="directory-title">
@@ -734,11 +664,14 @@
           >
         </li>
       </ul>
-      <p>
-        Une adresse e-mail manquante peut être volontaire. Ces points servent à
-        compléter les informations disponibles, sans confondre membre de
-        l’annuaire et utilisateur de l’application.
-      </p>
+      <details>
+        <summary>À propos des coordonnées manquantes</summary>
+        <p>
+          Une adresse e-mail manquante peut être volontaire. Complète seulement
+          les informations disponibles. Les membres de l’annuaire et les
+          utilisateurs de l’application sont gérés séparément.
+        </p>
+      </details>
     }
   </section>
   <section class="section" aria-labelledby="email-title">
@@ -790,27 +723,29 @@
         Les signaux d’ouverture restent inclus une seule fois dans les envois
         réussis. Un pixel d’ouverture ne prouve pas la lecture humaine.
       </p>
-      <h3>Les cinq campagnes les plus récentes</h3>
-      <ul>
-        @for (campaign of data.recent ?? []; track campaign.id) {
-          <li>
-            <a [routerLink]="['/emails/campaigns', campaign.id]">{{
-              campaign.title
-            }}</a>
-            — {{ campaign.created_at | date: "dd/MM/yyyy" }}
-            @if ((campaign.counts?.error ?? 0) > 0) {
-              ·
-              <a
-                [routerLink]="['/emails/campaigns', campaign.id]"
-                [queryParams]="{ state: 'ERROR' }"
-                >{{ campaign.counts?.error }} erreurs à examiner</a
-              >
-            }
-          </li>
-        } @empty {
-          <li>Aucune campagne enregistrée.</li>
-        }
-      </ul>
+      <details class="recent-campaigns">
+        <summary>Les cinq campagnes les plus récentes</summary>
+        <ul>
+          @for (campaign of data.recent ?? []; track campaign.id) {
+            <li>
+              <a [routerLink]="['/emails/campaigns', campaign.id]">{{
+                campaign.title
+              }}</a>
+              — {{ campaign.created_at | date: "dd/MM/yyyy" }}
+              @if ((campaign.counts?.error ?? 0) > 0) {
+                ·
+                <a
+                  [routerLink]="['/emails/campaigns', campaign.id]"
+                  [queryParams]="{ state: 'ERROR' }"
+                  >{{ campaign.counts?.error }} erreurs à examiner</a
+                >
+              }
+            </li>
+          } @empty {
+            <li>Aucune campagne enregistrée.</li>
+          }
+        </ul>
+      </details>
     }
   </section>
 </div>

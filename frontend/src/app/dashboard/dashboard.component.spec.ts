@@ -152,6 +152,13 @@ describe("Dashboard scopes and recovery", () => {
     f.detectChanges();
     expect(f.componentInstance.budgetId).toBe("newest");
     expect(f.nativeElement.textContent).toContain("Budget par défaut");
+    expect(f.nativeElement.querySelector("app-interactive-map")).not.toBeNull();
+    expect(f.nativeElement.querySelector("app-collections-chart")).toBeNull();
+    expect(f.nativeElement.querySelector("#collections-title")).toBeNull();
+    expect(f.nativeElement.querySelector("table")).toBeNull();
+    expect(f.nativeElement.querySelector(".comparison-section").open).toBe(
+      false,
+    );
     http.expectNone("/api/budget/older/dashboard?year=2026");
   });
   it("keeps an explicit URL selection, including deliberately choosing no budget", () => {

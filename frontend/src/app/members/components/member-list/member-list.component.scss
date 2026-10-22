@@ -10,7 +10,6 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
   gap: 1.5rem;
-  margin-block-start: 1.5rem;
 }
 .map-pane,
 .selection-pane {
@@ -28,9 +27,6 @@ p {
 .map-heading p {
   margin: 0;
   color: var(--asl-muted);
-}
-nav {
-  margin-block-end: 1rem;
 }
 app-crud-table[hidden] {
   display: none;

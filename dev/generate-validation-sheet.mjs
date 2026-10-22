@@ -1,9 +1,14 @@
 // Generate a standalone checklist from the human-readable Markdown source.
 // Run with Node from the repository or a development container. No dependencies.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const sourceURL = new URL('../docs/fiche-validation.md', import.meta.url);
-const outputURL = new URL('../docs/fiche-validation.html', import.meta.url);
+if (Boolean(process.argv[2]) !== Boolean(process.argv[3])) throw new Error('Usage: node generate-validation-sheet.mjs [source.md output.html [subtitle]]');
+const sourceURL = process.argv[2] ? pathToFileURL(resolve(process.argv[2])) : new URL('../docs/fiche-validation.md', import.meta.url);
+const outputURL = process.argv[3] ? pathToFileURL(resolve(process.argv[3])) : new URL('../docs/fiche-validation.html', import.meta.url);
+const subtitle = process.argv[4] ?? 'Lots 1–18 et ajouts dashboard, OVH, Smocker et Viper';
+const date = process.argv[4] ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'Europe/Paris' }).format(new Date()) : '21 octobre 2026';
 const source = readFileSync(sourceURL, 'utf8');
 const reference = source.match(/référence : `([^`]+)`/)?.[1];
 if (!reference) throw new Error('Missing reference version');
@@ -28,7 +33,7 @@ for (const line of source.split('\n')) {
   }
 }
 const items = sections.flatMap((s) => s.items);
-if (items.length < 70 || new Set(items.map((i) => i.id)).size !== items.length) throw new Error('Invalid test inventory');
+if (items.length < (process.argv[2] ? 1 : 70) || new Set(items.map((i) => i.id)).size !== items.length) throw new Error('Invalid test inventory');
 for (const i of items) if (!i.action || !i.expected) throw new Error('Incomplete test: ' + i.id);
 const esc = (s) => String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const renderCase = (i) => `<article class="test" data-test="${i.id}" data-search="${esc(i.id+' '+i.title+' '+i.action+' '+i.expected)}">
@@ -67,7 +72,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 <a class="skip" href="#tests">Aller aux tests</a>
 <header>
 <h1>Fiche de validation — ASL Bissieux</h1>
-<p class="muted">Lots 1–18 et ajouts dashboard, OVH, Smocker et Viper · Référence ${esc(reference)} · 21 octobre 2026</p>
+<p class="muted">${esc(subtitle)} · Référence ${esc(reference)} · ${esc(date)}</p>
 <p>Coche une case après avoir effectué le test et obtenu le résultat attendu. Pour un échec, un blocage ou un cas sans objet, utilise « Noter un écart ou une réserve ». Rien n’est prévalidé.</p>
 <div class="session">
   <label for="reviewer">Validateur<input id="reviewer" autocomplete="name"></label>

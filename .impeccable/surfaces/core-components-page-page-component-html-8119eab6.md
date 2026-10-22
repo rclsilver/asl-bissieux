@@ -26,3 +26,5 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 ## Vérification
 
 Tests Angular et helpers, build de production, cohérence des thèmes et conservation de la navigation mobile, des droits et des états métier. Cet environnement interdit le navigateur local et un serveur de présentation supplémentaire : pas de prétendue inspection visuelle par capture. Revue indépendante du code à portée explicite, puis validation humaine du rendu local. Aucun raster nouveau prévu.
+
+État de livraison : 128 tests Angular et 20 helpers réussis ; build de production réussi. Scan statique Impeccable sans constat. Revue indépendante des sources : contrastes de focus et variantes M3 warn/accent corrigés puis déclarés résolus. DESIGN.md et sidecar documentent le code livré. Verdict visuel `recapture` encore ouvert : captures desktop/mobile indisponibles par contrainte d’environnement. La fiche de 16 tests publiée accompagne la validation humaine ; aucun verdict visuel `ship` n’est revendiqué.

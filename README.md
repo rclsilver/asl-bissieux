@@ -451,6 +451,8 @@ rien en production et ne modifie aucun client Google distant.
 ## Parcours livrés et documentation
 
 - [Fiche de validation à cocher — lots 1–18 et OVH](docs/fiche-validation.md), également disponible en [HTML interactif autonome](docs/fiche-validation.html).
+- [Validation de la refonte Bassin clair / Graphite](docs/validation-refonte.md), avec [16 tests à cocher](docs/validation-refonte.html) indépendants de la fiche précédente.
+- [Système visuel, thèmes et composants](DESIGN.md)
 - [Démarrage local, ports et vérifications](docs/demarrage-local.md)
 - [Accueil : recouvrement, carte, encaissements et synthèses](docs/tableau-de-bord.md)
 - [Remboursements, ajustements et contre-écritures](docs/journal-financier.md)

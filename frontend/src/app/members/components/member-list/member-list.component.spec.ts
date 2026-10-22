@@ -1,5 +1,7 @@
 import { provideZoneChangeDetection } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
+import { CrudTableComponent } from "src/app/shared/components/crud-table/crud-table.component";
 import { provideHttpClient } from "@angular/common/http";
 import {
   HttpTestingController,
@@ -93,12 +95,12 @@ describe("Member directory and map", () => {
     return fixture;
   }
 
-  it("applies the missing-email link filter while retaining full member and coowner context", () => {
+  it("ignores the retired missing-email filter in old links and keeps all members", () => {
     params.next(convertToParamMap({ quality: "missing_email" }));
     const fixture = setup();
     const page = fixture.componentInstance;
-    expect(page.quality).toBe("missing_email");
-    expect(page.filteredMembers.map((m) => m.id)).toEqual([bob.id, zoe.id]);
+    expect(fixture.nativeElement.querySelector("mat-select")).toBeNull();
+    expect(page.filteredMembers).toHaveLength(3);
     expect(page.members).toHaveLength(3);
     page.query.setValue("Bob");
     expect(page.filteredMembers.map((m) => m.id)).toEqual([bob.id]);
@@ -109,31 +111,51 @@ describe("Member directory and map", () => {
     page.canEdit(bob);
     expect(allowed).toHaveBeenCalledWith("member.UpdateMember");
   });
-  it("shares accent-insensitive search across views without reloading or disconnecting the table", () => {
+  it("uses the standard search in the directory and direct lot clicks in the map without losing the query", () => {
     const fixture = setup();
     const page = fixture.componentInstance;
     const table = fixture.nativeElement.querySelector("table");
-    page.query.setValue("coeur ELODIE");
+    const search = fixture.debugElement.query(By.directive(CrudTableComponent))
+      .componentInstance.search;
+    search.show();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector(
+      "app-search-input input",
+    ) as HTMLInputElement;
+    input.value = "coeur ELODIE";
+    input.dispatchEvent(new Event("input"));
     fixture.detectChanges();
     expect(page.filteredMembers.map((member) => member.id)).toEqual([
       elodie.id,
     ]);
-    expect(page.highlightedUnits).toEqual([1, 2]);
-    page.setView("map");
-    fixture.detectChanges();
-    const header = fixture.nativeElement.querySelector(
-      "app-crud-table mat-toolbar",
+    expect(fixture.nativeElement.querySelector("table").textContent).toContain(
+      "Élodie",
     );
-    expect(header.querySelector('input[type="search"]')).not.toBeNull();
-    expect(header.querySelector("mat-select")).not.toBeNull();
-    expect(header.querySelector("mat-button-toggle-group")).not.toBeNull();
-    expect(header.querySelector(".create-action")).not.toBeNull();
-    expect(fixture.nativeElement.querySelector(".table-container").hidden).toBe(
+    expect(
+      fixture.nativeElement.querySelector("table").textContent,
+    ).not.toContain("Zoé");
+    const tabs = fixture.nativeElement.querySelectorAll("nav button");
+    tabs[1].click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector("app-crud-table").hidden).toBe(
       true,
     );
-    page.setView("list");
+    expect(
+      fixture.nativeElement.querySelector(
+        ".directory-map input, .directory-map mat-select",
+      ),
+    ).toBeNull();
+    expect(page.highlightedUnits).toEqual([]);
+    fixture.nativeElement
+      .querySelector("#unit-01")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector(".table-container").hidden).toBe(
+    expect(new Set(page.selectionMembers.map((m) => m.id))).toEqual(
+      new Set([bob.id, elodie.id]),
+    );
+    tabs[0].click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector("app-crud-table").hidden).toBe(
       false,
     );
     expect(page.query.value).toBe("coeur ELODIE");
@@ -152,6 +174,13 @@ describe("Member directory and map", () => {
     expect(fixture.nativeElement.querySelector(".create-action").disabled).toBe(
       true,
     );
+    expect(fixture.nativeElement.querySelector("app-search-input input")).toBe(
+      input,
+    );
+    search.clear(new MouseEvent("click"));
+    fixture.detectChanges();
+    expect(page.filteredMembers).toHaveLength(3);
+    expect(page.query.value).toBe("");
   });
 
   it("shows all coowners of a lot even when only one matches and focuses the details", () => {
@@ -180,7 +209,7 @@ describe("Member directory and map", () => {
     ).toContain("Aucun lot associé");
     page.clearSelection();
     expect(document.activeElement).toBe(
-      fixture.nativeElement.querySelector('input[type="search"]'),
+      fixture.nativeElement.querySelector(".map-heading p"),
     );
   });
 

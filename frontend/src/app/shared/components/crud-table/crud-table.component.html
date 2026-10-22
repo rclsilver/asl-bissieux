@@ -35,7 +35,9 @@
     }
   }
 
-  <app-search-input [columns]="filters$ | async"></app-search-input>
+  <app-search-input
+    [columns]="searchFields ?? (filters$ | async)"
+  ></app-search-input>
 
   @if (canRefresh) {
     <button
@@ -64,7 +66,7 @@
   </button>
 </mat-toolbar>
 
-<div class="table-container" [hidden]="!tableVisible">
+<div class="table-container">
   <div
     class="table-scroll"
     [attr.inert]="remoteSource && (loading$ | async) ? '' : null"
@@ -236,7 +238,7 @@
   }
 </div>
 
-@if (tableVisible && !(loaded$ | async)) {
+@if (!(loaded$ | async)) {
   <div class="loader">
     <p role="status">Chargement de la liste…</p>
     <mat-progress-spinner
@@ -246,7 +248,7 @@
   </div>
 }
 
-@if (tableVisible && remoteSource && !(error$ | async)) {
+@if (remoteSource && !(error$ | async)) {
   @if (remoteSource.page$ | async; as page) {
     <div class="pagination-shell">
       <mat-paginator

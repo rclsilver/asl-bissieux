@@ -1,5 +1,5 @@
-import { inject } from '@angular/core';
-import { CollectionViewer } from '@angular/cdk/collections';
+import { inject } from "@angular/core";
+import { CollectionViewer } from "@angular/cdk/collections";
 import {
   BehaviorSubject,
   Subject,
@@ -12,21 +12,17 @@ import {
   takeUntil,
   tap,
   throwError,
-} from 'rxjs';
-import { APISchemas } from 'src/app/core/api/openapi';
-import { ApiService } from 'src/app/core/services/api.service';
-import { DataSource } from 'src/app/shared/datasources';
-import { compareMembers, memberMatches } from '../member-directory';
+} from "rxjs";
+import { APISchemas } from "src/app/core/api/openapi";
+import { ApiService } from "src/app/core/services/api.service";
+import { DataSource } from "src/app/shared/datasources";
+import { compareMembers, memberMatches } from "../member-directory";
 
-export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
+export class MemberDataSource extends DataSource<APISchemas["ModelsMember"]> {
   private readonly api = inject(ApiService);
   private readonly disconnected = new Subject<void>();
-  private readonly quality = new BehaviorSubject('');
-  setQuality(quality: string) {
-    this.quality.next(quality);
-  }
-  private readonly query = new BehaviorSubject('');
-  private readonly units = new BehaviorSubject<APISchemas['ModelsUnit'][]>([]);
+  private readonly query = new BehaviorSubject("");
+  private readonly units = new BehaviorSubject<APISchemas["ModelsUnit"][]>([]);
   private readonly unitsError = new BehaviorSubject<unknown>(undefined);
   private readonly unitsLoading = new BehaviorSubject(false);
   readonly units$ = this.units.asObservable();
@@ -36,14 +32,10 @@ export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
     return super.results$;
   }
   override get results$() {
-    return combineLatest([super.results$, this.query, this.quality]).pipe(
-      map(([members, query, quality]) =>
-        members.filter(
-          (member) =>
-            (!quality || !(member.email ?? '').trim()) &&
-            memberMatches(member, query)
-        )
-      )
+    return combineLatest([super.results$, this.query]).pipe(
+      map(([members, query]) =>
+        members.filter((member) => memberMatches(member, query)),
+      ),
     );
   }
   setQuery(query: string) {
@@ -58,9 +50,9 @@ export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
       }),
       catchError((error) => {
         this.unitsError.next(error);
-        return of<APISchemas['ModelsUnit'][]>([]);
+        return of<APISchemas["ModelsUnit"][]>([]);
       }),
-      finalize(() => this.unitsLoading.next(false))
+      finalize(() => this.unitsLoading.next(false)),
     );
   }
   retryUnits() {
@@ -76,14 +68,13 @@ export class MemberDataSource extends DataSource<APISchemas['ModelsMember']> {
       catchError((error) => {
         this.units.next([]);
         return throwError(() => error);
-      })
+      }),
     );
   }
   override disconnect(viewer: CollectionViewer) {
     this.disconnected.next();
     this.disconnected.complete();
     this.query.complete();
-    this.quality.complete();
     this.units.complete();
     this.unitsError.complete();
     this.unitsLoading.complete();

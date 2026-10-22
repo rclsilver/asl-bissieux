@@ -7,30 +7,29 @@ import {
   ViewChild,
   OnInit,
   OnDestroy,
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormControl } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
-import { APISchemas } from 'src/app/core/api/openapi';
-import { ApiService } from 'src/app/core/services/api.service';
-import { AuthService } from 'src/app/core/services/auth.service';
-import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
-import { Column } from 'src/app/shared/models/column.model';
-import { NotificationsService } from 'src/app/shared/services/notifications.service';
-import { MemberDataSource } from '../../datasources/member.datasource';
-import { MemberFormComponent } from '../member-form/member-form.component';
-import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { FormControl } from "@angular/forms";
+import { Subject, takeUntil } from "rxjs";
+import { APISchemas } from "src/app/core/api/openapi";
+import { ApiService } from "src/app/core/services/api.service";
+import { AuthService } from "src/app/core/services/auth.service";
+import { NotificationDialogLevel } from "src/app/shared/components/notification-dialog/notification-dialog.component";
+import { Column } from "src/app/shared/models/column.model";
+import { NotificationsService } from "src/app/shared/services/notifications.service";
+import { MemberDataSource } from "../../datasources/member.datasource";
+import { MemberFormComponent } from "../member-form/member-form.component";
+import { CustomRowAction } from "src/app/shared/components/crud-table/crud-table.component";
 import {
   memberName,
   memberOwnsUnit,
   sortedMemberUnits,
-  unitMatches,
-} from '../../member-directory';
+} from "../../member-directory";
 
 @Component({
-  selector: 'app-member-list',
-  templateUrl: './member-list.component.html',
-  styleUrls: ['./member-list.component.scss'],
+  selector: "app-member-list",
+  templateUrl: "./member-list.component.html",
+  styleUrls: ["./member-list.component.scss"],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -42,25 +41,20 @@ export class MemberListComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly detector = inject(ChangeDetectorRef);
   private readonly destroyed$ = new Subject<void>();
-  @ViewChild('selectionHeading', { static: true })
+  @ViewChild("selectionHeading", { static: true })
   private selectionHeading!: ElementRef<HTMLElement>;
-  @ViewChild('directorySearch', { static: true })
-  private searchInput!: ElementRef<HTMLInputElement>;
-  readonly query = new FormControl('', { nonNullable: true });
+  @ViewChild("mapHeading", { static: true })
+  private mapHeading!: ElementRef<HTMLElement>;
+  readonly query = new FormControl("", { nonNullable: true });
   readonly memberName = memberName;
   readonly memberUnits = sortedMemberUnits;
-  quality = '';
-  filterQuality(quality: string) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { quality: quality || null },
-      queryParamsHandling: 'merge',
-    });
-  }
-  view: 'list' | 'map' = 'list';
-  members: APISchemas['ModelsMember'][] = [];
-  filteredMembers: APISchemas['ModelsMember'][] = [];
-  private allUnits: APISchemas['ModelsUnit'][] = [];
+  readonly searchFields = [
+    new Column("directory", { label: "Nom, coordonnées, adresse ou lot" }),
+  ];
+  view: "list" | "map" = "list";
+  members: APISchemas["ModelsMember"][] = [];
+  filteredMembers: APISchemas["ModelsMember"][] = [];
+  private allUnits: APISchemas["ModelsUnit"][] = [];
   loading = true;
   loaded = false;
   error = false;
@@ -70,11 +64,11 @@ export class MemberListComponent implements OnInit, OnDestroy {
   selectedUnitNumber: number | null = null;
   private invalidSelection = false;
   readonly rowActions = [
-    new CustomRowAction<APISchemas['ModelsMember']>(
-      'contact_page',
-      'Consulter le membre et ses lots',
-      'Consulter',
-      (member) => this.selectMember(member)
+    new CustomRowAction<APISchemas["ModelsMember"]>(
+      "contact_page",
+      "Consulter le membre et ses lots",
+      "Consulter",
+      (member) => this.selectMember(member),
     ),
   ];
 
@@ -115,17 +109,14 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.route.queryParamMap
       .pipe(takeUntil(this.destroyed$))
       .subscribe((params) => {
-        this.quality =
-          params.get('quality') === 'missing_email' ? 'missing_email' : '';
-        this.datasource.setQuality(this.quality);
-        this.view = params.get('view') === 'map' ? 'map' : 'list';
-        const lot = params.get('lot');
+        this.view = params.get("view") === "map" ? "map" : "list";
+        const lot = params.get("lot");
         this.invalidSelection =
           lot !== null &&
           (!/^\d+$/.test(lot) || !Number.isSafeInteger(Number(lot)));
         this.selectedUnitNumber =
           lot !== null && !this.invalidSelection ? Number(lot) : null;
-        this.selectedMemberId = lot === null ? params.get('member') : null;
+        this.selectedMemberId = lot === null ? params.get("member") : null;
       });
     this.datasource.load();
   }
@@ -135,21 +126,13 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
   get directoryUnits() {
     if (!this.unitsError) return this.allUnits;
-    const units = new Map<string | number, APISchemas['ModelsUnit']>();
+    const units = new Map<string | number, APISchemas["ModelsUnit"]>();
     for (const member of this.members)
       for (const unit of member.units ?? [])
         if (unit.id || unit.number !== undefined)
           units.set(unit.id ?? unit.number!, unit);
     return [...units.values()].sort(
-      (a, b) => (a.number ?? 0) - (b.number ?? 0)
-    );
-  }
-  get matchingUnits() {
-    return this.directoryUnits.filter(
-      (unit) =>
-        !this.query.value.trim() ||
-        unitMatches(unit, this.query.value) ||
-        this.filteredMembers.some((member) => memberOwnsUnit(member, unit))
+      (a, b) => (a.number ?? 0) - (b.number ?? 0),
     );
   }
   get selectedMember() {
@@ -157,7 +140,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
   get selectedUnit() {
     return this.directoryUnits.find(
-      (unit) => unit.number === this.selectedUnitNumber
+      (unit) => unit.number === this.selectedUnitNumber,
     );
   }
   get selectionMembers() {
@@ -173,52 +156,46 @@ export class MemberListComponent implements OnInit, OnDestroy {
       ? (this.selectedMember.units ?? [])
       : this.selectedUnit
         ? [this.selectedUnit]
-        : this.query.value.trim()
-          ? this.matchingUnits
-          : [];
+        : [];
     return [
       ...new Set(
         units.flatMap((unit) =>
-          unit.number === undefined ? [] : [unit.number]
-        )
+          unit.number === undefined ? [] : [unit.number],
+        ),
       ),
     ];
   }
   get selectionError() {
-    if (!this.loaded || this.loading || this.error) return '';
+    if (!this.loaded || this.loading || this.error) return "";
     if (this.invalidSelection)
-      return 'Le lien contient une sélection invalide. Choisis un membre ou un lot.';
+      return "Le lien contient une sélection invalide. Choisis un membre ou un lot.";
     if (this.selectedMemberId && !this.selectedMember)
-      return 'Ce membre n’est plus disponible. Choisis un autre membre.';
+      return "Ce membre n’est plus disponible. Choisis un autre membre.";
     if (this.selectedUnitNumber !== null && !this.selectedUnit)
       return this.unitsLoading
-        ? 'Chargement du lot sélectionné…'
+        ? "Chargement du lot sélectionné…"
         : this.unitsError
-          ? 'Ce lot n’est pas disponible dans les données chargées. Réessaie le chargement des lots.'
-          : 'Ce lot n’est pas renseigné ou n’est plus disponible.';
-    return '';
+          ? "Ce lot n’est pas disponible dans les données chargées. Réessaie le chargement des lots."
+          : "Ce lot n’est pas renseigné ou n’est plus disponible.";
+    return "";
   }
   setView(view: string) {
-    this.view = view === 'map' ? 'map' : 'list';
+    this.view = view === "map" ? "map" : "list";
     this.syncRoute();
   }
-  selectMember(member: APISchemas['ModelsMember']) {
+  selectMember(member: APISchemas["ModelsMember"]) {
     if (!member.id) return;
-    this.view = 'map';
+    this.view = "map";
     this.selectedMemberId = member.id;
     this.selectedUnitNumber = null;
     this.invalidSelection = false;
     this.syncRoute();
     this.focusSelection();
   }
-  selectMemberId(id: string) {
-    const member = this.members.find((member) => member.id === id);
-    if (member) this.selectMember(member);
-  }
   selectUnit(number: number | undefined) {
     if (number === undefined || !Number.isSafeInteger(number) || number < 0)
       return;
-    this.view = 'map';
+    this.view = "map";
     this.selectedUnitNumber = number;
     this.selectedMemberId = null;
     this.invalidSelection = false;
@@ -230,15 +207,15 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.selectedUnitNumber = null;
     this.invalidSelection = false;
     this.syncRoute();
-    this.searchInput.nativeElement.focus();
+    this.mapHeading.nativeElement.focus();
   }
   private syncRoute(replaceUrl = false) {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParamsHandling: 'merge',
+      queryParamsHandling: "merge",
       replaceUrl,
       queryParams: {
-        view: this.view === 'map' ? 'map' : null,
+        view: this.view === "map" ? "map" : null,
         member: this.selectedMemberId,
         lot: this.selectedUnitNumber,
       },
@@ -250,40 +227,40 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
 
   readonly columns = [
-    new Column('first_name', {
-      label: 'Prénom',
+    new Column("first_name", {
+      label: "Prénom",
       canSort: true,
       sortFunc: (a, b) =>
-        String(a ?? '').localeCompare(String(b ?? ''), 'fr', {
-          sensitivity: 'base',
+        String(a ?? "").localeCompare(String(b ?? ""), "fr", {
+          sensitivity: "base",
         }),
       canFilter: false,
     }),
-    new Column('last_name', {
-      label: 'Nom',
+    new Column("last_name", {
+      label: "Nom",
       canSort: true,
       defaultSort: true,
       sortFunc: (a, b) =>
-        String(a ?? '').localeCompare(String(b ?? ''), 'fr', {
-          sensitivity: 'base',
+        String(a ?? "").localeCompare(String(b ?? ""), "fr", {
+          sensitivity: "base",
         }),
       canFilter: false,
     }),
-    new Column('address', {
-      label: 'Adresse',
+    new Column("address", {
+      label: "Adresse",
       canFilter: false,
     }),
-    new Column('phone_number', {
-      label: 'Téléphone',
+    new Column("phone_number", {
+      label: "Téléphone",
       canFilter: false,
     }),
-    new Column('email', {
-      label: 'E-mail',
+    new Column("email", {
+      label: "E-mail",
       canFilter: false,
     }),
-    new Column<APISchemas['ModelsUnit'][]>('units', {
-      label: 'Lots',
-      render: (units) => (units ?? []).map((unit) => unit.number).join(', '),
+    new Column<APISchemas["ModelsUnit"][]>("units", {
+      label: "Lots",
+      render: (units) => (units ?? []).map((unit) => unit.number).join(", "),
       canSort: true,
       sortFunc: (a, b) => {
         const first = Math.min(...(a ?? []).map((unit) => unit.number ?? 0));
@@ -306,25 +283,25 @@ export class MemberListComponent implements OnInit, OnDestroy {
       },
     }),
   ];
-  readonly rowLabel = (member: APISchemas['ModelsMember']) =>
-    [member.first_name, member.last_name].filter(Boolean).join(' ');
+  readonly rowLabel = (member: APISchemas["ModelsMember"]) =>
+    [member.first_name, member.last_name].filter(Boolean).join(" ");
   readonly datasource = new MemberDataSource();
 
-  readonly canCreate$ = this._auth.allowed$('member.CreateMember');
+  readonly canCreate$ = this._auth.allowed$("member.CreateMember");
 
   refresh() {
     if (!this.loading && !this.unitsLoading) this.datasource.load();
   }
 
-  canEdit(_: APISchemas['ModelsMember']) {
-    return this._auth.allowed$('member.UpdateMember');
+  canEdit(_: APISchemas["ModelsMember"]) {
+    return this._auth.allowed$("member.UpdateMember");
   }
 
-  canDelete(_: APISchemas['ModelsMember']) {
-    return this._auth.allowed$('member.DeleteMember');
+  canDelete(_: APISchemas["ModelsMember"]) {
+    return this._auth.allowed$("member.DeleteMember");
   }
 
-  edit(member?: APISchemas['ModelsMember']) {
+  edit(member?: APISchemas["ModelsMember"]) {
     this._notifications
       .showForm(MemberFormComponent, {
         data: {
@@ -339,13 +316,13 @@ export class MemberListComponent implements OnInit, OnDestroy {
       });
   }
 
-  delete(member: APISchemas['ModelsMember']) {
+  delete(member: APISchemas["ModelsMember"]) {
     this._notifications
       .showConfirm({
-        title: 'Supprimer un membre',
-        confirmLabel: 'Supprimer',
+        title: "Supprimer un membre",
+        confirmLabel: "Supprimer",
         message: `Supprimer le membre ${member.first_name} ${member.last_name} ?`,
-        class: 'warn',
+        class: "warn",
       })
       .afterClosed()
       .subscribe((confirm) => {
@@ -354,12 +331,12 @@ export class MemberListComponent implements OnInit, OnDestroy {
             next: () => {
               this.refresh();
               this._notifications.showDialog({
-                title: 'Info',
+                title: "Info",
                 message: `Le membre ${member.first_name} ${member.last_name} a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Impossible de supprimer le membre'),
+            error: this._api.handleError("Impossible de supprimer le membre"),
           });
         }
       });

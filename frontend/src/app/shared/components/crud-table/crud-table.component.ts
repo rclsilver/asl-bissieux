@@ -123,8 +123,9 @@ export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
 export class CrudTableComponent<T extends {}>
   implements OnDestroy, AfterViewInit
 {
-  // Keep the table and its source alive when a directory switches to its map.
-  @Input() tableVisible = true;
+  // An owning directory can reuse the standard search control with its own matcher.
+  @Input() searchFields: Column[] | null = null;
+  @Output() searchChange = new EventEmitter<string>();
   private _destroyed$ = new Subject<void>();
 
   private _rowActions$ = new BehaviorSubject<CustomRowAction<T>[]>([]);
@@ -325,7 +326,9 @@ export class CrudTableComponent<T extends {}>
         dataSource,
         this._columnDefs$,
         this.sort.sortChange,
-        this.search.onPatternChange.asObservable(),
+        this.search.onPatternChange.pipe(
+          map((query) => (this.searchFields ? "" : query)),
+        ),
       ),
     );
   }
@@ -358,7 +361,10 @@ export class CrudTableComponent<T extends {}>
       .subscribe((sort) => this.remoteSource?.setSort(sort));
     this.search.onPatternChange
       .pipe(distinctUntilChanged(), takeUntil(this._destroyed$))
-      .subscribe((query) => this.remoteSource?.setFilter(query));
+      .subscribe((query) => {
+        if (!this.searchFields) this.remoteSource?.setFilter(query);
+        this.searchChange.emit(query);
+      });
     // set the table datasource
     this._dataSource$.pipe(takeUntil(this._destroyed$)).subscribe((ds) => {
       this.table.dataSource = ds;

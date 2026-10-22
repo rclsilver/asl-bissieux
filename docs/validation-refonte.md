@@ -76,7 +76,7 @@ Préparation : répéter ces vérifications dans les deux thèmes. Cette séance
 
 ## Ajustements après la première revue
 
-Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2 et AJUST3 ont été révisés après le dernier retour et sont à rejouer ; AJUST5 et AJUST6 sont nouveaux. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
+Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2, AJUST3 et AJUST5 ont été révisés après les retours et sont à rejouer ; AJUST7 est nouveau. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
 
 - [ ] **AJUST1 — Arrivée sans clic dans le menu**
   Action : avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné.
@@ -91,10 +91,13 @@ Préparation : corrections du 22 octobre 2026. Les résultats des cas précéden
   Action : ouvrir un budget publié sur l’accueil ; consulter la carte, ouvrir les aides et « Comparer les budgets annuels », puis choisir une référence et recharger.
   Attendu : aucun bloc Encaissements mensuels, graphique ou tableau mensuel ; indicateurs, carte, détails du lot et points à traiter conservés. Les aides et campagnes récentes se déplient à la demande. La comparaison est repliée sans référence et s’ouvre si une référence est présente dans l’adresse.
 - [ ] **AJUST5 — Contrôles cohérents dans les deux thèmes**
-  Action : changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails. Répéter en clair, sombre et sur petit écran.
-  Attendu : budget et filtre d’état utilisent des champs compacts à contour, sans fond décalé. L’actualisation du dashboard est un bouton icône à côté du budget, avec nom accessible et infobulle. Alignement, focus et textes restent lisibles ; les actions fonctionnent.
+  Action : changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails ; comparer avec le filtre Situation des cotisations et le filtre des utilisateurs. Répéter en clair, sombre et sur petit écran.
+  Attendu : les quatre sélecteurs utilisent le même style compact à contour, sans fond décalé. Les filtres des cotisations et utilisateurs sont alignés avec les autres commandes de liste. L’actualisation du dashboard reste à côté du budget, avec nom accessible et infobulle. Focus, textes et actions restent utilisables.
 - [ ] **AJUST6 — Filtres inutiles retirés**
   Action : ouvrir Lots, Membres puis la liste des campagnes ; essayer aussi une ancienne adresse avec quality=missing_email, quality=no_member ou state=ERROR selon la liste concernée.
   Attendu : aucun filtre de qualité sur Lots ou Membres, aucun filtre d’état dans la liste des campagnes. Ces anciens paramètres ne filtrent plus silencieusement les résultats. Le filtre d’état reste disponible à l’intérieur d’une campagne.
+- [ ] **AJUST7 — Onglets contigus au contenu**
+  Action : comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran.
+  Attendu : aucun espace vide ajouté entre les en-têtes d’onglets et leur tableau ou carte ; les vues restent accessibles et les changements d’onglet conservent leur comportement.
 
 **Résultat de la séance.** Noter les identifiants des cas en échec ou bloqués et le navigateur utilisé. La fiche HTML permet d’exporter un exemplaire rempli ou les résultats JSON. Aucun résultat n’est envoyé automatiquement et aucune case n’est précochée.

@@ -273,7 +273,9 @@ Panneaux de carte, détail et listes partagent surface, bordure fine et rayon de
 
 Les champs Material reçoivent les encres, contours et couleurs d’erreur des variables de thème ; leurs angles reprennent les boutons. Le fond des champs remplis conserve le rôle `surface-variant` de la palette azure générée par Material : il n’est pas remplacé par `--asl-raised`. La recherche de carte porte un vrai libellé et un bouton d’effacement nommé. Le curseur de saisie et le focus utilisent primaire ; les comportements flottants, erreurs et désactivations sont ceux de Material. La largeur de recherche suit le panneau, les sélecteurs s’étendent sur petit écran.
 
-Le budget de l’accueil et le filtre d’état dans une campagne utilisent `context-field` : apparence outline, fond surface, rayon 10px et hauteur 48px. L’actualisation de l’accueil est un bouton icône de même hauteur et rayon, contigu au choix de budget, avec libellé accessible et infobulle. Ces contrôles emploient les mêmes couleurs sémantiques dans Bassin clair et Graphite.
+Le budget de l’accueil, le filtre d’état dans une campagne, la situation des cotisations et l’état d’accès des utilisateurs utilisent `context-field` : apparence outline, fond surface, rayon 10px et hauteur 48px. Les filtres des cotisations et utilisateurs n’ajoutent pas de marge verticale propre dans leur en-tête. L’actualisation de l’accueil est un bouton icône de même hauteur et rayon, contigu au choix de budget, avec libellé accessible et infobulle. Ces contrôles emploient les mêmes couleurs sémantiques dans Bassin clair et Graphite.
+
+Les onglets E-mails et Membres sont contigus à leur contenu, comme les onglets du budget : aucune marge inférieure sur leur navigation, aucune marge supérieure ajoutée à la carte des membres.
 
 ### Navigation
 

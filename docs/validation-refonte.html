@@ -20,7 +20,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 <a class="skip" href="#tests">Aller aux tests</a>
 <header>
 <h1>Fiche de validation — ASL Bissieux</h1>
-<p class="muted">Bassin clair / Graphite — contrôles harmonisés et vues Membres simplifiées · Référence refonte-2026-10-v1 · 22 octobre 2026</p>
+<p class="muted">Bassin clair / Graphite — filtres uniformes et onglets sans espace · Référence refonte-2026-10-v1 · 22 octobre 2026</p>
 <p>Coche une case après avoir effectué le test et obtenu le résultat attendu. Pour un échec, un blocage ou un cas sans objet, utilise « Noter un écart ou une réserve ». Rien n’est prévalidé.</p>
 <div class="session">
   <label for="reviewer">Validateur<input id="reviewer" autocomplete="name"></label>
@@ -36,7 +36,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 </div>
 <p id="storage-status" role="status">La sauvegarde automatique dépend du stockage autorisé par ton navigateur. Exporte la fiche pour conserver ou partager tes résultats.</p>
 <noscript><p>Les cases restent utilisables, mais le suivi automatique nécessite JavaScript. Utilise aussi la version Markdown jointe pour une recette sur papier.</p></noscript>
-<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 22 tests</p><progress id="progress" value="0" max="22" aria-label="Tests validés"></progress></div>
+<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 23 tests</p><progress id="progress" value="0" max="23" aria-label="Tests validés"></progress></div>
 </header>
 <div class="layout">
 <nav aria-label="Parcours de validation"><details open><summary>Parcours</summary><ul><li><a href="#section-0">Thèmes et connexion</a></li><li><a href="#section-1">Navigation et écrans de gestion</a></li><li><a href="#section-2">Carte et paiements</a></li><li><a href="#section-3">Confort et validation finale</a></li><li><a href="#section-4">Ajustements après la première revue</a></li></ul></details></nav>
@@ -235,7 +235,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-UIR3" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article></section><section class="section" id="section-4" aria-labelledby="title-4"><h2 id="title-4">Ajustements après la première revue</h2><p class="section-context">Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2 et AJUST3 ont été révisés après le dernier retour et sont à rejouer ; AJUST5 et AJUST6 sont nouveaux. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.</p><p class="section-count"></p><article class="test" data-test="AJUST1" data-search="AJUST1 Arrivée sans clic dans le menu avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné. l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre la bonne vue et le bon lot ; le lien du menu correspondant est sélectionné sans clic préalable.">
+</article></section><section class="section" id="section-4" aria-labelledby="title-4"><h2 id="title-4">Ajustements après la première revue</h2><p class="section-context">Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2, AJUST3 et AJUST5 ont été révisés après les retours et sont à rejouer ; AJUST7 est nouveau. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.</p><p class="section-count"></p><article class="test" data-test="AJUST1" data-search="AJUST1 Arrivée sans clic dans le menu avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné. l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre la bonne vue et le bon lot ; le lien du menu correspondant est sélectionné sans clic préalable.">
   <label class="test-title" for="check-AJUST1"><input id="check-AJUST1" type="checkbox"><span><span class="test-id">AJUST1</span> Arrivée sans clic dans le menu</span></label>
   <p><strong>Faire.</strong> avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné.</p>
   <p><strong>Attendu.</strong> l’accueil s’affiche dès l’arrivée ; l’adresse directe ouvre la bonne vue et le bon lot ; le lien du menu correspondant est sélectionné sans clic préalable.</p>
@@ -283,10 +283,10 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-AJUST4" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="AJUST5" data-search="AJUST5 Contrôles cohérents dans les deux thèmes changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails. Répéter en clair, sombre et sur petit écran. budget et filtre d’état utilisent des champs compacts à contour, sans fond décalé. L’actualisation du dashboard est un bouton icône à côté du budget, avec nom accessible et infobulle. Alignement, focus et textes restent lisibles ; les actions fonctionnent.">
+</article><article class="test" data-test="AJUST5" data-search="AJUST5 Contrôles cohérents dans les deux thèmes changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails ; comparer avec le filtre Situation des cotisations et le filtre des utilisateurs. Répéter en clair, sombre et sur petit écran. les quatre sélecteurs utilisent le même style compact à contour, sans fond décalé. Les filtres des cotisations et utilisateurs sont alignés avec les autres commandes de liste. L’actualisation du dashboard reste à côté du budget, avec nom accessible et infobulle. Focus, textes et actions restent utilisables.">
   <label class="test-title" for="check-AJUST5"><input id="check-AJUST5" type="checkbox"><span><span class="test-id">AJUST5</span> Contrôles cohérents dans les deux thèmes</span></label>
-  <p><strong>Faire.</strong> changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails. Répéter en clair, sombre et sur petit écran.</p>
-  <p><strong>Attendu.</strong> budget et filtre d’état utilisent des champs compacts à contour, sans fond décalé. L’actualisation du dashboard est un bouton icône à côté du budget, avec nom accessible et infobulle. Alignement, focus et textes restent lisibles ; les actions fonctionnent.</p>
+  <p><strong>Faire.</strong> changer de budget et actualiser le dashboard ; ouvrir une campagne puis changer l’état des e-mails ; comparer avec le filtre Situation des cotisations et le filtre des utilisateurs. Répéter en clair, sombre et sur petit écran.</p>
+  <p><strong>Attendu.</strong> les quatre sélecteurs utilisent le même style compact à contour, sans fond décalé. Les filtres des cotisations et utilisateurs sont alignés avec les autres commandes de liste. L’actualisation du dashboard reste à côté du budget, avec nom accessible et infobulle. Focus, textes et actions restent utilisables.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
     <label for="status-AJUST5">Autre résultat pour AJUST5</label>
@@ -305,6 +305,18 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <select id="status-AJUST6"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
     <label for="note-AJUST6">Notes pour AJUST6 : résultat observé, reproduction, réserve</label>
     <textarea id="note-AJUST6" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST7" data-search="AJUST7 Onglets contigus au contenu comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran. aucun espace vide ajouté entre les en-têtes d’onglets et leur tableau ou carte ; les vues restent accessibles et les changements d’onglet conservent leur comportement.">
+  <label class="test-title" for="check-AJUST7"><input id="check-AJUST7" type="checkbox"><span><span class="test-id">AJUST7</span> Onglets contigus au contenu</span></label>
+  <p><strong>Faire.</strong> comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran.</p>
+  <p><strong>Attendu.</strong> aucun espace vide ajouté entre les en-têtes d’onglets et leur tableau ou carte ; les vues restent accessibles et les changements d’onglet conservent leur comportement.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST7">Autre résultat pour AJUST7</label>
+    <select id="status-AJUST7"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST7">Notes pour AJUST7 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST7" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
 </article></section>

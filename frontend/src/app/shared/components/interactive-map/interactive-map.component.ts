@@ -26,6 +26,7 @@ export type UnitClasses = { [unitId: number]: string };
   host: {
     '[class.static-map]': '!interactive',
     '[class.transparent-map]': 'transparentBackground',
+    '[class.fit-container]': 'fitContainer',
   },
 })
 export class InteractiveMapComponent implements AfterViewInit {
@@ -55,6 +56,7 @@ export class InteractiveMapComponent implements AfterViewInit {
   }
   @Input() label = 'Carte des lots';
   @Input() transparentBackground = false;
+  @Input() fitContainer = false;
   @Input() set highlightedUnits(units: number[]) {
     this._highlightedUnits = units ?? [];
     if (this.container) this.setSelection();

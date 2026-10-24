@@ -4,10 +4,13 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   ElementRef,
+  TemplateRef,
+  ViewContainerRef,
   ViewChild,
   OnInit,
   OnDestroy,
 } from "@angular/core";
+import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { ActivatedRoute, Router } from "@angular/router";
 import { FormControl } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
@@ -39,10 +42,15 @@ export class MemberListComponent implements OnInit, OnDestroy {
   private readonly _notifications = inject(NotificationsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialogs = inject(MatDialog);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly detector = inject(ChangeDetectorRef);
+  private selectionDialog?: MatDialogRef<unknown>;
   private readonly destroyed$ = new Subject<void>();
-  @ViewChild("selectionHeading", { static: true })
-  private selectionHeading!: ElementRef<HTMLElement>;
+  @ViewChild("selectionDetails", { static: true })
+  private selectionDetails!: TemplateRef<unknown>;
+  @ViewChild("selectionHeading")
+  private selectionHeading?: ElementRef<HTMLElement>;
   readonly query = new FormControl("", { nonNullable: true });
   readonly memberName = memberName;
   readonly memberUnits = sortedMemberUnits;
@@ -102,6 +110,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
         this.selectedMemberId = null;
         this.selectedUnitNumber = null;
         this.invalidSelection = false;
+        this.syncDialog();
         this.syncRoute(true);
       });
     this.route.queryParamMap
@@ -115,10 +124,12 @@ export class MemberListComponent implements OnInit, OnDestroy {
         this.selectedUnitNumber =
           lot !== null && !this.invalidSelection ? Number(lot) : null;
         this.selectedMemberId = lot === null ? params.get("member") : null;
+        this.syncDialog();
       });
     this.datasource.load();
   }
   ngOnDestroy() {
+    this.closeDialog();
     this.destroyed$.next();
     this.destroyed$.complete();
   }
@@ -179,6 +190,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
   setView(view: string) {
     this.view = view === "map" ? "map" : "list";
+    this.syncDialog();
     this.syncRoute();
   }
   selectMember(member: APISchemas["ModelsMember"]) {
@@ -188,24 +200,27 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.selectedUnitNumber = null;
     this.invalidSelection = false;
     this.syncRoute();
-    this.focusSelection();
+    this.syncDialog(true);
   }
-  selectUnit(number: number | undefined) {
+  selectUnit(number: number | undefined, event?: MouseEvent | KeyboardEvent) {
     if (number === undefined || !Number.isSafeInteger(number) || number < 0)
       return;
     this.view = "map";
     this.selectedUnitNumber = number;
     this.selectedMemberId = null;
     this.invalidSelection = false;
+    // Remember the clicked SVG lot as the dialog's return-focus target.
+    if (event?.currentTarget instanceof SVGElement)
+      (event.currentTarget as SVGGElement).focus();
     this.syncRoute();
-    this.focusSelection();
+    this.syncDialog(true);
   }
   clearSelection() {
     this.selectedMemberId = null;
     this.selectedUnitNumber = null;
     this.invalidSelection = false;
     this.syncRoute();
-    this.focusSelection();
+    this.syncDialog();
   }
   private syncRoute(replaceUrl = false) {
     void this.router.navigate([], {
@@ -219,9 +234,45 @@ export class MemberListComponent implements OnInit, OnDestroy {
       },
     });
   }
-  private focusSelection() {
-    this.detector.detectChanges();
-    this.selectionHeading.nativeElement.focus();
+  private syncDialog(focusHeading = false) {
+    const hasSelection =
+      this.selectedUnitNumber !== null ||
+      !!this.selectedMemberId ||
+      this.invalidSelection;
+    if (this.view !== "map" || !hasSelection) {
+      this.closeDialog();
+      return;
+    }
+    if (this.selectionDialog) {
+      if (focusHeading) {
+        this.detector.detectChanges();
+        this.selectionHeading?.nativeElement.focus();
+      }
+      return;
+    }
+    const dialog = this.dialogs.open(this.selectionDetails, {
+      viewContainerRef: this.viewContainerRef,
+      width: "38rem",
+      maxWidth: "calc(100vw - 2rem)",
+      maxHeight: "calc(100dvh - 2rem)",
+      autoFocus: "first-heading",
+      restoreFocus: true,
+      closeOnNavigation: false,
+    });
+    this.selectionDialog = dialog;
+    dialog
+      .beforeClosed()
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe(() => {
+        if (this.selectionDialog !== dialog) return;
+        this.selectionDialog = undefined;
+        this.clearSelection();
+      });
+  }
+  private closeDialog() {
+    const dialog = this.selectionDialog;
+    this.selectionDialog = undefined;
+    dialog?.close();
   }
 
   readonly columns = [

@@ -20,6 +20,9 @@ svg {
   max-inline-size: 100%;
   block-size: auto;
 }
+:host(.fit-container) svg {
+  inline-size: 100%;
+}
 :host(:not(.static-map)) #units > g.unit-highlighted > polygon {
   stroke: var(--asl-map-focus, #124dc5);
   stroke-width: 2px;

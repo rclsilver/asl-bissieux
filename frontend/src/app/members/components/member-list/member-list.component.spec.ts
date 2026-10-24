@@ -1,5 +1,6 @@
 import { provideZoneChangeDetection } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
+import { MatDialog } from "@angular/material/dialog";
 import { By } from "@angular/platform-browser";
 import { CrudTableComponent } from "src/app/shared/components/crud-table/crud-table.component";
 import { provideHttpClient } from "@angular/common/http";
@@ -81,7 +82,10 @@ describe("Member directory and map", () => {
       .spyOn(TestBed.inject(Router), "navigate")
       .mockResolvedValue(true);
   });
-  afterEach(() => http.verify());
+  afterEach(() => {
+    TestBed.inject(MatDialog).closeAll();
+    http.verify();
+  });
   function setup(unitFailure = false) {
     const fixture = TestBed.createComponent(MemberListComponent);
     fixture.detectChanges();
@@ -153,6 +157,7 @@ describe("Member directory and map", () => {
     expect(new Set(page.selectionMembers.map((m) => m.id))).toEqual(
       new Set([bob.id, elodie.id]),
     );
+    document.querySelector<HTMLButtonElement>("[mat-dialog-close]")!.click();
     tabs[0].click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector("app-crud-table").hidden).toBe(
@@ -183,7 +188,7 @@ describe("Member directory and map", () => {
     expect(page.query.value).toBe("");
   });
 
-  it("shows all coowners of a lot even when only one matches and focuses the details", () => {
+  it("shows all coowners of a lot even when only one matches and focuses the popup", async () => {
     const fixture = setup();
     const page = fixture.componentInstance;
     page.query.setValue("elodie");
@@ -192,20 +197,22 @@ describe("Member directory and map", () => {
     expect(new Set(page.selectionMembers.map((member) => member.id))).toEqual(
       new Set([bob.id, elodie.id]),
     );
-    expect(
-      fixture.nativeElement.querySelector(".selection-pane").textContent,
-    ).toContain("Non renseigné");
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Non renseigné",
+    );
+    await fixture.whenStable();
+    TestBed.tick();
     expect(document.activeElement).toBe(
-      fixture.nativeElement.querySelector(".selection-pane h3"),
+      document.querySelector("[mat-dialog-title]"),
     );
     const contacts = Array.from(
-      fixture.nativeElement.querySelectorAll(".contact-details"),
+      document.querySelectorAll(".contact-details"),
     ) as HTMLElement[];
     const singleLot = contacts.find((contact) =>
-      contact.querySelector("h4")?.textContent?.includes("Bob"),
+      contact.querySelector("h3")?.textContent?.includes("Bob"),
     )!;
     const multipleLots = contacts.find((contact) =>
-      contact.querySelector("h4")?.textContent?.includes("Élodie"),
+      contact.querySelector("h3")?.textContent?.includes("Élodie"),
     )!;
     expect(singleLot.textContent).not.toContain("Lots associés");
     expect(singleLot.textContent).not.toContain("Voir tous ses lots");
@@ -219,16 +226,19 @@ describe("Member directory and map", () => {
     allLots.click();
     fixture.detectChanges();
     expect(page.highlightedUnits).toEqual([1, 2]);
+    expect(
+      document.activeElement === document.querySelector("[mat-dialog-title]"),
+    ).toBe(true);
     page.selectMember(zoe);
     fixture.detectChanges();
     expect(page.highlightedUnits).toEqual([]);
-    expect(
-      fixture.nativeElement.querySelector(".selection-pane").textContent,
-    ).toContain("Aucun lot associé");
-    page.clearSelection();
-    expect(document.activeElement).toBe(
-      fixture.nativeElement.querySelector(".selection-pane h3"),
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Aucun lot associé",
     );
+    page.clearSelection();
+    await fixture.whenStable();
+    TestBed.tick();
+    expect(document.querySelector("[role=dialog]")).toBeNull();
   });
 
   it("resolves budget links by lot number, handles unassigned and missing lots and gives lot precedence", () => {
@@ -240,9 +250,9 @@ describe("Member directory and map", () => {
     expect(page.selectedMember).toBeUndefined();
     page.selectUnit(3);
     fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector(".selection-pane").textContent,
-    ).toContain("Aucun membre");
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Aucun membre",
+    );
     params.next(convertToParamMap({ view: "map", lot: "999" }));
     fixture.detectChanges();
     expect(page.selectionError).toContain("plus disponible");
@@ -252,6 +262,92 @@ describe("Member directory and map", () => {
     params.next(convertToParamMap({ view: "map", member: "deleted-member" }));
     fixture.detectChanges();
     expect(page.selectionError).toContain("Ce membre");
+  });
+
+  it("closes with Escape, backdrop or button, clears the URL selection and restores lot focus", async () => {
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    page.setView("map");
+    fixture.detectChanges();
+    const lot = fixture.nativeElement.querySelector("#unit-01") as SVGGElement;
+    for (const close of ["escape", "backdrop", "button"]) {
+      lot.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      TestBed.tick();
+      const dialog = document.querySelector<HTMLElement>("[role=dialog]")!;
+      expect(dialog).not.toBeNull();
+      expect(
+        document.getElementById(dialog.getAttribute("aria-labelledby")!)
+          ?.textContent,
+      ).toContain("Lot 1");
+      if (close === "escape")
+        dialog.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Escape",
+            keyCode: 27,
+            bubbles: true,
+          }),
+        );
+      else if (close === "backdrop")
+        document.querySelector<HTMLElement>(".cdk-overlay-backdrop")!.click();
+      else
+        document
+          .querySelector<HTMLButtonElement>("[mat-dialog-close]")!
+          .click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      TestBed.tick();
+      expect(document.querySelector("[role=dialog]")).toBeNull();
+      expect(page.selectedUnitNumber).toBeNull();
+      expect(page.selectedMemberId).toBeNull();
+      expect(page.highlightedUnits).toEqual([]);
+      expect(navigate.mock.lastCall?.[1]?.queryParams).toEqual({
+        view: "map",
+        lot: null,
+        member: null,
+      });
+      expect(document.activeElement).toBe(lot);
+    }
+  });
+
+  it("follows direct links and browser history without stacking popups, then closes on leaving the page", async () => {
+    params.next(convertToParamMap({ view: "map", lot: "1" }));
+    const fixture = TestBed.createComponent(MemberListComponent);
+    fixture.detectChanges();
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Chargement",
+    );
+    http.expectOne("/api/member").flush(members);
+    http.expectOne("/api/unit").flush(units);
+    fixture.detectChanges();
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Élodie",
+    );
+    params.next(convertToParamMap({ view: "map", member: zoe.id }));
+    fixture.detectChanges();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(1);
+    expect(document.querySelector("mat-dialog-content")?.textContent).toContain(
+      "Aucun lot associé",
+    );
+    expect(
+      document.querySelector("mat-dialog-content")?.textContent,
+    ).not.toContain("elodie@example.invalid");
+    navigate.mockClear();
+    params.next(convertToParamMap({ view: "map" }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    TestBed.tick();
+    expect(document.querySelector("[role=dialog]")).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+    params.next(convertToParamMap({ view: "map", lot: "2" }));
+    fixture.detectChanges();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(1);
+    fixture.destroy();
+    await fixture.whenStable();
+    TestBed.tick();
+    expect(document.querySelector("[role=dialog]")).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("keeps the directory and assigned lots available after a units-only failure and retries only units", () => {
@@ -290,6 +386,7 @@ describe("Member directory and map", () => {
     const page = fixture.componentInstance;
     page.query.setValue("zoe");
     page.setView("map");
+    page.selectUnit(1);
     page.refresh();
     http.expectOne("/api/unit").flush(units);
     http
@@ -299,6 +396,9 @@ describe("Member directory and map", () => {
     expect(page.error).toBe(true);
     expect(page.members).toEqual([]);
     expect(page.selectionMembers).toEqual([]);
+    expect(
+      document.querySelector("mat-dialog-content")?.textContent,
+    ).not.toContain("elodie@example.invalid");
     const retry = fixture.nativeElement.querySelector(
       ".map-pane button",
     ) as HTMLButtonElement;

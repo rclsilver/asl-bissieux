@@ -1,21 +1,16 @@
 :host {
   display: block;
-  container-type: inline-size;
 }
 p {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .directory-map {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
-  gap: 1.5rem;
   background: var(--asl-surface);
   border: 1px solid var(--asl-border);
   padding: 1rem;
 }
-.map-pane,
-.selection-pane {
+.map-pane {
   min-inline-size: 0;
 }
 app-crud-table[hidden] {
@@ -25,20 +20,13 @@ app-crud-table[hidden] {
   max-inline-size: 100%;
   overflow: auto;
 }
-.selection-pane {
-  border-inline-start: 1px solid var(--asl-border);
-  padding-inline-start: 1.5rem;
-  align-self: start;
-}
 .map-frame app-interactive-map {
   border-radius: 0;
 }
-h3 {
-  font-size: 1.125rem;
-  margin-block: 0 1rem;
+h2 {
   overflow-wrap: anywhere;
 }
-h4 {
+h3 {
   font-size: 1rem;
   margin-block: 1.5rem 0.75rem;
   overflow-wrap: anywhere;
@@ -75,14 +63,6 @@ button {
 .directory-map[hidden] {
   display: none;
 }
-@container (max-width: 56rem) {
-  .directory-map {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .selection-pane {
-    border-inline-start: 0;
-    border-block-start: 1px solid var(--asl-border);
-    padding-inline-start: 0;
-    padding-block-start: 1rem;
-  }
+mat-dialog-content {
+  color: var(--asl-ink);
 }

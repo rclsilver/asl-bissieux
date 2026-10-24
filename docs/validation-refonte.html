@@ -20,7 +20,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 <a class="skip" href="#tests">Aller aux tests</a>
 <header>
 <h1>Fiche de validation — ASL Bissieux</h1>
-<p class="muted">Bassin clair / Graphite — cartes transparentes et budget sans pointillés · Référence refonte-2026-10-v1 · 24 octobre 2026</p>
+<p class="muted">Bassin clair / Graphite — carte des membres et fenêtre de consultation · Référence refonte-2026-10-v1 · 24 octobre 2026</p>
 <p>Coche une case après avoir effectué le test et obtenu le résultat attendu. Pour un échec, un blocage ou un cas sans objet, utilise « Noter un écart ou une réserve ». Rien n’est prévalidé.</p>
 <div class="session">
   <label for="reviewer">Validateur<input id="reviewer" autocomplete="name"></label>
@@ -36,7 +36,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 </div>
 <p id="storage-status" role="status">La sauvegarde automatique dépend du stockage autorisé par ton navigateur. Exporte la fiche pour conserver ou partager tes résultats.</p>
 <noscript><p>Les cases restent utilisables, mais le suivi automatique nécessite JavaScript. Utilise aussi la version Markdown jointe pour une recette sur papier.</p></noscript>
-<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 24 tests</p><progress id="progress" value="0" max="24" aria-label="Tests validés"></progress></div>
+<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 25 tests</p><progress id="progress" value="0" max="25" aria-label="Tests validés"></progress></div>
 </header>
 <div class="layout">
 <nav aria-label="Parcours de validation"><details open><summary>Parcours</summary><ul><li><a href="#section-0">Thèmes et connexion</a></li><li><a href="#section-1">Navigation et écrans de gestion</a></li><li><a href="#section-2">Carte et paiements</a></li><li><a href="#section-3">Confort et validation finale</a></li><li><a href="#section-4">Ajustements après la première revue</a></li></ul></details></nav>
@@ -259,10 +259,10 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-AJUST2" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="AJUST3" data-search="AJUST3 Recherche dans l’annuaire, clic dans la carte chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche. l’annuaire utilise la même loupe et le même champ repliable que les autres listes. La carte et les coordonnées partagent un fond continu identique aux onglets, sans boîtes arrondies ni bandeau d’instruction/actualisation. Un simple séparateur devient horizontal sur petit écran. La carte n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot affiche tous ses membres. Pour chaque membre n’ayant qu’un seul lot, « Lots associés » et « Voir tous ses lots » sont masqués ; ces éléments restent disponibles pour les membres multi-lots. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres. Effacer la sélection reste utilisable au clavier et les erreurs permettent de réessayer.">
+</article><article class="test" data-test="AJUST3" data-search="AJUST3 Recherche dans l’annuaire, clic dans la carte chercher un membre, passer à Carte, cliquer sur un lot puis fermer la fenêtre et revenir à Annuaire ; enfin effacer la recherche. l’annuaire utilise la même loupe et le même champ repliable que les autres listes. La carte occupe toute la largeur sur un fond continu identique aux onglets, sans panneau de coordonnées latéral ni boîtes arrondies. Elle n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot ouvre une fenêtre contenant tous ses membres, même avec une recherche active dans l’annuaire. Pour chaque membre n’ayant qu’un seul lot, « Lots associés » et « Voir tous ses lots » sont masqués ; ces éléments restent disponibles pour les membres multi-lots et réutilisent la même fenêtre. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres. Les erreurs permettent de réessayer.">
   <label class="test-title" for="check-AJUST3"><input id="check-AJUST3" type="checkbox"><span><span class="test-id">AJUST3</span> Recherche dans l’annuaire, clic dans la carte</span></label>
-  <p><strong>Faire.</strong> chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche.</p>
-  <p><strong>Attendu.</strong> l’annuaire utilise la même loupe et le même champ repliable que les autres listes. La carte et les coordonnées partagent un fond continu identique aux onglets, sans boîtes arrondies ni bandeau d’instruction/actualisation. Un simple séparateur devient horizontal sur petit écran. La carte n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot affiche tous ses membres. Pour chaque membre n’ayant qu’un seul lot, « Lots associés » et « Voir tous ses lots » sont masqués ; ces éléments restent disponibles pour les membres multi-lots. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres. Effacer la sélection reste utilisable au clavier et les erreurs permettent de réessayer.</p>
+  <p><strong>Faire.</strong> chercher un membre, passer à Carte, cliquer sur un lot puis fermer la fenêtre et revenir à Annuaire ; enfin effacer la recherche.</p>
+  <p><strong>Attendu.</strong> l’annuaire utilise la même loupe et le même champ repliable que les autres listes. La carte occupe toute la largeur sur un fond continu identique aux onglets, sans panneau de coordonnées latéral ni boîtes arrondies. Elle n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot ouvre une fenêtre contenant tous ses membres, même avec une recherche active dans l’annuaire. Pour chaque membre n’ayant qu’un seul lot, « Lots associés » et « Voir tous ses lots » sont masqués ; ces éléments restent disponibles pour les membres multi-lots et réutilisent la même fenêtre. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres. Les erreurs permettent de réessayer.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
     <label for="status-AJUST3">Autre résultat pour AJUST3</label>
@@ -329,6 +329,18 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <select id="status-AJUST8"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
     <label for="note-AJUST8">Notes pour AJUST8 : résultat observé, reproduction, réserve</label>
     <textarea id="note-AJUST8" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST9" data-search="AJUST9 Fenêtre des membres et retour à la carte en clair puis en sombre, sur ordinateur et petit écran, ouvrir un lot avec plusieurs membres et parcourir leurs autres lots. Fermer par le bouton, Échap puis clic extérieur. Essayer une adresse directe vers un lot, recharger et utiliser précédent/suivant ; ouvrir aussi un lot sans membre. une seule fenêtre, titre et coordonnées lisibles, contenu défilable si nécessaire et bouton Fermer accessible. Les lots sans membre affichent un message explicite. Au clavier, le titre reçoit le focus ; Tab reste dans la fenêtre et la fermeture rend le focus au lot choisi. La carte retrouve toute sa largeur, la sélection est effacée à la fermeture et l’adresse reste cohérente. Quitter Membres ferme la fenêtre.">
+  <label class="test-title" for="check-AJUST9"><input id="check-AJUST9" type="checkbox"><span><span class="test-id">AJUST9</span> Fenêtre des membres et retour à la carte</span></label>
+  <p><strong>Faire.</strong> en clair puis en sombre, sur ordinateur et petit écran, ouvrir un lot avec plusieurs membres et parcourir leurs autres lots. Fermer par le bouton, Échap puis clic extérieur. Essayer une adresse directe vers un lot, recharger et utiliser précédent/suivant ; ouvrir aussi un lot sans membre.</p>
+  <p><strong>Attendu.</strong> une seule fenêtre, titre et coordonnées lisibles, contenu défilable si nécessaire et bouton Fermer accessible. Les lots sans membre affichent un message explicite. Au clavier, le titre reçoit le focus ; Tab reste dans la fenêtre et la fermeture rend le focus au lot choisi. La carte retrouve toute sa largeur, la sélection est effacée à la fermeture et l’adresse reste cohérente. Quitter Membres ferme la fenêtre.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST9">Autre résultat pour AJUST9</label>
+    <select id="status-AJUST9"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST9">Notes pour AJUST9 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST9" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
 </article></section>

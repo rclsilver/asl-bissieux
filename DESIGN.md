@@ -277,6 +277,8 @@ Le budget de l’accueil, le filtre d’état dans une campagne, la situation de
 
 Les onglets des budgets, d’E-mails et des membres partagent la présentation d’E-mails : fond surface, coins supérieurs de la barre arrondis à 12px et coins inférieurs droits. La règle commune cible `[mat-tab-nav-bar]` et l’en-tête direct de `mat-tab-group`. Les onglets sont contigus à leur contenu : aucune marge inférieure sur leur navigation, aucune marge supérieure ajoutée à la carte des membres. Sous `mat-tab-group` et `mat-tab-nav-panel`, `--asl-table-radius` vaut `0` : les tableaux n’ont aucun coin arrondi, en haut comme en bas. Les listes sans onglets conservent leurs quatre coins arrondis.
 
+Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un panneau à angles droits, avec bordure fine et padding de 1rem. Ce panneau réunit légende, carte et sélection. La figure SVG conserve son fond géographique clair et ses couleurs métier dans les deux thèmes.
+
 ### Navigation
 
 Le menu Repères est horizontal sur grand écran. Les liens ont un padding de 10px par 12px, un rayon de navigation et un texte de 0.875rem. La page active change de fond et d’encre, prend une graisse de 650 et porte `aria-current="page"`. Le survol ajoute un mélange de l’encre à 12 %. Le contour de focus est intérieur, avec l’encre du bandeau au repos et l’encre de navigation sur la page active. Le lien d’évitement devient visible au focus ; le tiroir mobile conserve l’indication de page active.

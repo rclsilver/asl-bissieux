@@ -174,46 +174,52 @@
       }
       @if ((cotisations$ | async) && (unitClasses$ | async); as unitClasses) {
         <mat-tab label="Carte">
-          <ul class="payment-legend" aria-label="Légende des paiements">
-            <li>
-              <span class="state state-ok" aria-hidden="true"></span>Soldé
-            </li>
-            <li>
-              <span class="state state-overpaid" aria-hidden="true"></span
-              >Trop-perçu à rembourser
-            </li>
-            <li>
-              <span class="state state-doing" aria-hidden="true"></span>Au moins
-              la moitié réglée
-            </li>
-            <li>
-              <span class="state state-ko" aria-hidden="true"></span>Moins de la
-              moitié réglée
-            </li>
-          </ul>
-          <p>
-            Choisis un lot sur la carte pour ouvrir ses membres dans l’annuaire.
-          </p>
-          <div class="map-container">
-            <app-interactive-map
-              hoverClass="unit-hover"
-              [unitClasses]="unitClasses"
-              [showLabels]="true"
-              [selectedUnit]="selectedMapUnit"
-              (unitClick)="selectedMapUnit = $event.unitId"
-            ></app-interactive-map>
-          </div>
-          @if (selectedMapUnit !== null) {
-            <p role="status">
-              Lot {{ selectedMapUnit }} sélectionné.
-              <a
-                mat-button
-                [routerLink]="['/members']"
-                [queryParams]="{ view: 'map', lot: selectedMapUnit }"
-                >Consulter les membres du lot {{ selectedMapUnit }}</a
-              >
+          <section
+            class="budget-map-panel"
+            aria-label="Carte des paiements du budget"
+          >
+            <ul class="payment-legend" aria-label="Légende des paiements">
+              <li>
+                <span class="state state-ok" aria-hidden="true"></span>Soldé
+              </li>
+              <li>
+                <span class="state state-overpaid" aria-hidden="true"></span
+                >Trop-perçu à rembourser
+              </li>
+              <li>
+                <span class="state state-doing" aria-hidden="true"></span>Au
+                moins la moitié réglée
+              </li>
+              <li>
+                <span class="state state-ko" aria-hidden="true"></span>Moins de
+                la moitié réglée
+              </li>
+            </ul>
+            <p>
+              Choisis un lot sur la carte pour ouvrir ses membres dans
+              l’annuaire.
             </p>
-          }
+            <div class="map-container">
+              <app-interactive-map
+                hoverClass="unit-hover"
+                [unitClasses]="unitClasses"
+                [showLabels]="true"
+                [selectedUnit]="selectedMapUnit"
+                (unitClick)="selectedMapUnit = $event.unitId"
+              ></app-interactive-map>
+            </div>
+            @if (selectedMapUnit !== null) {
+              <p role="status">
+                Lot {{ selectedMapUnit }} sélectionné.
+                <a
+                  mat-button
+                  [routerLink]="['/members']"
+                  [queryParams]="{ view: 'map', lot: selectedMapUnit }"
+                  >Consulter les membres du lot {{ selectedMapUnit }}</a
+                >
+              </p>
+            }
+          </section>
         </mat-tab>
       }
       <mat-tab label="Dépenses">

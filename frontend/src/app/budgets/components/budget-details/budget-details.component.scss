@@ -51,11 +51,11 @@ div.loading {
 
 h2 .label {
   &::before {
-    content: ' (';
+    content: " (";
   }
 
   &::after {
-    content: ')';
+    content: ")";
   }
 }
 h2,
@@ -118,21 +118,27 @@ p {
   .unit-hover * {
     opacity: 0.7;
   }
-  .payment-done g[id^='label'] *,
-  .payment-overpaid g[id^='label'] * {
+  .payment-done g[id^="label"] *,
+  .payment-overpaid g[id^="label"] * {
     fill: white;
   }
-  .payment-doing g[id^='label'] *,
-  .payment-waiting g[id^='label'] * {
+  .payment-doing g[id^="label"] *,
+  .payment-waiting g[id^="label"] * {
     fill: black;
   }
+}
+
+.budget-map-panel {
+  background: var(--asl-surface);
+  border: 1px solid var(--asl-border);
+  padding: 1rem;
+  min-inline-size: 0;
 }
 
 .map-container {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding-top: 1em;
   overflow: auto;
   app-interactive-map {
     inline-size: min(100%, 1000px);
@@ -144,7 +150,7 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  padding: 1rem;
+  padding: 0;
   margin: 0;
   list-style: none;
 

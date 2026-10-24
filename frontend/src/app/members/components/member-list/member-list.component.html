@@ -131,24 +131,27 @@
               <dt>Adresse</dt>
               <dd>{{ member.address || "Non renseignée" }}</dd>
             </dl>
-            <p>Lots associés :</p>
-            <div class="member-lots">
-              @for (unit of memberUnits(member); track unit.id) {
-                <button
-                  mat-stroked-button
-                  type="button"
-                  (click)="selectUnit(unit.number)"
-                >
-                  Lot {{ unit.number }}
+            @let units = memberUnits(member);
+            @if (!selectedUnit || units.length > 1) {
+              <p>Lots associés :</p>
+              <div class="member-lots">
+                @for (unit of units; track unit.id) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="selectUnit(unit.number)"
+                  >
+                    Lot {{ unit.number }}
+                  </button>
+                } @empty {
+                  <p>Aucun lot associé à ce membre.</p>
+                }
+              </div>
+              @if (selectedUnit) {
+                <button mat-button type="button" (click)="selectMember(member)">
+                  Voir tous ses lots
                 </button>
-              } @empty {
-                <p>Aucun lot associé à ce membre.</p>
               }
-            </div>
-            @if (selectedUnit) {
-              <button mat-button type="button" (click)="selectMember(member)">
-                Voir tous ses lots
-              </button>
             }
           </section>
         }

@@ -281,6 +281,8 @@ Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un 
 
 La carte des membres et le détail associé partagent aussi un seul panneau `surface`, bordé et sans arrondi, raccordé aux onglets. Un séparateur vertical distingue les coordonnées sur grand écran ; il devient horizontal lorsque les colonnes s’empilent. Les anciennes cartes arrondies et le bandeau d’instruction/actualisation sont supprimés. L’actualisation habituelle reste dans l’annuaire et des boutons de reprise apparaissent sur la carte en cas d’erreur ; effacer la sélection rend le focus au titre du détail. La figure SVG est droite dans cette vue et conserve son fond géographique clair.
 
+Lorsqu’un lot est sélectionné, chaque copropriétaire garde ses coordonnées mais la section « Lots associés » et l’action « Voir tous ses lots » apparaissent seulement pour les membres possédant plusieurs lots. La consultation directe d’un membre conserve sa liste de lots et le message d’absence de lot.
+
 ### Navigation
 
 Le menu Repères est horizontal sur grand écran. Les liens ont un padding de 10px par 12px, un rayon de navigation et un texte de 0.875rem. La page active change de fond et d’encre, prend une graisse de 650 et porte `aria-current="page"`. Le survol ajoute un mélange de l’encre à 12 %. Le contour de focus est intérieur, avec l’encre du bandeau au repos et l’encre de navigation sur la page active. Le lien d’évitement devient visible au focus ; le tiroir mobile conserve l’indication de page active.

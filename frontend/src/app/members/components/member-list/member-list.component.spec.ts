@@ -198,7 +198,25 @@ describe("Member directory and map", () => {
     expect(document.activeElement).toBe(
       fixture.nativeElement.querySelector(".selection-pane h3"),
     );
-    page.selectMember(elodie);
+    const contacts = Array.from(
+      fixture.nativeElement.querySelectorAll(".contact-details"),
+    ) as HTMLElement[];
+    const singleLot = contacts.find((contact) =>
+      contact.querySelector("h4")?.textContent?.includes("Bob"),
+    )!;
+    const multipleLots = contacts.find((contact) =>
+      contact.querySelector("h4")?.textContent?.includes("Élodie"),
+    )!;
+    expect(singleLot.textContent).not.toContain("Lots associés");
+    expect(singleLot.textContent).not.toContain("Voir tous ses lots");
+    expect(singleLot.querySelector(".member-lots")).toBeNull();
+    expect(multipleLots.querySelectorAll(".member-lots button")).toHaveLength(
+      2,
+    );
+    const allLots = Array.from(multipleLots.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("Voir tous ses lots"),
+    )!;
+    allLots.click();
     fixture.detectChanges();
     expect(page.highlightedUnits).toEqual([1, 2]);
     page.selectMember(zoe);

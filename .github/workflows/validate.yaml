@@ -44,6 +44,9 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.19.0
       - name: Start disposable Smocker for OVH contract tests
         run: |
           docker run -d --name smocker-contract --network host \
@@ -56,6 +59,7 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://test:test@localhost:5432/test?sslmode=disable
           TEST_SMOCKER: '1'
+          REQUIRE_HELM: '1'
         run: |
           go test -count=1 ./...
           go test -race -count=1 ./pkg/auth
@@ -69,7 +73,8 @@ jobs:
           govulncheck ./...
       - name: Build and audit deployable images
         run: |
-          docker build -t local/asl-bissieux:ci .
+          docker build --build-arg VERSION=0.0.0-ci --build-arg COMMIT="${{ github.sha }}" -t local/asl-bissieux:ci .
+          test "$(docker run --rm --network none local/asl-bissieux:ci --version)" = "asl-bissieux version 0.0.0-ci (commit ${{ github.sha }})"
           docker build -t local/asl-smtp:ci smtp-mock
           docker create --name app-audit local/asl-bissieux:ci
           docker cp app-audit:/app/asl-bissieux "$RUNNER_TEMP/asl-bissieux"

@@ -5,9 +5,9 @@
 replicaCount: 1
 
 image:
-  repository: rclsilver/asl-bissieux
+  repository: ghcr.io/rclsilver/asl-bissieux
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # Defaults to the packaged chart's appVersion. Required for a source checkout.
   tag: ""
 
 imagePullSecrets: []

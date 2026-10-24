@@ -81,6 +81,7 @@
       }
       <div class="map-frame" [attr.inert]="loading || error ? '' : null">
         <app-interactive-map
+          [transparentBackground]="true"
           [highlightedUnits]="highlightedUnits"
           [selectedUnit]="selectedUnitNumber"
           (unitClick)="selectUnit($event.unitId)"

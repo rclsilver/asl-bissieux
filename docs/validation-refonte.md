@@ -15,7 +15,7 @@ Préparation : ouvre l’application locale habituelle. Le bouton soleil/lune du
   Attendu : bandeau cobalt, fond bleu eau et surfaces claires ; textes, liens, filtres et tableaux lisibles sur chaque écran.
 - [ ] **THEME2 — Graphite sombre et fenêtres**
   Action : choisir « Sombre · Graphite », ouvrir un formulaire existant puis l’annuler, et ouvrir un menu ou un sélecteur.
-  Attendu : le fond, les surfaces, les menus et les fenêtres suivent le thème sombre ; aucun texte sombre illisible sur fond sombre. La carte reste une figure claire et lisible.
+  Attendu : le fond, les surfaces, les menus et les fenêtres suivent le thème sombre ; aucun texte sombre illisible sur fond sombre. Les cartes des budgets et des membres laissent apparaître leur panneau à travers le fond ; routes, numéros et couleurs restent lisibles.
 - [ ] **THEME3 — Préférence mémorisée**
   Action : choisir le thème clair ou sombre, recharger la page puis quitter et rouvrir l’application.
   Attendu : le choix est conservé lorsque le navigateur autorise son stockage ; aucune modification des données métier.
@@ -98,9 +98,9 @@ Préparation : corrections des 22 et 24 octobre 2026. Les résultats des cas pr�
   Attendu : aucun filtre de qualité sur Lots ou Membres, aucun filtre d’état dans la liste des campagnes. Ces anciens paramètres ne filtrent plus silencieusement les résultats. Le filtre d’état reste disponible à l’intérieur d’une campagne.
 - [ ] **AJUST7 — Onglets contigus au contenu**
   Action : comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran.
-  Attendu : les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Dans un budget, légende et carte sont réunies sur un fond identique à la barre d’onglets, en clair comme en sombre. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet restent utilisables.
+  Attendu : les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Les cartes du budget et des membres ont un fond transparent laissant apparaître la surface du panneau, en clair comme en sombre ; les couleurs et numéros du dessin sont conservés. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet restent utilisables.
 - [ ] **AJUST8 — Carte du budget en lecture seule**
   Action : dans un budget publié, ouvrir Carte, survoler et cliquer plusieurs lots puis parcourir la page avec Tab. Revenir ensuite à la carte des membres et à celle du dashboard.
-  Attendu : dans le budget, pas de curseur de bouton, effet de survol, encadrement de sélection ou action au clic ; Tab ne s’arrête pas sur les lots. Numéros, couleurs de paiement et légende restent visibles. Les cartes des membres et du dashboard conservent leurs clics, sélections et navigation clavier.
+  Attendu : dans le budget, pas de curseur de bouton, effet de survol, encadrement de sélection, pointillés de focus ou action au clic ; Tab ne s’arrête pas sur les lots. Numéros, couleurs de paiement et légende restent visibles. Les cartes des membres et du dashboard conservent leurs clics, sélections et pointillés de focus au clavier.
 
 **Résultat de la séance.** Noter les identifiants des cas en échec ou bloqués et le navigateur utilisé. La fiche HTML permet d’exporter un exemplaire rempli ou les résultats JSON. Aucun résultat n’est envoyé automatiquement et aucune case n’est précochée.

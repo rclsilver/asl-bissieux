@@ -28,6 +28,9 @@ describe('Interactive map after the Angular migration', () => {
       )
     ).toHaveLength(0);
     expect(unit.getAttribute('aria-label')).toBe('Lot 1');
+    expect(unit.getAttribute('focusable')).toBe('false');
+    expect(unit.onfocus).toBeNull();
+    expect(unit.onclick).toBeNull();
     expect(unit.classList.contains('payment-overpaid')).toBe(true);
     expect(unit.classList.contains('unit-selected')).toBe(false);
     expect(unit.classList.contains('unit-highlighted')).toBe(false);
@@ -51,6 +54,15 @@ describe('Interactive map after the Angular migration', () => {
     ).toHaveLength(1);
     unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(selected).toEqual([1]);
+    unit.focus();
+    expect(document.activeElement).toBe(unit);
+    fixture.componentRef.setInput('interactive', false);
+    fixture.detectChanges();
+    expect(document.activeElement).not.toBe(unit);
+    expect(unit.onfocus).toBeNull();
+    expect(unit.onclick).toBeNull();
+    expect(unit.classList.contains('unit-selected')).toBe(false);
+    expect(unit.hasAttribute('tabindex')).toBe(false);
   });
   it('renders payment colors and labels, and emits the selected lot', async () => {
     await TestBed.configureTestingModule({

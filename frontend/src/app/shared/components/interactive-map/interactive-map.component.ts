@@ -23,7 +23,10 @@ export type UnitClasses = { [unitId: number]: string };
   styleUrls: ['./interactive-map.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
-  host: { '[class.static-map]': '!interactive' },
+  host: {
+    '[class.static-map]': '!interactive',
+    '[class.transparent-map]': 'transparentBackground',
+  },
 })
 export class InteractiveMapComponent implements AfterViewInit {
   private readonly _svgWidth = 1871;
@@ -51,6 +54,7 @@ export class InteractiveMapComponent implements AfterViewInit {
     return this._interactive;
   }
   @Input() label = 'Carte des lots';
+  @Input() transparentBackground = false;
   @Input() set highlightedUnits(units: number[]) {
     this._highlightedUnits = units ?? [];
     if (this.container) this.setSelection();
@@ -119,71 +123,86 @@ export class InteractiveMapComponent implements AfterViewInit {
 
     this.foreachUnits((unitId, element) => {
       this.unitElements.push({ number: unitId, element });
-      element.onmouseenter = (e) => {
-        if (this.interactive && this.hoverClass) {
-          element.classList.add(this.hoverClass);
-        }
-      };
-
-      element.onmouseleave = (e) => {
-        if (this.hoverClass) {
-          element.classList.remove(this.hoverClass);
-        }
-      };
-
-      element.onclick = (event) => {
-        if (!this.interactive) return;
-        this.unitClick.emit({
-          unitId,
-          event,
-        });
-      };
-      element.onfocus = () => {
-        if (!this.interactive) return;
-        this.activeUnit = unitId;
-        this.setTabStops();
-      };
-      element.onkeydown = (event) => {
-        if (!this.interactive) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          if (!event.repeat) this.unitClick.emit({ unitId, event });
-        } else {
-          const index = this.unitElements.findIndex(
-            (unit) => unit.number === unitId
-          );
-          let next: number;
-          switch (event.key) {
-            case 'ArrowRight':
-            case 'ArrowDown':
-              next = Math.min(index + 1, this.unitElements.length - 1);
-              break;
-            case 'ArrowLeft':
-            case 'ArrowUp':
-              next = Math.max(index - 1, 0);
-              break;
-            case 'Home':
-              next = 0;
-              break;
-            case 'End':
-              next = this.unitElements.length - 1;
-              break;
-            default:
-              return;
-          }
-          event.preventDefault();
-          this.unitElements[next]?.element.focus();
-        }
-      };
     });
     this.unitElements.sort((a, b) => a.number - b.number);
     this.updateInteraction();
   }
 
+  private bindUnitEvents(unitId: number, element: SVGGElement) {
+    element.onmouseenter = (e) => {
+      if (this.interactive && this.hoverClass) {
+        element.classList.add(this.hoverClass);
+      }
+    };
+
+    element.onmouseleave = (e) => {
+      if (this.hoverClass) {
+        element.classList.remove(this.hoverClass);
+      }
+    };
+
+    element.onclick = (event) => {
+      if (!this.interactive) return;
+      this.unitClick.emit({
+        unitId,
+        event,
+      });
+    };
+    element.onfocus = () => {
+      if (!this.interactive) return;
+      this.activeUnit = unitId;
+      this.setTabStops();
+    };
+    element.onkeydown = (event) => {
+      if (!this.interactive) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (!event.repeat) this.unitClick.emit({ unitId, event });
+      } else {
+        const index = this.unitElements.findIndex(
+          (unit) => unit.number === unitId
+        );
+        let next: number;
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            next = Math.min(index + 1, this.unitElements.length - 1);
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            next = Math.max(index - 1, 0);
+            break;
+          case 'Home':
+            next = 0;
+            break;
+          case 'End':
+            next = this.unitElements.length - 1;
+            break;
+          default:
+            return;
+        }
+        event.preventDefault();
+        this.unitElements[next]?.element.focus();
+      }
+    };
+  }
+
   private updateInteraction() {
     this.unitElements.forEach(({ number, element }) => {
-      if (this.interactive) element.setAttribute('role', 'button');
-      else element.removeAttribute('role');
+      if (this.interactive) {
+        element.setAttribute('role', 'button');
+        element.removeAttribute('focusable');
+        this.bindUnitEvents(number, element);
+      } else {
+        element.removeAttribute('role');
+        element.setAttribute('focusable', 'false');
+        element.onclick = null;
+        element.onmouseenter = null;
+        element.onmouseleave = null;
+        element.onfocus = null;
+        element.onkeydown = null;
+        if (element.ownerDocument.activeElement === element) element.blur();
+      }
       element.setAttribute(
         'aria-label',
         this.interactive ? `Consulter le lot ${number}` : `Lot ${number}`

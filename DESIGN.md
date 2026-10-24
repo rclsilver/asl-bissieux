@@ -195,7 +195,7 @@ La palette primaire est cobalt dans le thème clair et bleu eau lumineux dans Gr
 - **Encre et encre secondaire** : `ink` porte le contenu, `muted` les légendes et en-têtes. `border` fournit les séparations ; il ne remplace pas la couleur d’un texte ou d’un contour de focus.
 - **Teinte de sélection** : `tint` accompagne les statuts non financiers, résultats de recherche et survols de lignes.
 
-Les clés `light-*` et `dark-*` correspondent aux propriétés CSS `--asl-*` de même suffixe. La carte conserve ses couleurs `map-*` et son fond clair dans les deux thèmes ; ce choix garde lisibles les routes et les numéros du dessin existant.
+Les clés `light-*` et `dark-*` correspondent aux propriétés CSS `--asl-*` de même suffixe. La carte conserve ses couleurs `map-*`, ses remplissages et les marquages du dessin. Le dashboard garde son fond clair ; les cartes des budgets et des membres utilisent un support transparent pour laisser apparaître la surface de leur panneau dans les deux thèmes.
 
 ### États métier
 
@@ -277,9 +277,9 @@ Le budget de l’accueil, le filtre d’état dans une campagne, la situation de
 
 Les onglets des budgets, d’E-mails et des membres partagent la présentation d’E-mails : fond surface, coins supérieurs de la barre arrondis à 12px et coins inférieurs droits. La règle commune cible `[mat-tab-nav-bar]` et l’en-tête direct de `mat-tab-group`. Les onglets sont contigus à leur contenu : aucune marge inférieure sur leur navigation, aucune marge supérieure ajoutée à la carte des membres. Sous `mat-tab-group` et `mat-tab-nav-panel`, `--asl-table-radius` vaut `0` : les tableaux n’ont aucun coin arrondi, en haut comme en bas. Les listes sans onglets conservent leurs quatre coins arrondis.
 
-Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un panneau à angles droits, avec bordure fine et padding de 1rem. Ce panneau réunit légende et carte en lecture seule : aucun survol actif, pointeur de bouton, sélection ni réaction au clic ou au clavier. La figure SVG conserve son fond géographique clair, ses numéros et ses couleurs métier dans les deux thèmes.
+Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un panneau à angles droits, avec bordure fine et padding de 1rem. Ce panneau réunit légende et carte en lecture seule : aucun survol actif, pointeur de bouton, sélection ni réaction au clic ou au clavier. Le support de la figure SVG est transparent ; ses numéros et ses remplissages métier sont conservés dans les deux thèmes.
 
-La carte des membres et le détail associé partagent aussi un seul panneau `surface`, bordé et sans arrondi, raccordé aux onglets. Un séparateur vertical distingue les coordonnées sur grand écran ; il devient horizontal lorsque les colonnes s’empilent. Les anciennes cartes arrondies et le bandeau d’instruction/actualisation sont supprimés. L’actualisation habituelle reste dans l’annuaire et des boutons de reprise apparaissent sur la carte en cas d’erreur ; effacer la sélection rend le focus au titre du détail. La figure SVG est droite dans cette vue et conserve son fond géographique clair.
+La carte des membres et le détail associé partagent aussi un seul panneau `surface`, bordé et sans arrondi, raccordé aux onglets. Un séparateur vertical distingue les coordonnées sur grand écran ; il devient horizontal lorsque les colonnes s’empilent. Les anciennes cartes arrondies et le bandeau d’instruction/actualisation sont supprimés. L’actualisation habituelle reste dans l’annuaire et des boutons de reprise apparaissent sur la carte en cas d’erreur ; effacer la sélection rend le focus au titre du détail. La figure SVG est droite dans cette vue et son support est transparent.
 
 Lorsqu’un lot est sélectionné, chaque copropriétaire garde ses coordonnées mais la section « Lots associés » et l’action « Voir tous ses lots » apparaissent seulement pour les membres possédant plusieurs lots. La consultation directe d’un membre conserve sa liste de lots et le message d’absence de lot.
 
@@ -295,9 +295,9 @@ Le tableau CRUD est bordé, avec en-têtes `raised`, texte secondaire et sépara
 
 ### Carte interactive
 
-Le SVG existant garde son fond clair, ses numéros et ses cinq remplissages financiers. Un résultat de recherche reçoit un contour de 2px ; le lot sélectionné, 4px ; le lot au focus, 4px en tirets `5 3`. Les contours ne changent pas d’épaisseur avec l’échelle du dessin. Un seul lot entre dans l’ordre de tabulation ; les flèches, Début et Fin déplacent le focus, Entrée et Espace activent le lot.
+Le SVG existant garde ses numéros et ses cinq remplissages financiers. Le support est clair par défaut et devient transparent avec `transparentBackground=true` dans les budgets et les membres. Sur les cartes interactives, un résultat de recherche reçoit un contour de 2px ; le lot sélectionné, 4px ; le lot au focus, 4px en tirets `5 3`. Les contours ne changent pas d’épaisseur avec l’échelle du dessin. Un seul lot entre dans l’ordre de tabulation ; les flèches, Début et Fin déplacent le focus, Entrée et Espace activent le lot.
 
-Ces interactions sont conservées pour le dashboard et les membres. Le composant partagé accepte `interactive=false` pour la vue Carte d’un budget : SVG exposé comme image nommée, aucun lot présenté comme bouton ni accessible par Tab, aucune émission d’action ou contour de sélection. Le mode interactif reste le comportement par défaut.
+Ces interactions sont conservées pour le dashboard et les membres. Le composant partagé accepte `interactive=false` pour la vue Carte d’un budget : SVG exposé comme image nommée, aucun lot présenté comme bouton ni accessible par Tab, aucune émission d’action ou contour de sélection. Les gestionnaires souris/clavier/focus sont retirés et `focusable=false` est appliqué aux lots ; les règles de contour sont réservées aux cartes interactives. Passer en mode statique retire aussi un focus résiduel. Le mode interactif reste le comportement par défaut.
 
 Les transitions durent 140ms pour les contours et 180ms pour l’ombre du détail, avec `ease-out`. Elles sont supprimées lorsque la réduction du mouvement est demandée. Le sidecar montre seulement un fragment d’état, pas une carte de remplacement ni des données réelles.
 
@@ -313,6 +313,6 @@ Les transitions durent 140ms pour les contours et 180ms pour l’ombre du détai
 ### Don't:
 
 - **Don't** réutiliser le violet de trop-perçu comme couleur de sélection de la carte.
-- **Don't** assombrir le fond géographique de la carte sans revoir ses routes et ses numéros.
+- **Don't** effacer les remplissages des lots ou les marquages routiers pour rendre le support de la carte transparent.
 - **Don't** remplacer le bouton + compact des listes par une action sans nom accessible ni infobulle.
 - **Don't** présenter une extraction de code, un build ou une vignette du sidecar comme une validation visuelle de l’application.

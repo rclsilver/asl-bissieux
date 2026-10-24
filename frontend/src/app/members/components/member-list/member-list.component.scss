@@ -10,23 +10,13 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
   gap: 1.5rem;
+  background: var(--asl-surface);
+  border: 1px solid var(--asl-border);
+  padding: 1rem;
 }
 .map-pane,
 .selection-pane {
   min-inline-size: 0;
-  background: var(--asl-surface);
-  border-radius: var(--asl-radius);
-}
-.map-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-block-end: 0.75rem;
-}
-.map-heading p {
-  margin: 0;
-  color: var(--asl-muted);
 }
 app-crud-table[hidden] {
   display: none;
@@ -36,9 +26,12 @@ app-crud-table[hidden] {
   overflow: auto;
 }
 .selection-pane {
-  border: 1px solid var(--asl-border);
-  padding: 1.5rem;
+  border-inline-start: 1px solid var(--asl-border);
+  padding-inline-start: 1.5rem;
   align-self: start;
+}
+.map-frame app-interactive-map {
+  border-radius: 0;
 }
 h3 {
   font-size: 1.125rem;
@@ -85,5 +78,11 @@ button {
 @container (max-width: 56rem) {
   .directory-map {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .selection-pane {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--asl-border);
+    padding-inline-start: 0;
+    padding-block-start: 1rem;
   }
 }

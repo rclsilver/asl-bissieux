@@ -76,7 +76,7 @@ Préparation : répéter ces vérifications dans les deux thèmes. Cette séance
 
 ## Ajustements après la première revue
 
-Préparation : corrections du 22 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2, AJUST3 et AJUST5 ont été révisés après les retours et sont à rejouer ; AJUST7 est nouveau. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
+Préparation : corrections des 22 et 24 octobre 2026. Les résultats des cas précédents restent conservés. AJUST2, AJUST3, AJUST5 et AJUST7 ont été révisés après les retours et sont à rejouer. Dans la fiche des lots précédents, DB07 (ancien graphique mensuel) est désormais sans objet.
 
 - [ ] **AJUST1 — Arrivée sans clic dans le menu**
   Action : avec une session active, ouvrir l’application à sa racine puis recharger une adresse directe de Membres avec une vue carte et un lot sélectionné.
@@ -86,7 +86,7 @@ Préparation : corrections du 22 octobre 2026. Les résultats des cas précéden
   Attendu : les filtres conservés, la recherche, l’actualisation et l’ajout sont regroupés dans l’en-tête selon les fonctions et droits disponibles. Sur petit écran, les contrôles reviennent à la ligne sans débordement.
 - [ ] **AJUST3 — Recherche dans l’annuaire, clic dans la carte**
   Action : chercher un membre, passer à Carte puis revenir à Annuaire, enfin effacer la recherche.
-  Attendu : l’annuaire utilise la même loupe et le même champ repliable que les autres listes. Les onglets sont au-dessus des vues. La carte n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot affiche tous ses membres. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres.
+  Attendu : l’annuaire utilise la même loupe et le même champ repliable que les autres listes. La carte et les coordonnées partagent un fond continu identique aux onglets, sans boîtes arrondies ni bandeau d’instruction/actualisation. Un simple séparateur devient horizontal sur petit écran. La carte n’affiche ni recherche ni sélecteurs de membre/lot : cliquer sur un lot affiche tous ses membres. Le retour à l’annuaire conserve la recherche ; son effacement rétablit tous les membres. Effacer la sélection reste utilisable au clavier et les erreurs permettent de réessayer.
 - [ ] **AJUST4 — Dashboard allégé**
   Action : ouvrir un budget publié sur l’accueil ; consulter la carte, ouvrir les aides et « Comparer les budgets annuels », puis choisir une référence et recharger.
   Attendu : aucun bloc Encaissements mensuels, graphique ou tableau mensuel ; indicateurs, carte, détails du lot et points à traiter conservés. Les aides et campagnes récentes se déplient à la demande. La comparaison est repliée sans référence et s’ouvre si une référence est présente dans l’adresse.

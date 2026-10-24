@@ -43,8 +43,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
   private readonly destroyed$ = new Subject<void>();
   @ViewChild("selectionHeading", { static: true })
   private selectionHeading!: ElementRef<HTMLElement>;
-  @ViewChild("mapHeading", { static: true })
-  private mapHeading!: ElementRef<HTMLElement>;
   readonly query = new FormControl("", { nonNullable: true });
   readonly memberName = memberName;
   readonly memberUnits = sortedMemberUnits;
@@ -207,7 +205,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.selectedUnitNumber = null;
     this.invalidSelection = false;
     this.syncRoute();
-    this.mapHeading.nativeElement.focus();
+    this.focusSelection();
   }
   private syncRoute(replaceUrl = false) {
     void this.router.navigate([], {

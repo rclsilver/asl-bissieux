@@ -50,29 +50,19 @@
     aria-label="Carte et consultation des membres"
   >
     <div class="map-pane">
-      <div class="map-heading">
-        <p #mapHeading tabindex="-1">
-          Clique sur un lot pour consulter ses membres.
-        </p>
-        <button
-          mat-icon-button
-          type="button"
-          (click)="refresh()"
-          [disabled]="loading || unitsLoading"
-          aria-label="Actualiser les membres et les lots"
-          matTooltip="Actualiser les membres et les lots"
-        >
-          <mat-icon aria-hidden="true">refresh</mat-icon>
-        </button>
-      </div>
       @if (loading) {
         <p role="status">Chargement des membres et des lots…</p>
       }
       @if (error) {
-        <p role="alert">
-          Impossible de charger les membres. Réessaie avec le bouton
-          d’actualisation.
-        </p>
+        <p role="alert">Impossible de charger les membres.</p>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="refresh()"
+          [disabled]="loading || unitsLoading"
+        >
+          Réessayer les membres
+        </button>
       }
       @if (unitsError && !error) {
         <p role="alert">

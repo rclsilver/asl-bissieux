@@ -209,7 +209,7 @@ describe("Member directory and map", () => {
     ).toContain("Aucun lot associé");
     page.clearSelection();
     expect(document.activeElement).toBe(
-      fixture.nativeElement.querySelector(".map-heading p"),
+      fixture.nativeElement.querySelector(".selection-pane h3"),
     );
   });
 
@@ -271,6 +271,7 @@ describe("Member directory and map", () => {
     const fixture = setup();
     const page = fixture.componentInstance;
     page.query.setValue("zoe");
+    page.setView("map");
     page.refresh();
     http.expectOne("/api/unit").flush(units);
     http
@@ -280,7 +281,11 @@ describe("Member directory and map", () => {
     expect(page.error).toBe(true);
     expect(page.members).toEqual([]);
     expect(page.selectionMembers).toEqual([]);
-    page.refresh();
+    const retry = fixture.nativeElement.querySelector(
+      ".map-pane button",
+    ) as HTMLButtonElement;
+    expect(retry.textContent).toContain("Réessayer les membres");
+    retry.click();
     http.expectOne("/api/member").flush(members);
     http.expectOne("/api/unit").flush(units);
     fixture.detectChanges();

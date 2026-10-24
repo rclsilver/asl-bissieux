@@ -277,7 +277,7 @@ Le budget de l’accueil, le filtre d’état dans une campagne, la situation de
 
 Les onglets des budgets, d’E-mails et des membres partagent la présentation d’E-mails : fond surface, coins supérieurs de la barre arrondis à 12px et coins inférieurs droits. La règle commune cible `[mat-tab-nav-bar]` et l’en-tête direct de `mat-tab-group`. Les onglets sont contigus à leur contenu : aucune marge inférieure sur leur navigation, aucune marge supérieure ajoutée à la carte des membres. Sous `mat-tab-group` et `mat-tab-nav-panel`, `--asl-table-radius` vaut `0` : les tableaux n’ont aucun coin arrondi, en haut comme en bas. Les listes sans onglets conservent leurs quatre coins arrondis.
 
-Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un panneau à angles droits, avec bordure fine et padding de 1rem. Ce panneau réunit légende, carte et sélection. La figure SVG conserve son fond géographique clair et ses couleurs métier dans les deux thèmes.
+Dans un budget, l’onglet Carte prolonge le fond `surface` de la barre dans un panneau à angles droits, avec bordure fine et padding de 1rem. Ce panneau réunit légende et carte en lecture seule : aucun survol actif, pointeur de bouton, sélection ni réaction au clic ou au clavier. La figure SVG conserve son fond géographique clair, ses numéros et ses couleurs métier dans les deux thèmes.
 
 La carte des membres et le détail associé partagent aussi un seul panneau `surface`, bordé et sans arrondi, raccordé aux onglets. Un séparateur vertical distingue les coordonnées sur grand écran ; il devient horizontal lorsque les colonnes s’empilent. Les anciennes cartes arrondies et le bandeau d’instruction/actualisation sont supprimés. L’actualisation habituelle reste dans l’annuaire et des boutons de reprise apparaissent sur la carte en cas d’erreur ; effacer la sélection rend le focus au titre du détail. La figure SVG est droite dans cette vue et conserve son fond géographique clair.
 
@@ -294,6 +294,8 @@ Le tableau CRUD est bordé, avec en-têtes `raised`, texte secondaire et sépara
 ### Carte interactive
 
 Le SVG existant garde son fond clair, ses numéros et ses cinq remplissages financiers. Un résultat de recherche reçoit un contour de 2px ; le lot sélectionné, 4px ; le lot au focus, 4px en tirets `5 3`. Les contours ne changent pas d’épaisseur avec l’échelle du dessin. Un seul lot entre dans l’ordre de tabulation ; les flèches, Début et Fin déplacent le focus, Entrée et Espace activent le lot.
+
+Ces interactions sont conservées pour le dashboard et les membres. Le composant partagé accepte `interactive=false` pour la vue Carte d’un budget : SVG exposé comme image nommée, aucun lot présenté comme bouton ni accessible par Tab, aucune émission d’action ou contour de sélection. Le mode interactif reste le comportement par défaut.
 
 Les transitions durent 140ms pour les contours et 180ms pour l’ombre du détail, avec `ease-out`. Elles sont supprimées lorsque la réduction du mouvement est demandée. Le sidecar montre seulement un fragment d’état, pas une carte de remplacement ni des données réelles.
 

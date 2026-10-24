@@ -23,6 +23,7 @@ export type UnitClasses = { [unitId: number]: string };
   styleUrls: ['./interactive-map.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
+  host: { '[class.static-map]': '!interactive' },
 })
 export class InteractiveMapComponent implements AfterViewInit {
   private readonly _svgWidth = 1871;
@@ -41,6 +42,14 @@ export class InteractiveMapComponent implements AfterViewInit {
   private _selectedUnit: number | null = null;
   private activeUnit?: number;
   private unitElements: { number: number; element: SVGGElement }[] = [];
+  private _interactive = true;
+  @Input() set interactive(value: boolean) {
+    this._interactive = value;
+    if (this.container) this.updateInteraction();
+  }
+  get interactive() {
+    return this._interactive;
+  }
   @Input() label = 'Carte des lots';
   @Input() set highlightedUnits(units: number[]) {
     this._highlightedUnits = units ?? [];
@@ -110,10 +119,8 @@ export class InteractiveMapComponent implements AfterViewInit {
 
     this.foreachUnits((unitId, element) => {
       this.unitElements.push({ number: unitId, element });
-      element.setAttribute('role', 'button');
-      element.setAttribute('aria-label', `Consulter le lot ${unitId}`);
       element.onmouseenter = (e) => {
-        if (this.hoverClass) {
+        if (this.interactive && this.hoverClass) {
           element.classList.add(this.hoverClass);
         }
       };
@@ -125,16 +132,19 @@ export class InteractiveMapComponent implements AfterViewInit {
       };
 
       element.onclick = (event) => {
+        if (!this.interactive) return;
         this.unitClick.emit({
           unitId,
           event,
         });
       };
       element.onfocus = () => {
+        if (!this.interactive) return;
         this.activeUnit = unitId;
         this.setTabStops();
       };
       element.onkeydown = (event) => {
+        if (!this.interactive) return;
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           if (!event.repeat) this.unitClick.emit({ unitId, event });
@@ -167,6 +177,20 @@ export class InteractiveMapComponent implements AfterViewInit {
       };
     });
     this.unitElements.sort((a, b) => a.number - b.number);
+    this.updateInteraction();
+  }
+
+  private updateInteraction() {
+    this.unitElements.forEach(({ number, element }) => {
+      if (this.interactive) element.setAttribute('role', 'button');
+      else element.removeAttribute('role');
+      element.setAttribute(
+        'aria-label',
+        this.interactive ? `Consulter le lot ${number}` : `Lot ${number}`
+      );
+      if (!this.interactive && this.hoverClass)
+        element.classList.remove(this.hoverClass);
+    });
     this.setSelection();
     this.setTabStops();
   }
@@ -175,15 +199,24 @@ export class InteractiveMapComponent implements AfterViewInit {
     this.foreachUnits((number, element) => {
       element.classList.toggle(
         'unit-highlighted',
-        this._highlightedUnits.includes(number)
+        this.interactive && this._highlightedUnits.includes(number)
       );
-      element.classList.toggle('unit-selected', this._selectedUnit === number);
-      if (this._selectedUnit === number)
+      element.classList.toggle(
+        'unit-selected',
+        this.interactive && this._selectedUnit === number
+      );
+      if (this.interactive && this._selectedUnit === number)
         element.setAttribute('aria-current', 'true');
       else element.removeAttribute('aria-current');
     });
   }
   private setTabStops() {
+    if (!this.interactive) {
+      this.unitElements.forEach(({ element }) =>
+        element.removeAttribute('tabindex')
+      );
+      return;
+    }
     if (!this.unitElements.some((unit) => unit.number === this.activeUnit))
       this.activeUnit = this.unitElements[0]?.number;
     this.unitElements.forEach((unit) =>

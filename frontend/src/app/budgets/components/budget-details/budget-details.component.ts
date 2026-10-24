@@ -54,7 +54,6 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
     unpaid: 'Sans paiement',
     overpaid: 'Trop-perçus',
   };
-  selectedMapUnit: number | null = null;
   private readonly _destroy$ = new Subject<void>();
   private readonly _refresh$ = new BehaviorSubject<void>(undefined);
   readonly STATE_OK = PaymentState.Done;
@@ -376,7 +375,6 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
           this.budgetLoading = true;
           this.budgetError = false;
           this._budget$.next(null);
-          this.selectedMapUnit = null;
         }),
         switchMap(([params]) =>
           this._api.getBudget(params.get('id')!).pipe(

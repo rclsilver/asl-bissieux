@@ -18,7 +18,7 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
 import { BudgetsModule } from '../../budgets.module';
 import { BudgetDetailsComponent } from './budget-details.component';
 
-describe('Budget map directory link', () => {
+describe('Budget payment map', () => {
   let http: HttpTestingController;
   let routeParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
@@ -138,7 +138,7 @@ describe('Budget map directory link', () => {
         .classList.contains('payment-overpaid')
     ).toBe(true);
   });
-  it('opens the directory using the selected SVG lot number while preserving payment styling', async () => {
+  it('shows payment colors without responding to lot clicks or keyboard activation', async () => {
     const fixture = TestBed.createComponent(BudgetDetailsComponent);
     fixture.detectChanges();
     http.expectOne('/api/budget/budget-test').flush({
@@ -177,17 +177,26 @@ describe('Budget map directory link', () => {
     const unit = fixture.nativeElement.querySelector('#unit-01') as SVGGElement;
     expect(unit.classList.contains('payment-overpaid')).toBe(true);
     unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    unit.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    );
     fixture.detectChanges();
-    const link = fixture.nativeElement.querySelector(
-      'a[href*="/members"]'
-    ) as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toContain('/members?view=map&lot=1');
-    expect(link.textContent).toContain('lot 1');
     expect(
-      unit.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+      fixture.nativeElement.querySelector('a[href*="/members"]')
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector(
+        '#units [tabindex], #units [role="button"]'
+      )
+    ).toBeNull();
+    expect(
+      fixture.nativeElement
+        .querySelector('app-interactive-map svg')
+        .getAttribute('role')
+    ).toBe('img');
     expect(unit.classList.contains('payment-overpaid')).toBe(true);
-    expect(unit.classList.contains('unit-selected')).toBe(true);
+    expect(unit.classList.contains('unit-selected')).toBe(false);
+    expect(unit.classList.contains('unit-hover')).toBe(false);
     http.expectNone('/api/member');
   });
 });

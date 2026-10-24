@@ -3,6 +3,55 @@ import { describe, expect, it } from 'vitest';
 import { InteractiveMapComponent } from './interactive-map.component';
 
 describe('Interactive map after the Angular migration', () => {
+  it('keeps a static map readable without pointer or keyboard actions and can restore interaction', async () => {
+    await TestBed.configureTestingModule({
+      declarations: [InteractiveMapComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(InteractiveMapComponent);
+    fixture.componentRef.setInput('interactive', false);
+    fixture.componentRef.setInput('unitClasses', { 1: 'payment-overpaid' });
+    fixture.componentRef.setInput('selectedUnit', 1);
+    fixture.componentRef.setInput('highlightedUnits', [1]);
+    fixture.componentRef.setInput('hoverClass', 'hovered');
+    fixture.detectChanges();
+    const unit = fixture.nativeElement.querySelector('#unit-01') as SVGGElement;
+    const svg = fixture.nativeElement.querySelector('svg');
+    const selected: number[] = [];
+    fixture.componentInstance.unitClick.subscribe((event) =>
+      selected.push(event.unitId)
+    );
+    expect(svg.getAttribute('role')).toBe('img');
+    expect(svg.hasAttribute('aria-description')).toBe(false);
+    expect(
+      fixture.nativeElement.querySelectorAll(
+        '#units [tabindex], #units [role="button"]'
+      )
+    ).toHaveLength(0);
+    expect(unit.getAttribute('aria-label')).toBe('Lot 1');
+    expect(unit.classList.contains('payment-overpaid')).toBe(true);
+    expect(unit.classList.contains('unit-selected')).toBe(false);
+    expect(unit.classList.contains('unit-highlighted')).toBe(false);
+    expect(unit.hasAttribute('aria-current')).toBe(false);
+    unit.dispatchEvent(new MouseEvent('mouseenter'));
+    unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    unit.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    );
+    unit.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true })
+    );
+    expect(unit.classList.contains('hovered')).toBe(false);
+    expect(selected).toEqual([]);
+    fixture.componentRef.setInput('interactive', true);
+    fixture.detectChanges();
+    expect(svg.getAttribute('role')).toBe('group');
+    expect(unit.getAttribute('role')).toBe('button');
+    expect(
+      fixture.nativeElement.querySelectorAll('#units [tabindex="0"]')
+    ).toHaveLength(1);
+    unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(selected).toEqual([1]);
+  });
   it('renders payment colors and labels, and emits the selected lot', async () => {
     await TestBed.configureTestingModule({
       declarations: [InteractiveMapComponent],

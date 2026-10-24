@@ -1,6 +1,9 @@
 #units g {
   cursor: pointer;
 }
+:host(.static-map) #units g {
+  cursor: default;
+}
 
 :host {
   display: block;

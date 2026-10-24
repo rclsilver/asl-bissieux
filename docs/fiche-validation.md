@@ -180,8 +180,8 @@ Lots : lot 13 et correction d’alignement demandée.
   Attendu : Le lot sélectionné et ses informations sont identifiables sans souris ; la sélection ne dépend pas de la couleur seule.
 
 - [ ] **DIR06 — Passer d’un budget à l’annuaire du lot**
-  Action : Dans la carte d’un budget, sélectionner un lot et utiliser le lien vers ses membres.
-  Attendu : La carte de l’annuaire s’ouvre sur le lot concerné avec son contexte visible ; « Effacer la sélection » retire cette sélection.
+  Action : Classer ce cas historique « Sans objet » : depuis la revue du 24 octobre, la carte d’un budget est uniquement consultative et ne sélectionne plus de lot.
+  Attendu : Aucune action n’est attendue au clic dans cette carte. Vérifier AJUST8 dans la fiche de refonte ; les cartes du dashboard et des membres restent interactives.
 
 ## Budgets brouillons, publication et centimes
 

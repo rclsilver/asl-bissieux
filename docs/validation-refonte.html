@@ -20,7 +20,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 <a class="skip" href="#tests">Aller aux tests</a>
 <header>
 <h1>Fiche de validation — ASL Bissieux</h1>
-<p class="muted">Bassin clair / Graphite — carte des membres sans bandeau ni boîtes · Référence refonte-2026-10-v1 · 24 octobre 2026</p>
+<p class="muted">Bassin clair / Graphite — carte du budget en lecture seule · Référence refonte-2026-10-v1 · 24 octobre 2026</p>
 <p>Coche une case après avoir effectué le test et obtenu le résultat attendu. Pour un échec, un blocage ou un cas sans objet, utilise « Noter un écart ou une réserve ». Rien n’est prévalidé.</p>
 <div class="session">
   <label for="reviewer">Validateur<input id="reviewer" autocomplete="name"></label>
@@ -36,7 +36,7 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
 </div>
 <p id="storage-status" role="status">La sauvegarde automatique dépend du stockage autorisé par ton navigateur. Exporte la fiche pour conserver ou partager tes résultats.</p>
 <noscript><p>Les cases restent utilisables, mais le suivi automatique nécessite JavaScript. Utilise aussi la version Markdown jointe pour une recette sur papier.</p></noscript>
-<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 23 tests</p><progress id="progress" value="0" max="23" aria-label="Tests validés"></progress></div>
+<div class="progress-area"><p id="counts" role="status" aria-live="polite">0 validé sur 24 tests</p><progress id="progress" value="0" max="24" aria-label="Tests validés"></progress></div>
 </header>
 <div class="layout">
 <nav aria-label="Parcours de validation"><details open><summary>Parcours</summary><ul><li><a href="#section-0">Thèmes et connexion</a></li><li><a href="#section-1">Navigation et écrans de gestion</a></li><li><a href="#section-2">Carte et paiements</a></li><li><a href="#section-3">Confort et validation finale</a></li><li><a href="#section-4">Ajustements après la première revue</a></li></ul></details></nav>
@@ -307,16 +307,28 @@ input,textarea,select,button{font:inherit;color:inherit}input,textarea,select{ba
     <textarea id="note-AJUST6" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
-</article><article class="test" data-test="AJUST7" data-search="AJUST7 Onglets contigus au contenu comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran. les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Dans un budget, légende et carte sont réunies sur un fond identique à la barre d’onglets, en clair comme en sombre. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet et la sélection des lots conservent leur comportement.">
+</article><article class="test" data-test="AJUST7" data-search="AJUST7 Onglets contigus au contenu comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran. les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Dans un budget, légende et carte sont réunies sur un fond identique à la barre d’onglets, en clair comme en sombre. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet restent utilisables.">
   <label class="test-title" for="check-AJUST7"><input id="check-AJUST7" type="checkbox"><span><span class="test-id">AJUST7</span> Onglets contigus au contenu</span></label>
   <p><strong>Faire.</strong> comparer les onglets d’un budget, d’E-mails (Campagnes et Modèles) et de Membres (Annuaire et Carte), sur ordinateur puis sur petit écran.</p>
-  <p><strong>Attendu.</strong> les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Dans un budget, légende et carte sont réunies sur un fond identique à la barre d’onglets, en clair comme en sombre. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet et la sélection des lots conservent leur comportement.</p>
+  <p><strong>Attendu.</strong> les barres d’onglets partagent le style d’E-mails, avec le même fond et des coins arrondis seulement en haut. Leur bas et les quatre coins des tableaux sont droits, sans espace vide ajouté entre l’en-tête et le contenu. Dans un budget, légende et carte sont réunies sur un fond identique à la barre d’onglets, en clair comme en sombre. Les listes sans onglets gardent leurs quatre coins arrondis. Les changements d’onglet restent utilisables.</p>
   <span class="case-status">À faire</span>
   <details><summary>Noter un écart ou une réserve</summary>
     <label for="status-AJUST7">Autre résultat pour AJUST7</label>
     <select id="status-AJUST7"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
     <label for="note-AJUST7">Notes pour AJUST7 : résultat observé, reproduction, réserve</label>
     <textarea id="note-AJUST7" rows="3"></textarea>
+    <p class="print-note print-only"></p>
+  </details>
+</article><article class="test" data-test="AJUST8" data-search="AJUST8 Carte du budget en lecture seule dans un budget publié, ouvrir Carte, survoler et cliquer plusieurs lots puis parcourir la page avec Tab. Revenir ensuite à la carte des membres et à celle du dashboard. dans le budget, pas de curseur de bouton, effet de survol, encadrement de sélection ou action au clic ; Tab ne s’arrête pas sur les lots. Numéros, couleurs de paiement et légende restent visibles. Les cartes des membres et du dashboard conservent leurs clics, sélections et navigation clavier.">
+  <label class="test-title" for="check-AJUST8"><input id="check-AJUST8" type="checkbox"><span><span class="test-id">AJUST8</span> Carte du budget en lecture seule</span></label>
+  <p><strong>Faire.</strong> dans un budget publié, ouvrir Carte, survoler et cliquer plusieurs lots puis parcourir la page avec Tab. Revenir ensuite à la carte des membres et à celle du dashboard.</p>
+  <p><strong>Attendu.</strong> dans le budget, pas de curseur de bouton, effet de survol, encadrement de sélection ou action au clic ; Tab ne s’arrête pas sur les lots. Numéros, couleurs de paiement et légende restent visibles. Les cartes des membres et du dashboard conservent leurs clics, sélections et navigation clavier.</p>
+  <span class="case-status">À faire</span>
+  <details><summary>Noter un écart ou une réserve</summary>
+    <label for="status-AJUST8">Autre résultat pour AJUST8</label>
+    <select id="status-AJUST8"><option value="todo">À faire</option><option value="fail">Échec</option><option value="blocked">Bloqué</option><option value="na">Sans objet</option></select>
+    <label for="note-AJUST8">Notes pour AJUST8 : résultat observé, reproduction, réserve</label>
+    <textarea id="note-AJUST8" rows="3"></textarea>
     <p class="print-note print-only"></p>
   </details>
 </article></section>

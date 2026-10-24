@@ -107,6 +107,9 @@ func (s *httpServer) Build() error {
 
 		authGroup.GET("access-requests/summary", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.PendingAccessRequests, http.StatusOK))
 
+		authGroup.GET("tour", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetTour, http.StatusOK))
+		authGroup.POST("tour/progress", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ViewTourStep, http.StatusOK))
+
 		authGroup.GET("actions", []fizz.OperationOption{
 			fizz.Summary("Get all the registered actions"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),

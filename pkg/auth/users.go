@@ -16,10 +16,11 @@ type User struct {
 	AccessStatus string         `json:"access_status" gorm:"-"`
 	Identities   []UserIdentity `json:"identities,omitempty" gorm:"-"`
 
-	Username string         `gorm:"uniqueIndex;notNull" json:"username"`
-	Enabled  bool           `gorm:"default:false;notNull" json:"enabled"`
-	Admin    bool           `gorm:"default:false;notNull" json:"admin"`
-	Actions  pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
+	Username    string         `gorm:"uniqueIndex;notNull" json:"username"`
+	Enabled     bool           `gorm:"default:false;notNull" json:"enabled"`
+	Admin       bool           `gorm:"default:false;notNull" json:"admin"`
+	Actions     pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
+	TourVersion int            `gorm:"notNull;default:0" json:"tour_version"`
 }
 
 func NewUser(username string, enabled, administrator bool, actions []string) *User {

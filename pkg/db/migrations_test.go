@@ -97,6 +97,15 @@ func assertUpgradePreservesData(t *testing.T, conn *gorm.DB, before map[string]s
 		t.Fatal(err)
 	}
 	after["member"] = legacyMemberHash
+	var legacyUserHash string
+	if err := conn.Raw(`SELECT md5(COALESCE(jsonb_agg(to_jsonb(t) - 'tour_version' ORDER BY (to_jsonb(t) - 'tour_version')::text)::text, '[]')) FROM public."user" t`).Scan(&legacyUserHash).Error; err != nil {
+		t.Fatal(err)
+	}
+	after["user"] = legacyUserHash
+	var seenTours int64
+	if err := conn.Raw(`SELECT count(*) FROM public."user" WHERE tour_version <> 0`).Scan(&seenTours).Error; err != nil || seenTours != 0 {
+		t.Fatalf("existing users acquired tour progress: %d, %v", seenTours, err)
+	}
 	var unexpectedBureau int64
 	if err := conn.Raw("SELECT count(*) FROM public.member WHERE bureau IS DISTINCT FROM false").Scan(&unexpectedBureau).Error; err != nil || unexpectedBureau != 0 {
 		t.Fatalf("existing members gained bureau status: %d, %v", unexpectedBureau, err)

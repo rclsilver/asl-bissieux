@@ -224,7 +224,7 @@
         role="region"
         aria-label="Historique des ajustements et remboursements"
       >
-        <table>
+        <table role="table">
           <caption class="visually-hidden">
             Opérations tracées, par ordre d’enregistrement
           </caption>
@@ -237,10 +237,13 @@
               <th scope="col">Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody role="rowgroup">
             @for (entry of entries; track entry.id) {
-              <tr [id]="'financial-entry-' + entry.id" tabindex="-1">
-                <td>
+              <tr role="row" [id]="'financial-entry-' + entry.id" tabindex="-1">
+                <td role="cell">
+                  <span class="mobile-label" aria-hidden="true"
+                    >Nature et date</span
+                  >
                   {{ entry.kind === 'refund' ? 'Remboursement' : 'Ajustement'
                   }}{{ entry.reverses_id ? ' — contre-écriture' : '' }}
                   @if (entry.reverses_id) {
@@ -256,10 +259,21 @@
                     {{ entry.created_at | date: 'dd/MM/yyyy HH:mm' }}</small
                   >
                 </td>
-                <td>{{ amount(entry.amount) }}</td>
-                <td>{{ entry.reason }}<br />{{ entry.reference }}</td>
-                <td>{{ entry.user?.username }}</td>
-                <td>
+                <td role="cell">
+                  <span class="mobile-label" aria-hidden="true">Montant</span
+                  >{{ amount(entry.amount) }}
+                </td>
+                <td role="cell">
+                  <span class="mobile-label" aria-hidden="true"
+                    >Motif et référence</span
+                  >{{ entry.reason }}<br />{{ entry.reference }}
+                </td>
+                <td role="cell">
+                  <span class="mobile-label" aria-hidden="true"
+                    >Enregistré par</span
+                  >{{ entry.user?.username }}
+                </td>
+                <td role="cell">
                   @if (reversed(entry)) {
                     Annulée par contre-écriture
                   } @else if (

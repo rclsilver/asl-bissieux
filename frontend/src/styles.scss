@@ -297,6 +297,19 @@ button.mat-accent {
 .mat-mdc-dialog-title {
   letter-spacing: -0.015em;
 }
+@media (max-width: 600px) {
+  // Material creates tbody outside the CRUD component's emulated CSS scope.
+  app-crud-table table.stack-on-narrow > tbody {
+    display: block;
+  }
+  .cotisation-dialog {
+    @include mat.dialog-overrides(
+      (
+        container-shape: 0,
+      )
+    );
+  }
+}
 .mat-mdc-header-cell {
   font-weight: 650;
   color: var(--asl-muted);

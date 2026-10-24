@@ -5,7 +5,10 @@ import {
   OnInit,
   inject,
   ChangeDetectionStrategy,
+  DestroyRef,
 } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, map, shareReplay, take } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
@@ -18,6 +21,15 @@ import { PaymentFormComponent } from '../payment-form/payment-form.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 
+export const COTISATION_DIALOG_OPTIONS = {
+  width: 'min(76rem, calc(100vw - 2rem))',
+  height: 'min(56rem, calc(100dvh - 2rem))',
+  maxWidth: '100vw',
+  maxHeight: '100dvh',
+  panelClass: 'cotisation-dialog',
+  autoFocus: 'first-heading',
+};
+
 @Component({
   selector: 'app-payment-list',
   templateUrl: './payment-list.component.html',
@@ -29,10 +41,17 @@ export class PaymentListComponent implements OnInit {
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
   private readonly _notifications = inject(NotificationsService);
+  private readonly breakpoints = inject(BreakpointObserver);
+  private readonly destroyed = inject(DestroyRef);
 
   @ViewChild(FinancialHistoryComponent) history?: FinancialHistoryComponent;
   loadError = false;
+  view: 'situation' | 'payments' = 'situation';
   readonly data = this._data;
+
+  setView(view: 'situation' | 'payments') {
+    if (!this.history?.busy) this.view = view;
+  }
 
   readonly columns = [
     new Column('date', {
@@ -82,6 +101,9 @@ export class PaymentListComponent implements OnInit {
   edit(payment?: APISchemas['ModelsPayment']) {
     this._notifications
       .showForm(PaymentFormComponent, {
+        width: '36rem',
+        maxWidth: 'calc(100vw - 2rem)',
+        maxHeight: 'calc(100dvh - 2rem)',
         data: {
           budget: {
             id: this._data.budgetId,
@@ -143,11 +165,21 @@ export class PaymentListComponent implements OnInit {
     private readonly _data: {
       budgetId: string;
       cotisationId: string;
+      unitNumber?: number;
     },
     private readonly _dialogRef: MatDialogRef<PaymentListComponent>
   ) {}
 
   ngOnInit(): void {
+    this.breakpoints
+      .observe('(max-width: 600px)')
+      .pipe(takeUntilDestroyed(this.destroyed))
+      .subscribe(({ matches }) =>
+        this._dialogRef.updateSize(
+          matches ? '100vw' : COTISATION_DIALOG_OPTIONS.width,
+          matches ? '100dvh' : COTISATION_DIALOG_OPTIONS.height
+        )
+      );
     this.loadBudget();
   }
 

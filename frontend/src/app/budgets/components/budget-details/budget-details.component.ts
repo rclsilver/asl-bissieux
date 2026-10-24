@@ -30,7 +30,10 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
-import { PaymentListComponent } from '../payment-list/payment-list.component';
+import {
+  COTISATION_DIALOG_OPTIONS,
+  PaymentListComponent,
+} from '../payment-list/payment-list.component';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
 import { PaymentState, paymentState, paymentClass } from '../../payment-state';
 
@@ -324,20 +327,23 @@ export class BudgetDetailsComponent implements OnInit, OnDestroy {
 
   readonly cotisationsRowActions$ = this._budget$.pipe(
     map((budget) => {
-      const actions: CustomRowAction<APISchemas['ModelsBudgetResult']>[] = [];
+      const actions: CustomRowAction<APISchemas['ModelsCotisationResult']>[] =
+        [];
 
       if (!budget?.draft) {
         actions.push(
-          new CustomRowAction<APISchemas['ModelsBudgetResult']>(
+          new CustomRowAction<APISchemas['ModelsCotisationResult']>(
             'list',
             'Consulter la cotisation',
             'Consulter la cotisation',
             (row) =>
               this._notifications
                 .showForm(PaymentListComponent, {
+                  ...COTISATION_DIALOG_OPTIONS,
                   data: {
                     budgetId: this._budget$.value?.id,
                     cotisationId: row.id,
+                    unitNumber: row.unit?.number,
                   },
                 })
                 .afterClosed()

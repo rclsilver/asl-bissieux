@@ -1,37 +1,81 @@
-<h1 mat-dialog-title>Historique de la cotisation</h1>
+<h1 mat-dialog-title tabindex="-1">
+  {{
+    data.unitNumber === undefined
+      ? 'Historique de la cotisation'
+      : 'Cotisation du lot ' + data.unitNumber
+  }}
+</h1>
+@if (budget$ | async; as budget) {
+  <p class="budget-label">{{ budget.label }}</p>
+}
+<nav
+  mat-tab-nav-bar
+  [tabPanel]="historyPanel"
+  aria-label="Détails de la cotisation"
+>
+  <button
+    mat-tab-link
+    type="button"
+    [active]="view === 'situation'"
+    (click)="setView('situation')"
+    [disabled]="!!history?.busy"
+  >
+    Situation
+  </button>
+  <button
+    mat-tab-link
+    type="button"
+    [active]="view === 'payments'"
+    (click)="setView('payments')"
+    [disabled]="!!history?.busy"
+  >
+    Paiements
+  </button>
+</nav>
 <div mat-dialog-content class="content">
-  @if (loadError) {
-    <p role="alert">Impossible de charger le budget.</p>
-    <button mat-stroked-button type="button" (click)="loadBudget()">
-      Réessayer
-    </button>
-  } @else if (!(budget$ | async)) {
-    <p role="status">Chargement du budget…</p>
-  }
-  @if (budget$ | async; as budget) {
-    <p>{{ budget.label }}</p>
-    <app-financial-history
-      #history
-      [budgetId]="data.budgetId"
-      [cotisationId]="data.cotisationId"
-      (changed)="refresh()"
-      (addPayment)="edit()"
-    ></app-financial-history>
-    <h2>Paiements reçus</h2>
-    <app-crud-table
-      tableLabel="Paiements reçus"
-      [columns]="columns"
-      [dataSource]="payments$ | async"
-      [canEdit]="canEdit.bind(this)"
-      (edit)="edit($event)"
-      [canDelete]="canDelete.bind(this)"
-      (delete)="delete($event)"
-    ></app-crud-table>
-  }
+  <mat-tab-nav-panel #historyPanel>
+    @if (loadError) {
+      <p role="alert">Impossible de charger le budget.</p>
+      <button mat-stroked-button type="button" (click)="loadBudget()">
+        Réessayer
+      </button>
+    } @else if (!(budget$ | async)) {
+      <p role="status">Chargement du budget…</p>
+    }
+    @if (budget$ | async; as budget) {
+      <app-financial-history
+        [hidden]="view !== 'situation'"
+        #history
+        [budgetId]="data.budgetId"
+        [cotisationId]="data.cotisationId"
+        (changed)="refresh()"
+        (addPayment)="edit()"
+      ></app-financial-history>
+      <section [hidden]="view !== 'payments'" aria-label="Paiements reçus">
+        <app-crud-table
+          tableLabel="Paiements reçus"
+          [stackOnNarrow]="true"
+          createLabel="Ajouter un paiement"
+          [canCreate]="canCreate$"
+          [columns]="columns"
+          [dataSource]="payments$ | async"
+          [canEdit]="canEdit.bind(this)"
+          (edit)="edit($event)"
+          [canDelete]="canDelete.bind(this)"
+          (delete)="delete($event)"
+        ></app-crud-table>
+      </section>
+    }
+  </mat-tab-nav-panel>
 </div>
 <div mat-dialog-actions>
   <div class="spacer"></div>
-  <button mat-button type="button" (click)="close()" [disabled]="!!history?.busy">
+  <button
+    mat-button
+    type="button"
+    (click)="close()"
+    [disabled]="!!history?.busy"
+  >
     Fermer
   </button>
 </div>

@@ -1,0 +1,45 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+h1 {
+  flex: none;
+  overflow-wrap: anywhere;
+}
+.budget-label {
+  margin: 0;
+  padding: 0 1.5rem 1rem;
+  color: var(--asl-muted);
+  overflow-wrap: anywhere;
+}
+nav {
+  flex: none;
+}
+.content {
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
+  padding-block: 1rem;
+}
+app-financial-history[hidden],
+section[hidden] {
+  display: none;
+}
+[mat-dialog-actions] {
+  flex: none;
+  border-block-start: 1px solid var(--asl-border);
+}
+button {
+  min-block-size: 44px;
+}
+@media (max-width: 600px) {
+  .content {
+    padding-inline: 1rem;
+  }
+  .budget-label {
+    padding-inline: 1rem;
+  }
+}

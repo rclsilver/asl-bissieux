@@ -123,6 +123,7 @@ export type CanDeleteFunction<T = any> = (row: T) => Observable<boolean>;
 export class CrudTableComponent<T extends {}>
   implements OnDestroy, AfterViewInit
 {
+  @Input() stackOnNarrow = false;
   // An owning directory can reuse the standard search control with its own matcher.
   @Input() searchFields: Column[] | null = null;
   @Output() searchChange = new EventEmitter<string>();

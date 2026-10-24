@@ -47,18 +47,24 @@ ENTRYPOINT ["go", "run", "main.go"]
 # build Go application #
 ########################
 FROM server-base AS server-build
+ARG VERSION=dev
+ARG COMMIT=unknown
 WORKDIR /go/src/github.com/rclsilver/asl-bissieux
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . /go/src/github.com/rclsilver/asl-bissieux
 COPY --from=frontend-build /app/dist/asl-bissieux /go/src/github.com/rclsilver/asl-bissieux/frontend/dist/asl-bissieux
-RUN make asl-bissieux
+RUN make asl-bissieux VERSION="$VERSION" COMMIT="$COMMIT"
 
 
 #####################
 # build final image #
 #####################
 FROM runtime-base AS final
+ARG VERSION=dev
+ARG COMMIT=unknown
+LABEL org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.revision=$COMMIT
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -S -g 10001 app && adduser -S -u 10001 -G app app && \
     mkdir /app

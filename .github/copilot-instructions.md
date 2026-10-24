@@ -74,7 +74,7 @@ asl-bissieux/
 | Templating | `github.com/Masterminds/sprig/v3`, Go `text/template` |
 | UUID | `github.com/google/uuid` |
 
-**Go version:** 1.27.2 (Docker and CI use the version pinned in go.mod)
+**Go version:** 1.27.3 (Docker and CI use the version pinned in go.mod)
 
 **Module path:** `github.com/rclsilver/asl-bissieux`
 

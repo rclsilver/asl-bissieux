@@ -21,6 +21,8 @@ export type APISchemas = {
     enabled?: boolean;
     id?: string;
     identities?: Array<APISchemas['AuthUserIdentity']>;
+    /* Format: int32 */
+    tour_version?: number;
     /* Format: date-time */
     updated_at?: string;
     username?: string;
@@ -481,6 +483,24 @@ export type APISchemas = {
     advanced?: boolean;
     fields?: Array<APISchemas['TemplatesCustomField']>;
   };
+  TourState: {
+    /* Format: int32 */
+    seen_version?: number;
+    steps?: Array<APISchemas['TourStep']>;
+    /* Format: int32 */
+    version?: number;
+  };
+  TourStep: {
+    capabilities?: Array<string>;
+    changes?: Array<string>;
+    description?: string;
+    id?: string;
+    /* Format: int32 */
+    revision?: number;
+    /* Format: int32 */
+    seen_revision?: number;
+    title?: string;
+  };
   UpdateBudgetInput: { label?: string };
   UpdateEmailTemplateInput: {
     label?: string;
@@ -523,6 +543,13 @@ export type APISchemas = {
     expected_updated_at?: null | string;
     username?: string;
   };
+  ViewTourStepInput: {
+    /* Format: int32 */
+    revision?: number;
+    step_id?: string;
+    /* Format: int32 */
+    version?: number;
+  };
 };
 
 export type APIEndpoints = {
@@ -545,6 +572,14 @@ export type APIEndpoints = {
   '/api/auth/me': {
     responses: { get: APISchemas['AuthUser'] };
     requests: { method?: 'get' };
+  };
+  '/api/auth/tour': {
+    responses: { get: APISchemas['TourState'] };
+    requests: { method?: 'get' };
+  };
+  '/api/auth/tour/progress': {
+    responses: { post: APISchemas['TourState'] };
+    requests: { method: 'post'; body: APISchemas['ViewTourStepInput'] };
   };
   '/api/auth/users': {
     responses: {

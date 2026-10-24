@@ -1,0 +1,362 @@
+@switch (step.id) {
+  @case ("overview") {
+    <h3>Accueil · exemple fictif</h3>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Budget d’exemple</mat-label
+      ><mat-select [(value)]="year"
+        ><mat-option value="2027">Entretien 2027</mat-option
+        ><mat-option value="2026">Entretien 2026</mat-option></mat-select
+      ></mat-form-field
+    >
+    <p>
+      Le budget choisi définit le périmètre des montants. Clique sur un lot pour
+      lire sa situation.
+    </p>
+    <app-interactive-map
+      [transparentBackground]="true"
+      [width]="600"
+      [unitClasses]="mapClasses"
+      [selectedUnit]="selected"
+      (unitClick)="selected = $event.unitId"
+      label="Carte fictive des paiements"
+    ></app-interactive-map>
+    <p role="status">
+      <strong>Lot {{ selected }}</strong> ·
+      {{
+        [
+          "Soldé",
+          "Partiellement réglé",
+          "Sans paiement",
+          "Trop-perçu",
+          "Sans cotisation",
+        ][(selected - 1) % 5]
+      }}
+      · Budget {{ year }}
+    </p>
+    <p>
+      Le vert signifie soldé, l’orange partiellement réglé, le rose sans
+      paiement et le violet trop-perçu. Le gris indique l’absence de cotisation.
+    </p>
+  }
+  @case ("directory") {
+    <h3>Membres · exemple fictif</h3>
+    <mat-tab-group>
+      <mat-tab label="Annuaire">
+        <div class="example-controls">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>Rechercher un nom ou un lot</mat-label
+            ><input
+              matInput
+              [(ngModel)]="query"
+              placeholder="Camille ou lot 24"
+          /></mat-form-field>
+        </div>
+        <div
+          class="example-table"
+          role="region"
+          aria-label="Annuaire fictif"
+          tabindex="0"
+        >
+          <table>
+            <caption>
+              Trois membres fictifs
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Membre</th>
+                <th scope="col">Lots</th>
+                <th scope="col">Consulter</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (member of matches; track member.email) {
+                <tr>
+                  <td>{{ member.name }}</td>
+                  <td>{{ member.lots.join(", ") }}</td>
+                  <td>
+                    <button
+                      mat-button
+                      type="button"
+                      (click)="openLot(member.lots[0])"
+                      [attr.aria-label]="
+                        'Consulter le lot ' +
+                        member.lots[0] +
+                        ' de ' +
+                        member.name
+                      "
+                    >
+                      Voir le lot
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3">
+                    Aucun membre trouvé. Essaie « Camille » ou efface la
+                    recherche.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+      <mat-tab label="Carte">
+        <app-interactive-map
+          [transparentBackground]="true"
+          [width]="600"
+          [selectedUnit]="selected"
+          (unitClick)="openLot($event.unitId, $event.event)"
+          label="Carte fictive des membres"
+        ></app-interactive-map>
+      </mat-tab>
+    </mat-tab-group>
+    <p>
+      Essaie le lot 1 : ses deux copropriétaires restent visibles. Camille
+      possède aussi le lot 24.
+    </p>
+    @if (allowed("member.CreateMember")) {
+      <p>
+        Le bouton + de l’annuaire permet d’ajouter un membre ; ses lots sont
+        associés dans sa fiche.
+      </p>
+    }
+    @if (allowed("member.UpdateMember")) {
+      <p>
+        L’action Modifier permet de corriger les coordonnées et l’appartenance
+        au bureau, puis d’enregistrer la fiche.
+      </p>
+    }
+    @if (allowed("unit.UpdateUnit")) {
+      <p>
+        Les tantièmes et l’adresse se corrigent dans la fiche du lot, depuis
+        Lots.
+      </p>
+    }
+  }
+  @case ("budgets") {
+    <h3>Entretien 2027 · exemple fictif</h3>
+    <p class="example-status">{{ published ? "Publié" : "Brouillon" }}</p>
+    <dl>
+      <dt>Dépenses prévisionnelles</dt>
+      <dd>1 000,00 €</dd>
+      <dt>Total des tantièmes de l’exemple</dt>
+      <dd>100</dd>
+      <dt>Lot 1 · 10 tantièmes</dt>
+      <dd>100,00 € appelés</dd>
+    </dl>
+    <p>
+      1 000 € × 10 / 100 = 100 €. La cotisation d’un lot dépend de ses
+      tantièmes.
+    </p>
+    <button mat-stroked-button type="button" (click)="published = !published">
+      Comparer avec un budget {{ published ? "brouillon" : "publié" }}
+    </button>
+    <p role="status">
+      {{
+        published
+          ? "Une fois publié, les montants sont figés et les cotisations peuvent recevoir des paiements."
+          : "Le brouillon sert à préparer les dépenses ; sa situation reste prévisionnelle."
+      }}
+    </p>
+    @if (allowed("budget.CreateBudget")) {
+      <p>
+        Dans Budgets, + crée un nouveau brouillon. Vérifie son libellé avant de
+        l’enregistrer.
+      </p>
+    }
+    @if (allowed("budget.CreateExpense")) {
+      <p>
+        Dans Dépenses, + ajoute une ligne au brouillon. Le total prévisionnel
+        est recalculé.
+      </p>
+    }
+    @if (allowed("budget.PublishBudget")) {
+      <p>
+        Publier engage les montants appelés : vérifie les dépenses et les
+        tantièmes avant de confirmer.
+      </p>
+    }
+  }
+  @case ("payments") {
+    <h3>Lot 1 · règlement fictif</h3>
+    <p>Cotisation publiée : 100,00 €</p>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Montant du paiement d’exemple (€)</mat-label
+      ><input matInput [(ngModel)]="amount" inputmode="decimal"
+    /></mat-form-field>
+    <button mat-stroked-button type="button" (click)="simulatePayment()">
+      Simuler le paiement
+    </button>
+    @if (exampleError) {
+      <p role="alert">{{ exampleError }}</p>
+    }
+    <dl>
+      <dt>Réglé dans cet exemple</dt>
+      <dd>{{ money(paid) }}</dd>
+      <dt>{{ paid > 10000 ? "Trop-perçu" : "Restant dû" }}</dt>
+      <dd>{{ money(paid > 10000 ? paid - 10000 : 10000 - paid) }}</dd>
+    </dl>
+    <p>
+      La carte distingue le règlement partiel, la cotisation soldée et le
+      trop-perçu.
+    </p>
+    @if (allowed("budget.CreateRefund")) {
+      <p>
+        Un remboursement se prépare depuis le lot avec un aperçu, puis se
+        confirme ; il reste dans l’historique.
+      </p>
+    }
+    @if (allowed("budget.CreateAdjustment")) {
+      <p>
+        Une correction sur un budget publié passe par un ajustement tracé avec
+        aperçu, sans réécrire l’historique.
+      </p>
+    }
+  }
+  @case ("emails") {
+    <h3>Appel de cotisation · campagne fictive</h3>
+    <div
+      class="example-table"
+      role="region"
+      aria-label="E-mails fictifs"
+      tabindex="0"
+    >
+      <table>
+        <caption>
+          Historique de l’exemple
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Destinataire</th>
+            <th scope="col">État</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>camille@example.invalid</td>
+            <td>{{ emailState === "SENT" ? "Envoyé" : "En attente" }}</td>
+          </tr>
+          <tr>
+            <td>noe@example.invalid</td>
+            <td>Erreur</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Ouvre une campagne pour consulter ses messages et filtrer leur état. «
+      État inconnu » demande une vérification avant toute relance.
+    </p>
+    @if (allowed("email.CreateEmailTemplate")) {
+      <p>
+        Un modèle réutilise les données de membre et de cotisation. Son aperçu
+        permet de vérifier les variables avant de préparer une campagne.
+      </p>
+    }
+    @if (allowed("budget.SendEmail")) {
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="
+          message =
+            'Aperçu fictif : Bonjour Camille, la cotisation du lot 1 est de 100,00 €. Préparer une campagne ne déclenche pas son envoi.'
+        "
+      >
+        Prévisualiser l’appel fictif
+      </button>
+    }
+    @if (allowed("email.SendEmail")) {
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="
+          emailState = 'SENT';
+          message =
+            'Envoi simulé uniquement. Dans le site, préparer une campagne et envoyer les messages sont deux actions distinctes.'
+        "
+      >
+        Simuler l’envoi
+      </button>
+    }
+  }
+  @case ("access") {
+    <h3>Alex Exemple · compte fictif</h3>
+    <p>État : {{ accessApproved ? "Actif" : "En attente d’activation" }}</p>
+    <p>
+      Alex a vérifié son identité. Sa demande d’accès doit être examinée avant
+      de l’activer.
+    </p>
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="
+        accessApproved = true;
+        message =
+          'Accès simulé : Alex peut consulter les données mais ne possède aucun droit de modification.'
+      "
+    >
+      Simuler l’activation
+    </button>
+    <p>
+      Un compte actif peut consulter les données. Les autorisations
+      particulières ouvrent les actions de gestion ; Administrateur donne tous
+      les droits.
+    </p>
+    <p>
+      Un membre du bureau de l’ASL n’est pas automatiquement administrateur. Le
+      dernier administrateur actif doit toujours être conservé.
+    </p>
+  }
+  @case ("mailings") {
+    <h3>Listes OVH · exemple fictif</h3>
+    <p>ASL : Camille et Noé · Liste membres : Noé et une ancienne adresse.</p>
+    <button mat-stroked-button type="button" (click)="mailingsPreview = true">
+      Prévisualiser les écarts fictifs
+    </button>
+    @if (mailingsPreview) {
+      <dl>
+        <dt>À ajouter</dt>
+        <dd>camille@example.invalid</dd>
+        <dt>À retirer</dt>
+        <dd>ancienne-adresse@example.invalid</dd>
+      </dl>
+      <button mat-stroked-button type="button" (click)="mailingsApplied = true">
+        Simuler la synchronisation
+      </button>
+    }
+    @if (mailingsApplied) {
+      <p role="status">
+        Exemple synchronisé. Dans le site, les tâches OVH sont suivies jusqu’à
+        une nouvelle comparaison des abonnés.
+      </p>
+    }
+    <p>
+      La liste Membres dépend des coordonnées de l’annuaire. La liste Bureau
+      dépend du rôle explicite « membre du bureau », pas du statut
+      administrateur.
+    </p>
+  }
+}
+@if (message) {
+  <p role="status">{{ message }}</p>
+}
+<ng-template #memberDetails>
+  <h2 mat-dialog-title tabindex="-1">Lot {{ selected }} · exemple fictif</h2>
+  <mat-dialog-content>
+    @for (member of selectedMembers; track member.email) {
+      <h3>{{ member.name }}</h3>
+      <p>{{ member.email }}</p>
+      @if (member.lots.length > 1) {
+        <p>Lots associés : {{ member.lots.join(", ") }}</p>
+      }
+    } @empty {
+      <p>Aucun membre fictif associé à ce lot.</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"
+    ><button mat-button mat-dialog-close type="button">
+      Fermer
+    </button></mat-dialog-actions
+  >
+</ng-template>

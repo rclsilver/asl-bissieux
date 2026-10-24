@@ -1,0 +1,79 @@
+:host {
+  display: block;
+}
+.tour-heading,
+.tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.tour-heading {
+  margin-block-end: 1.5rem;
+}
+h1 {
+  margin-block-end: 0.5rem;
+}
+h2 {
+  margin-block-start: 0;
+}
+p,
+li {
+  line-height: 1.55;
+  max-inline-size: 70ch;
+  overflow-wrap: anywhere;
+}
+.tour-heading p,
+.tour-progress {
+  color: var(--asl-muted);
+}
+.tour-progress {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}
+progress {
+  inline-size: 100%;
+  block-size: 0.4rem;
+  accent-color: var(--asl-primary);
+  margin-block: 0.75rem 1.5rem;
+}
+.tour-workspace {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr);
+  gap: 2rem;
+  align-items: start;
+}
+.tour-example {
+  min-inline-size: 0;
+  background: var(--asl-surface);
+  border: 1px solid var(--asl-border);
+  border-radius: var(--asl-radius);
+  padding: 1.25rem;
+}
+.demo-notice {
+  margin-block-start: 1.5rem;
+  color: var(--asl-muted);
+  font-size: 0.875rem;
+}
+.tour-actions {
+  margin-block-start: 1.5rem;
+  border-block-start: 1px solid var(--asl-border);
+  padding-block-start: 1rem;
+}
+.tour-complete {
+  padding-block: 1rem;
+}
+a,
+button {
+  min-block-size: 44px;
+}
+@media (max-width: 800px) {
+  .tour-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .tour-example {
+    padding: 1rem;
+  }
+}

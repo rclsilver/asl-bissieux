@@ -22,6 +22,7 @@ import { CoreModule } from '../../core.module';
 import { AuthInterceptor } from '../../interceptors/auth-interceptor';
 import { AUTH_NAVIGATE } from '../../services/auth.service';
 import { PageComponent } from './page.component';
+import { TourService } from '../../../tour/tour.service';
 
 @Component({ template: '<h1>Contenu de test</h1>' })
 class TestContent {}
@@ -41,6 +42,7 @@ describe('OIDC sign-in page', () => {
     await TestBed.configureTestingModule({
       imports: [CoreModule, NoopAnimationsModule],
       providers: [
+        { provide: TourService, useValue: { offer: () => false } },
         provideRouter(
           ['budgets', 'units', 'members', 'emails', 'users'].map((path) => ({
             path,
@@ -142,14 +144,12 @@ describe('OIDC sign-in page', () => {
       http
         .expectOne('/api/auth/config')
         .flush({ mode: 'oidc', login_url: '/api/auth/login' });
-      http
-        .expectOne('/api/auth/me')
-        .flush({
-          username: 'inactive@example.invalid',
-          enabled: false,
-          admin: false,
-          access_status: status,
-        });
+      http.expectOne('/api/auth/me').flush({
+        username: 'inactive@example.invalid',
+        enabled: false,
+        admin: false,
+        access_status: status,
+      });
       fixture.detectChanges();
       await fixture.whenStable();
       expect(fixture.nativeElement.textContent).toContain(title);
@@ -158,14 +158,12 @@ describe('OIDC sign-in page', () => {
       );
       fixture.componentInstance.refreshAccess();
       fixture.componentInstance.refreshAccess();
-      http
-        .expectOne('/api/auth/me')
-        .flush({
-          username: 'inactive@example.invalid',
-          enabled: true,
-          admin: false,
-          access_status: 'active',
-        });
+      http.expectOne('/api/auth/me').flush({
+        username: 'inactive@example.invalid',
+        enabled: true,
+        admin: false,
+        access_status: 'active',
+      });
       fixture.detectChanges();
       await fixture.whenStable();
       expect(fixture.nativeElement.querySelector('.auth-panel')).toBeNull();
@@ -435,7 +433,8 @@ describe('OIDC sign-in page', () => {
   it('shows the French administration entry only to an active administrator', async () => {
     const fixture = authenticated(true);
     await fixture.whenStable();
-    const text = fixture.nativeElement.querySelector('#top-navigation').textContent;
+    const text =
+      fixture.nativeElement.querySelector('#top-navigation').textContent;
     expect(text).toContain('Lots');
     expect(text).toContain('Membres');
     expect(text).toContain('Utilisateurs');

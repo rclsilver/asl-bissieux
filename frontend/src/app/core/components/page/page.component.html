@@ -99,6 +99,12 @@
           <mat-icon aria-hidden="true">logout</mat-icon>
           <span>Se déconnecter</span>
         </button>
+        @if (user.enabled) {
+          <a mat-menu-item routerLink="/tour" [queryParams]="{ mode: 'all' }">
+            <mat-icon aria-hidden="true">explore</mat-icon
+            ><span>Revoir la visite guidée</span>
+          </a>
+        }
       </mat-menu>
     </div>
   }
@@ -146,6 +152,7 @@
         @if (message$ | async; as message) {
           <p role="alert" class="auth-message">{{ message }}</p>
         }
+        <app-tour-prompt></app-tour-prompt>
         <router-outlet></router-outlet>
       } @else {
         <div class="auth-layout">

@@ -38,6 +38,13 @@ export class ApiService {
     });
   }
 
+  getTour() {
+    return this.request('/api/auth/tour', { method: 'get' });
+  }
+  viewTourStep(body: APISchemas['ViewTourStepInput']) {
+    return this.request('/api/auth/tour/progress', { method: 'post', body });
+  }
+
   listFinancialEntries(budgetId: string, cotisationId: string) {
     return this.request(
       '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries',

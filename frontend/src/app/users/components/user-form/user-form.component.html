@@ -18,6 +18,14 @@
     @if (data.user; as user) {
       <p>{{ providerLabel(user) }} · {{ accessLabels[accessState(user)] }}</p>
       <p>
+        Visite guidée :
+        {{
+          user.tour_version
+            ? 'version ' + user.tour_version + ' terminée'
+            : 'pas encore terminée'
+        }}.
+      </p>
+      <p>
         Les droits ci-dessous sont indépendants de la décision d’accès. Ils ne
         modifient pas l’identité de connexion.
       </p>

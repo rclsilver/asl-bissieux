@@ -1,7 +1,13 @@
 import { NgModule } from "@angular/core";
 import { ExtraOptions, RouterModule, Routes } from "@angular/router";
+import { isAuthenticated } from "./core/guards/auth.guard";
 
 const routes: Routes = [
+  {
+    path: "tour",
+    canActivate: [isAuthenticated],
+    loadComponent: () => import("./tour/tour.component").then(m => m.TourComponent),
+  },
   {
     path: "",
     pathMatch: "full",

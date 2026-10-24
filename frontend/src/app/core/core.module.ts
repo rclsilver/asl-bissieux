@@ -14,6 +14,7 @@ import { RouterModule } from '@angular/router';
 import { CoreRouterModule } from './core.routes';
 import { SharedModule } from '../shared/shared.module';
 import { WithGoogleAuthModule } from 'ngx-sign-in-with-google';
+import { TourPromptComponent } from '../tour/tour-prompt.component';
 
 const material = [
   MatMenuModule,
@@ -33,6 +34,7 @@ const material = [
     WithGoogleAuthModule,
     ...material,
     SharedModule,
+    TourPromptComponent,
   ],
   declarations: [PageComponent],
   exports: [PageComponent],

@@ -5,6 +5,9 @@ Application Go / Angular / PostgreSQL. Effectuer les modifications sur `dev`.
 Préparation du candidat, versions des images et du chart, notes et prérequis
 de production : [publication et release](docs/publication-release.md).
 
+La [revue de sécurité avant publication](docs/revue-securite.md) recense les
+constats du candidat et les conditions de correction avant release.
+
 ## Développement local
 
 Docker Compose v2 est requis. Depuis la racine du dépôt :

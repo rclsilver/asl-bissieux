@@ -2,6 +2,9 @@
 
 Application Go / Angular / PostgreSQL. Effectuer les modifications sur `dev`.
 
+Préparation du candidat, versions des images et du chart, notes et prérequis
+de production : [publication et release](docs/publication-release.md).
+
 ## Développement local
 
 Docker Compose v2 est requis. Depuis la racine du dépôt :
@@ -258,7 +261,7 @@ Sur ce PC, ajouter `-p 55432` aux arguments de `psql`.
 
 ## Socle backend et images (lot 6)
 
-Le backend nécessite Go **1.27.2**. Docker et la CI utilisent la même version ;
+Le backend nécessite Go **1.27.3**. Docker et la CI utilisent la même version ;
 les images Go et Alpine **3.24.2** sont figées par version et digest. Les modules
 Go sont verrouillés par `go.mod` et `go.sum`, vérifiés avec `go mod verify`.
 `make asl-bissieux` reconstruit systématiquement un binaire statique, avec

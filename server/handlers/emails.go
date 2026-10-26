@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"bytes"
+	stdErrors "errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/attachments"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
@@ -166,10 +167,29 @@ type addAttachmentIn struct {
 }
 
 func AddAttachmentMiddleware(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, attachments.MaxRequestBytes())
+	defer func() {
+		if c.Request.MultipartForm != nil {
+			_ = c.Request.MultipartForm.RemoveAll()
+		}
+	}()
+	if err := c.Request.ParseMultipartForm(attachments.Current().MaxFileBytes); err != nil {
+		var tooLarge *http.MaxBytesError
+		if stdErrors.As(err, &tooLarge) {
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": "Téléversement trop volumineux."})
+		} else {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Formulaire de pièce jointe invalide."})
+		}
+		return
+	}
 	file, err := c.FormFile("content")
 	if err != nil {
 		logrus.WithContext(c).WithError(err).Error("unable to get file form field")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if err := attachments.CheckFileSize(file.Size); err != nil {
+		c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -210,10 +230,15 @@ func AddAttachmentMiddleware(c *gin.Context) {
 		return
 	}
 
-	var content bytes.Buffer
-	if _, err := io.Copy(&content, f); err != nil {
+	defer f.Close()
+	content, err := io.ReadAll(io.LimitReader(f, attachments.Current().MaxFileBytes+1))
+	if err != nil {
 		logrus.WithContext(c).WithError(err).Error("unable to read the file")
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if err := attachments.CheckFileSize(int64(len(content))); err != nil {
+		c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -224,7 +249,7 @@ func AddAttachmentMiddleware(c *gin.Context) {
 	c.Set("name", name[0])
 	c.Set("inline", inline)
 	c.Set("content_type", contentType[0])
-	c.Set("content", content.Bytes())
+	c.Set("content", content)
 }
 
 func AddAttachment(c *gin.Context, in *addAttachmentIn) (*models.Attachment, error) {

@@ -16,6 +16,7 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/attachments"
 	"github.com/rclsilver/asl-bissieux/pkg/smtp"
 	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
@@ -131,18 +132,42 @@ func ListAttachments(tx *gorm.DB, templateID string) ([]*models.Attachment, erro
 }
 
 func AddAttachment(tx *gorm.DB, templateID, name string, inline bool, contentType string, content []byte) (*models.Attachment, error) {
-	template, err := GetEmailTemplate(tx, templateID)
-	if err != nil {
+	if err := attachments.CheckFileSize(int64(len(content))); err != nil {
 		return nil, err
 	}
+	var row *models.Attachment
+	err := tx.Transaction(func(locked *gorm.DB) error {
+		// Serialize additions on the parent: two simultaneous uploads must not
+		// both pass a total calculated before either insert was committed.
+		template, err := GetEmailTemplate(locked.Clauses(clause.Locking{Strength: "UPDATE"}), templateID)
+		if err != nil {
+			return err
+		}
+		if err := checkAttachmentTotal(locked, template.ID, int64(len(content))); err != nil {
+			return err
+		}
+		row = models.NewAttachment(template.ID, name, inline, content, contentType)
+		return locked.Create(row).Error
+	})
+	return row, err
+}
 
-	row := models.NewAttachment(template.ID, name, inline, content, contentType)
-
-	if err := tx.Create(row).Error; err != nil {
-		return nil, err
+func checkAttachmentTotal(tx *gorm.DB, templateID string, additional int64) error {
+	var usage struct {
+		Total   int64
+		Largest int64
 	}
-
-	return row, nil
+	// Compute lengths inside PostgreSQL, without transferring bytea contents.
+	if err := tx.Model(&models.Attachment{}).Select("COALESCE(SUM(octet_length(content)), 0) AS total, COALESCE(MAX(octet_length(content)), 0) AS largest").Where("email_template_id = ?", templateID).Scan(&usage).Error; err != nil {
+		return err
+	}
+	if err := attachments.CheckFileSize(usage.Largest); err != nil {
+		return err
+	}
+	if limit := attachments.Current().MaxTemplateBytes; usage.Total > limit || additional > limit-usage.Total {
+		return fmt.Errorf("%w : maximum %g Mio par modèle", attachments.ErrTooLarge, float64(limit)/(1<<20))
+	}
+	return nil
 }
 
 func GetAttachment(tx *gorm.DB, templateID, attachmentID string) (*models.Attachment, error) {
@@ -256,18 +281,33 @@ func getEmail(tx *gorm.DB, emailID string, lock, attachmentContent bool) (*model
 		tx = tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
 
-	if attachmentContent {
-		tx = tx.Preload("EmailCampaign.EmailTemplate.Attachments")
-	} else {
-		tx = tx.Preload("EmailCampaign.EmailTemplate.Attachments", attachmentMetadata)
-	}
-	if err := tx.First(&row, "id = ?", emailID).Error; err != nil {
+	query := tx.Preload("EmailCampaign.EmailTemplate.Attachments", attachmentMetadata)
+	if err := query.First(&row, "id = ?", emailID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 		}
 		return nil, err
 	}
 
+	if attachmentContent {
+		if row.EmailCampaign == nil || row.EmailCampaign.EmailTemplate == nil {
+			return nil, errors.NewNotFound(nil, "email template not found")
+		}
+		id := row.EmailCampaign.EmailTemplateID
+		err := tx.Transaction(func(locked *gorm.DB) error {
+			var template models.EmailTemplate
+			if err := locked.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").First(&template, "id = ?", id).Error; err != nil {
+				return err
+			}
+			if err := checkAttachmentTotal(locked, id, 0); err != nil {
+				return err
+			}
+			return locked.Find(&row.EmailCampaign.EmailTemplate.Attachments, "email_template_id = ?", id).Error
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
 	if row.State == models.Waiting || row.State == models.Error {
 		if err := buildEmail(&row); err != nil {
 			return nil, err

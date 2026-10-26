@@ -1,6 +1,7 @@
 package server
 
 import (
+	stdErrors "errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/rclsilver/asl-bissieux/frontend"
+	"github.com/rclsilver/asl-bissieux/pkg/attachments"
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
 	"github.com/rclsilver/asl-bissieux/pkg/money"
 	_auth "github.com/rclsilver/asl-bissieux/server/auth"
@@ -519,6 +521,9 @@ func errHook(ctx *gin.Context, e error) (int, interface{}) {
 		code, msg = http.StatusBadRequest, e.Error()
 	} else {
 		switch {
+		case stdErrors.Is(e, attachments.ErrTooLarge):
+			code, msg = http.StatusRequestEntityTooLarge, e.Error()
+
 		case errors.IsBadRequest(e), errors.IsNotValid(e), errors.IsNotSupported(e), errors.IsNotProvisioned(e):
 			code, msg = http.StatusBadRequest, e.Error()
 

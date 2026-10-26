@@ -2,6 +2,13 @@
 
 **Date : 25 octobre 2026. Candidat examiné : `9406842` sur `dev`.**
 
+**Suivi du 26 octobre :** les arbitrages de Thomas et les corrections locales
+sont décrits dans [le suivi des corrections](corrections-securite.md).
+Les constats et l'avis ci-dessous sont ceux de l'audit initial : SEC-01 et
+SEC-04 font désormais l'objet d'une acceptation de risque explicite, et le
+chart est laissé inchangé. Ne pas confondre ce document historique avec le
+statut du candidat corrigé ni avec une validation de production.
+
 **Avis : publication déconseillée en l'état.** Une faille élevée de lecture
 des variables d'environnement est confirmée. Cinq constats de niveau moyen
 complètent la revue. Aucun correctif applicatif n'a été appliqué pendant cet

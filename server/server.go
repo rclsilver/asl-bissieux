@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/tonic"
@@ -68,10 +67,8 @@ func (s *httpServer) Build() error {
 		engine.Use(func(c *gin.Context) { c.Header("Cache-Control", "no-store"); c.Next() })
 	}
 
-	corsCfg := cors.DefaultConfig()
-	corsCfg.AllowAllOrigins = true
-	corsCfg.AllowHeaders = []string{"authorization", "content-type"}
-	engine.Use(cors.New(corsCfg))
+	// Frontend and API share an origin (including through the development
+	// proxy). Do not grant cross-origin browser access to the API.
 
 	infos := &openapi.Info{
 		Title:   "ASL",
@@ -485,26 +482,34 @@ func (s *httpServer) Build() error {
 	return nil
 }
 
-func (s *httpServer) Serve() error {
+// Handler includes protections for both the embedded SPA and every API route.
+func (s *httpServer) Handler() (http.Handler, error) {
 	if s.apiRouter == nil {
 		if err := s.Build(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	// Frontend
 	dist, err := fs.Sub(frontend.Dist, "dist/asl-bissieux")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/", frontendHandler(dist))
 
 	// API
 	mux.Handle("/api/", withLogging(s.apiRouter))
+	return browserProtections(mux, cfg), nil
+}
 
+func (s *httpServer) Serve() error {
+	handler, err := s.Handler()
+	if err != nil {
+		return err
+	}
 	logrus.Debugf("starting server on %s:%d", cfg.ListenAddress, cfg.ListenPort)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), mux)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), handler)
 }
 
 func errHook(ctx *gin.Context, e error) (int, interface{}) {

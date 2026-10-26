@@ -159,6 +159,12 @@ docker compose run --rm --no-deps server database migrate
 `status` est en lecture seule. `baseline` adopte une base existante uniquement
 si ses tables, colonnes, contraintes, index et triggers correspondent au schéma
 initial figé. Elle écrit l’historique sans modifier les lignes métier.
+L’ordre physique des colonnes et les doublons de clés étrangères strictement
+équivalentes n’affectent pas cette comparaison. Sous PostgreSQL 18, les
+contraintes `NOT NULL` du catalogue sont vérifiées par la nullabilité des
+colonnes. Les types, valeurs par défaut, cibles et actions des clés étrangères,
+contraintes, index et triggers restent contrôlés ; les migrations SQL figées
+et leurs empreintes ne sont pas modifiées.
 `migrate` applique les versions en attente ; sur une base neuve, elle crée
 aussi le schéma initial. Une base existante non versionnée, une empreinte
 modifiée ou une version inconnue provoquent une erreur explicite.

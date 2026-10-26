@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"sort"
@@ -198,7 +199,7 @@ func applyMigrations(ctx context.Context, conn *gorm.DB, migrations []migration)
 	})
 }
 
-// Baseline adopts only an exact match of the frozen initial schema. It never
+// Baseline adopts only a structurally equivalent frozen initial schema. It never
 // rebuilds a table or updates application rows, or applies later versions.
 func Baseline(ctx context.Context, conn *gorm.DB) error {
 	migrations, err := loadMigrations()
@@ -246,9 +247,14 @@ func validateBaseline(tx *gorm.DB) error {
 	if err := tx.Raw(string(query)).Scan(&actual).Error; err != nil {
 		return err
 	}
-	want := strings.Split(strings.TrimSpace(string(expected)), "\n")
-	sort.Strings(want)
-	sort.Strings(actual)
+	want, err := normalizeBaselineSignature(strings.Split(strings.TrimSpace(string(expected)), "\n"))
+	if err != nil {
+		return err
+	}
+	actual, err = normalizeBaselineSignature(actual)
+	if err != nil {
+		return err
+	}
 	if len(actual) != len(want) {
 		return fmt.Errorf("schema differs from baseline (%d entries, expected %d); no changes were made", len(actual), len(want))
 	}
@@ -258,4 +264,40 @@ func validateBaseline(tx *gorm.DB) error {
 		}
 	}
 	return nil
+}
+
+// Column order and duplicate equivalent foreign keys can vary across historical
+// GORM schemas. They do not change the constraints enforced on application rows.
+// Keep types, defaults, nullability, checks, FK targets/actions and indexes exact.
+func normalizeBaselineSignature(entries []string) ([]string, error) {
+	unique := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		parts := strings.SplitN(entry, ":", 4)
+		if len(parts) == 4 {
+			switch parts[0] {
+			case "column":
+				var definition map[string]json.RawMessage
+				if err := json.Unmarshal([]byte(parts[3]), &definition); err != nil {
+					return nil, fmt.Errorf("invalid baseline column metadata for %s.%s: %w", parts[1], parts[2], err)
+				}
+				delete(definition, "position")
+				data, err := json.Marshal(definition)
+				if err != nil {
+					return nil, err
+				}
+				entry = strings.Join(parts[:3], ":") + ":" + string(data)
+			case "constraint":
+				if strings.HasPrefix(parts[3], "FOREIGN KEY (") {
+					entry = "foreign-key:" + parts[1] + ":" + parts[3]
+				}
+			}
+		}
+		unique[entry] = struct{}{}
+	}
+	result := make([]string, 0, len(unique))
+	for entry := range unique {
+		result = append(result, entry)
+	}
+	sort.Strings(result)
+	return result, nil
 }

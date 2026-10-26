@@ -196,7 +196,52 @@ func TestMigrationsIntegration(t *testing.T) {
 		}
 		assertUpgradePreservesData(t, conn, before)
 	})
-	for _, change := range []string{"ALTER TABLE public.unit ADD COLUMN unexpected text", "DROP INDEX public.idx_user_username", "ALTER TABLE public.expense ALTER COLUMN amount TYPE double precision", "ALTER TABLE public.budget ALTER COLUMN draft SET DEFAULT false"} {
+	t.Run("equivalent historical GORM schema with reordered columns and duplicate FK", func(t *testing.T) {
+		conn := migrationTestDB(t)
+		schema := strings.Replace(migrations[0].SQL,
+			"    inline boolean DEFAULT false NOT NULL,\n    email_template_id uuid NOT NULL",
+			"    email_template_id uuid NOT NULL,\n    inline boolean DEFAULT false NOT NULL", 1)
+		schema = strings.Replace(schema,
+			"    email_campaign_id uuid NOT NULL,\n    state text DEFAULT 'WAITING'::text NOT NULL,\n    error text",
+			"    state text DEFAULT 'WAITING'::text NOT NULL,\n    error text,\n    email_campaign_id uuid NOT NULL", 1)
+		schema = strings.Replace(schema,
+			"    title text NOT NULL,\n    email_template_id uuid NOT NULL,\n    data jsonb NOT NULL",
+			"    email_template_id uuid NOT NULL,\n    data jsonb NOT NULL,\n    title text NOT NULL", 1)
+		if schema == migrations[0].SQL {
+			t.Fatal("fixture did not reorder columns")
+		}
+		if err := conn.Exec(schema).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec(`ALTER TABLE public.email ADD CONSTRAINT fk_email_email_campaign FOREIGN KEY (email_campaign_id) REFERENCES public.email_campaign(id)`).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := conn.Exec(legacyFixture).Error; err != nil {
+			t.Fatal(err)
+		}
+		before := applicationFingerprint(t, conn)
+		if err := Baseline(ctx, conn); err != nil {
+			t.Fatal(err)
+		}
+		if after := applicationFingerprint(t, conn); !reflect.DeepEqual(before, after) {
+			t.Fatal("adoption changed existing rows")
+		}
+		if err := Migrate(ctx, conn); err != nil {
+			t.Fatal(err)
+		}
+		assertUpgradePreservesData(t, conn, before)
+	})
+	for _, change := range []string{
+		"ALTER TABLE public.unit ADD COLUMN unexpected text",
+		"DROP INDEX public.idx_user_username",
+		"ALTER TABLE public.expense ALTER COLUMN amount TYPE double precision",
+		"ALTER TABLE public.budget ALTER COLUMN draft SET DEFAULT false",
+		"ALTER TABLE public.attachment ALTER COLUMN inline DROP NOT NULL",
+		`ALTER TABLE public.email DROP CONSTRAINT fk_email_campaign_emails; ALTER TABLE public.email ADD CONSTRAINT renamed FOREIGN KEY (email_campaign_id) REFERENCES public.email_template(id)`,
+		`ALTER TABLE public.email DROP CONSTRAINT fk_email_campaign_emails; ALTER TABLE public.email ADD CONSTRAINT renamed FOREIGN KEY (email_campaign_id) REFERENCES public.email_campaign(id) ON DELETE CASCADE`,
+		`ALTER TABLE public.email ADD CONSTRAINT deferred_copy FOREIGN KEY (email_campaign_id) REFERENCES public.email_campaign(id) DEFERRABLE INITIALLY DEFERRED`,
+		`ALTER TABLE public.email ADD CONSTRAINT unvalidated_copy FOREIGN KEY (email_campaign_id) REFERENCES public.email_campaign(id) NOT VALID`,
+	} {
 		t.Run("refuse schema drift "+change, func(t *testing.T) {
 			conn := migrationTestDB(t)
 			if err := conn.Exec(migrations[0].SQL).Error; err != nil {

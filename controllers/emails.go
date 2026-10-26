@@ -23,7 +23,7 @@ import (
 func ListEmailTemplates(tx *gorm.DB) ([]*models.EmailTemplate, error) {
 	var result []*models.EmailTemplate
 
-	if err := tx.Preload("Attachments").Find(&result).Error; err != nil {
+	if err := tx.Preload("Attachments", attachmentMetadata).Find(&result).Error; err != nil {
 		return nil, err
 	}
 	for _, row := range result {
@@ -127,7 +127,7 @@ func ListAttachments(tx *gorm.DB, templateID string) ([]*models.Attachment, erro
 
 	var result []*models.Attachment
 
-	return result, tx.Find(&result, "email_template_id = ?", template.ID).Error
+	return result, tx.Omit("content").Find(&result, "email_template_id = ?", template.ID).Error
 }
 
 func AddAttachment(tx *gorm.DB, templateID, name string, inline bool, contentType string, content []byte) (*models.Attachment, error) {
@@ -167,7 +167,7 @@ func GetAttachment(tx *gorm.DB, templateID, attachmentID string) (*models.Attach
 }
 
 func DeleteAttachment(tx *gorm.DB, templateID, attachmentID string) error {
-	attachment, err := GetAttachment(tx, templateID, attachmentID)
+	attachment, err := GetAttachment(tx.Omit("content"), templateID, attachmentID)
 	if err != nil {
 		return err
 	}
@@ -237,6 +237,15 @@ func ListEmails(tx *gorm.DB, campaignID string) ([]*models.Email, error) {
 }
 
 func GetEmail(tx *gorm.DB, emailID string, lock bool) (*models.Email, error) {
+	return getEmail(tx, emailID, lock, false)
+}
+
+func attachmentMetadata(tx *gorm.DB) *gorm.DB {
+	return tx.Omit("content")
+}
+
+// Attachment bytes are only needed for delivery, never for the API preview.
+func getEmail(tx *gorm.DB, emailID string, lock, attachmentContent bool) (*models.Email, error) {
 	if err := validateUUID(emailID); err != nil {
 		return nil, errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 	}
@@ -247,7 +256,12 @@ func GetEmail(tx *gorm.DB, emailID string, lock bool) (*models.Email, error) {
 		tx = tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
 
-	if err := tx.Preload("EmailCampaign.EmailTemplate.Attachments").First(&row, "id = ?", emailID).Error; err != nil {
+	if attachmentContent {
+		tx = tx.Preload("EmailCampaign.EmailTemplate.Attachments")
+	} else {
+		tx = tx.Preload("EmailCampaign.EmailTemplate.Attachments", attachmentMetadata)
+	}
+	if err := tx.First(&row, "id = ?", emailID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFound(nil, fmt.Sprintf("email %q not found", emailID))
 		}
@@ -315,7 +329,7 @@ func SendEmail(c context.Context, tx *gorm.DB, emailID string, wait bool) error 
 func sendClaimedEmail(c context.Context, tx *gorm.DB, emailID string) error {
 	ctx, cancel := context.WithTimeout(c, time.Minute)
 	defer cancel()
-	email, sendErr := GetEmail(tx.WithContext(ctx), emailID, false)
+	email, sendErr := getEmail(tx.WithContext(ctx), emailID, false, true)
 	state := models.Error
 	if sendErr == nil {
 		sendErr = buildEmail(email)

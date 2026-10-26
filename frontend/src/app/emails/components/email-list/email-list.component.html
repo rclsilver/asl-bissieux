@@ -1,26 +1,87 @@
-<h2 *ngIf="!(campaign$ | async)">E-mails</h2>
-<h2 *ngIf="campaign$ | async as campaign">{{campaign.title}}</h2>
-<app-crud-table
-  [canSelect]="true"
-  [columns]="columns"
-  [dataSource]="emails$ | async"
-  [canDelete]="canDelete.bind(this)"
-  (delete)="delete($event)"
-  [toolbarActions]="toolbarActions$ | async"
-  [rowActions]="rowActions$ | async"
->
-  <ng-container matColumnDef="state">
-    <td mat-cell *matCellDef="let email">
-      <span class="{{email.columns.state.value | lowercase}}">{{email.columns.state.value}}</span>
-      <span *ngIf="email.original.error" class="fa fa-exclamation-circle error" [matTooltip]="email.original.error"></span>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="message">
-    <td mat-cell *matCellDef="let row">
-      <button mat-icon-button (click)="show(row.original)" matTooltip="Display the message">
-        <mat-icon>preview</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-</app-crud-table>
+@if (campaign$ | async; as campaign) {
+  <h2>{{ campaign.title }}</h2>
+} @else {
+  <h2>E-mails</h2>
+}
+@if (campaignLoading) {
+  <p role="status">Chargement de la campagne…</p>
+}
+@if (campaignError) {
+  <p role="alert">Impossible de charger cette campagne.</p>
+  <button mat-stroked-button type="button" (click)="reloadCampaign()">
+    Réessayer la campagne
+  </button>
+}
+<div [hidden]="campaignLoading || campaignError">
+  @if (previewingId) {
+    <p role="status">Chargement du détail de l’e-mail…</p>
+  }
+  @if (busyAction) {
+    <p role="status">Opération en cours…</p>
+  }
+  <app-crud-table
+    tableLabel="E-mails de la campagne"
+    [attr.inert]="busyAction ? '' : null"
+    [canSelect]="true"
+    [columns]="columns"
+    [dataSource]="emails$ | async"
+    [canDelete]="canDelete.bind(this)"
+    (delete)="delete($event)"
+    [toolbarActions]="toolbarActions$ | async"
+    [rowActions]="rowActions$ | async"
+  >
+    <div table-filters class="list-filters">
+      <mat-form-field
+        appearance="outline"
+        subscriptSizing="dynamic"
+        class="state-filter context-field"
+      >
+        <mat-label>État des e-mails</mat-label>
+        <mat-select
+          [value]="state"
+          (selectionChange)="setState($event.value)"
+          [disabled]="busyAction"
+        >
+          <mat-option value="">Tous les états</mat-option>
+          @for (state of states; track state) {
+            <mat-option [value]="state">{{ stateLabel(state) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <ng-container matColumnDef="state">
+      <td mat-cell *matCellDef="let email">
+        <span class="{{ email.columns.state.value | lowercase }}">{{
+          stateLabel(email.columns.state.value)
+        }}</span>
+        @if (email.original.has_error) {
+          <button
+            mat-icon-button
+            type="button"
+            (click)="showError(email.original)"
+            [disabled]="previewingId !== null || loading"
+            matTooltip="Consulter l’erreur"
+            aria-label="Consulter l’erreur de l’e-mail"
+          >
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="message">
+      <td mat-cell *matCellDef="let row">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="show(row.original)"
+          [disabled]="previewingId !== null || loading"
+          matTooltip="Afficher le message"
+          aria-label="Afficher le message"
+        >
+          <mat-icon aria-hidden="true">preview</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+  </app-crud-table>
+  <p class="list-note">La sélection porte uniquement sur la page affichée.</p>
+</div>

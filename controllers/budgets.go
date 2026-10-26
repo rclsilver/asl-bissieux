@@ -9,6 +9,7 @@ import (
 	"github.com/juju/errors"
 
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
 
@@ -23,18 +24,21 @@ func ListBudgets(tx *gorm.DB) ([]*models.BudgetResult, error) {
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.budget_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.budget_id")
 
 	if err := tx.
 		Model(&models.Budget{}).
-		Select("budget.*, expenses.amount as amount, payments.paid as paid").
+		Select("budget.*, COALESCE(expenses.amount, 0) AS amount, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS expenses ON expenses.budget_id = budget.id", expensesAmounts).
 		Joins("LEFT JOIN (?) AS payments ON payments.budget_id = budget.id", paymentsAmounts).
 		Find(&result).Error; err != nil {
 		return nil, err
 	}
 
+	if err := applyBudgetFinancialTotals(tx, result); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -53,12 +57,12 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.budget_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.budget_id")
 
 	if err := tx.
 		Model(&models.Budget{}).
-		Select("budget.*, expenses.amount as amount, payments.paid as paid").
+		Select("budget.*, COALESCE(expenses.amount, 0) AS amount, COALESCE(payments.paid, 0) AS paid").
 		Joins("LEFT JOIN (?) AS expenses ON expenses.budget_id = budget.id", expensesAmounts).
 		Joins("LEFT JOIN (?) AS payments ON payments.budget_id = budget.id", paymentsAmounts).
 		First(&row, "budget.id = ?", budgetID).Error; err != nil {
@@ -68,6 +72,27 @@ func GetBudget(tx *gorm.DB, budgetID string) (*models.BudgetResult, error) {
 		return nil, err
 	}
 
+	if err := applyBudgetFinancialTotals(tx, []*models.BudgetResult{&row}); err != nil {
+		return nil, err
+	}
+	if row.Draft {
+		var units []*models.Unit
+		if err := tx.Find(&units).Error; err != nil {
+			return nil, err
+		}
+		row.Preview = BudgetPreview(row.Amount, units)
+		var expenses []*models.Expense
+		if err := tx.Find(&expenses, "budget_id = ?", row.ID).Error; err != nil {
+			return nil, err
+		}
+		for _, expense := range expenses {
+			if err := expense.Amount.ValidateInput(); err != nil {
+				row.Preview.Ready = false
+				row.Preview.Message = fmt.Sprintf("La dépense %q doit être corrigée avant publication : %s", expense.Label, err.Error())
+				break
+			}
+		}
+	}
 	return &row, nil
 }
 
@@ -113,16 +138,36 @@ func ListCotisations(tx *gorm.DB, budgetID string) ([]*models.CotisationResult, 
 	paymentsAmounts := tx.
 		Model(&models.Payment{}).
 		Select("cotisation.id as cotisation_id, SUM(payment.amount) AS paid").
-		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id").
+		Joins("JOIN cotisation ON cotisation.id = payment.cotisation_id AND cotisation.deleted_at IS NULL").
 		Group("cotisation.id")
 
 	if err := tx.
 		Model(&models.Cotisation{}).
 		Preload("Unit.Members").
-		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid").
+		Select("cotisation.*, COALESCE(payments.paid, 0) AS paid, COALESCE(entries.adjustment,0) AS adjustment, COALESCE(entries.refunded,0) AS refunded").
+		Joins("LEFT JOIN (SELECT cotisation_id, SUM(CASE WHEN kind = 'adjustment' THEN amount ELSE 0 END) adjustment, SUM(CASE WHEN kind = 'refund' THEN amount ELSE 0 END) refunded FROM financial_entry GROUP BY cotisation_id) entries ON entries.cotisation_id = cotisation.id").
 		Joins("LEFT JOIN (?) AS payments ON payments.cotisation_id = cotisation.id", paymentsAmounts).
 		Find(&result, "cotisation.budget_id = ?", budget.ID).Error; err != nil {
 		return nil, err
+	}
+	for _, row := range result {
+		row.InitialAmount = row.Amount
+		row.Amount = row.Amount.Add(row.Adjustment)
+		row.GrossPaid = row.Paid
+		row.Paid = money.Of(row.Paid.Sub(row.Refunded.Decimal))
+		row.Remaining = money.Of(row.Amount.Sub(row.Paid.Decimal))
+		switch row.Paid.Cmp(row.Amount) {
+		case 1:
+			row.PaymentState = 4
+		case 0:
+			row.PaymentState = 1
+		default:
+			if row.Paid.Add(row.Paid).Cmp(row.Amount) >= 0 {
+				row.PaymentState = 2
+			} else {
+				row.PaymentState = 3
+			}
+		}
 	}
 
 	return result, nil
@@ -157,7 +202,14 @@ func ListPayments(tx *gorm.DB, budgetID, cotisationID string) ([]*models.Payment
 	return result, nil
 }
 
-func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data map[string]any) (*models.BuiltEmail, error) {
+type BudgetEmailRecipientFilter struct {
+	IncludeDoing bool
+	IncludePaid  bool
+}
+
+// An omitted filter preserves the legacy preview of all a member's cotisations.
+// Preparation screens pass the same filter for preview and campaign creation.
+func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data map[string]any, filters ...BudgetEmailRecipientFilter) (*models.BuiltEmail, error) {
 	template, err := GetEmailTemplate(tx, templateID)
 	if err != nil {
 		return nil, err
@@ -178,6 +230,22 @@ func PreviewBudgetEmail(tx *gorm.DB, budgetID, templateID, memberID string, data
 		return nil, err
 	}
 	cotisations = filterCotisations(cotisations, member.ID)
+	if len(filters) > 0 {
+		filter := filters[0]
+		selected := make([]*models.CotisationResult, 0, len(cotisations))
+		for _, cotisation := range cotisations {
+			if includeBudgetEmailCotisation(cotisation, filter.IncludeDoing, filter.IncludePaid) {
+				selected = append(selected, cotisation)
+			}
+		}
+		cotisations = selected
+		if len(cotisations) == 0 {
+			return nil, errors.NewBadRequest(nil, "Ce membre ne fait pas partie des destinataires sélectionnés.")
+		}
+		if member.Email == "" {
+			return nil, errors.NewBadRequest(nil, "Ce membre n’a pas d’adresse e-mail.")
+		}
+	}
 
 	t, err := buildTemplate(tx, budget, member, cotisations, data)
 	if err != nil {
@@ -211,14 +279,15 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 		return err
 	}
 
-	members := make(map[*models.Member][]*models.CotisationResult)
+	type recipient struct {
+		member      *models.Member
+		cotisations []*models.CotisationResult
+		data        map[string]any
+	}
+	members := make(map[string]*recipient)
 
 	for _, cotisation := range cotisations {
-		if !toPaid && cotisation.Paid == cotisation.Amount {
-			continue
-		}
-
-		if !toDoing && cotisation.Paid >= cotisation.Amount/2 {
+		if !includeBudgetEmailCotisation(cotisation, toDoing, toPaid) {
 			continue
 		}
 
@@ -227,27 +296,34 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 				continue
 			}
 
-			if _, exists := members[member]; exists {
-				members[member] = append(members[member], cotisation)
-			} else {
-				members[member] = []*models.CotisationResult{cotisation}
+			if _, exists := members[member.ID]; !exists {
+				members[member.ID] = &recipient{member: member}
 			}
+			members[member.ID].cotisations = append(members[member.ID].cotisations, cotisation)
 		}
 	}
 
 	if len(members) > 0 {
+		// Validate every context before creating any campaign or email. A
+		// representative preview alone cannot cover all multi-lot shapes.
+		for _, recipient := range members {
+			context, err := buildTemplateData(tx, budget, recipient.member, recipient.cotisations)
+			if err != nil {
+				return err
+			}
+			if err := validateBudgetEmailTemplate(template, context, data); err != nil {
+				return err
+			}
+			recipient.data = context
+		}
+
 		campaign := models.NewEmailCampaign(fmt.Sprintf("%s: %s", budget.Label, template.Label), template, data)
 		if err := tx.Create(campaign).Error; err != nil {
 			return err
 		}
 
-		for member, cotisations := range members {
-			data, err := buildTemplateData(tx, budget, member, cotisations)
-			if err != nil {
-				return err
-			}
-
-			email := models.NewEmail(campaign, member.Email, data)
+		for _, recipient := range members {
+			email := models.NewEmail(campaign, recipient.member.Email, recipient.data)
 			if err := tx.Create(email).Error; err != nil {
 				return err
 			}
@@ -257,15 +333,48 @@ func SendBudgetEmail(tx *gorm.DB, budgetID, templateID string, data map[string]a
 	return nil
 }
 
+func includeBudgetEmailCotisation(cotisation *models.CotisationResult, toDoing, toPaid bool) bool {
+	if cotisation.Paid.Cmp(cotisation.Amount) >= 0 {
+		return toPaid
+	}
+	return cotisation.Paid.Add(cotisation.Paid).Cmp(cotisation.Amount) < 0 || toDoing
+}
+
+func validateBudgetEmailTemplate(template *models.EmailTemplate, data, extra map[string]any) error {
+	merged := make(map[string]any, len(data)+len(extra))
+	for key, value := range data {
+		merged[key] = value
+	}
+	for key, value := range extra {
+		merged[key] = value
+	}
+	// Sprig allows map mutation. Validate an independent deep copy so the
+	// check cannot alter persisted contexts or a later recipient's values.
+	encoded, err := json.Marshal(merged)
+	if err != nil {
+		return err
+	}
+	var context map[string]any
+	if err := json.Unmarshal(encoded, &context); err != nil {
+		return err
+	}
+	t, err := templates.NewTemplate(context)
+	if err != nil {
+		return err
+	}
+	_, err = BuildEmail(template, t)
+	return err
+}
+
 func buildTemplateData(tx *gorm.DB, budget *models.BudgetResult, member *models.Member, cotisations []*models.CotisationResult) (map[string]any, error) {
 	expenses, err := ListExpenses(tx, budget.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	var amount float64
+	var amount money.Amount
 	for _, c := range cotisations {
-		amount += c.Amount
+		amount = amount.Add(c.Amount)
 	}
 
 	data := make(map[string]any)

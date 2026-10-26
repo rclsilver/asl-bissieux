@@ -1,29 +1,29 @@
 import { CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { inject } from '@angular/core';
+import { Observable, combineLatest, filter, map, take } from 'rxjs';
+
+function waitForAuthentication(
+  auth: AuthService,
+  allowed$: Observable<boolean>,
+  path: string
+) {
+  return combineLatest([auth.loading$, allowed$]).pipe(
+    filter(([loading]) => !loading),
+    take(1),
+    map(([, allowed]) => {
+      if (!allowed) auth.rememberReturnPath(path);
+      return allowed;
+    })
+  );
+}
 
 export const isAuthenticated: CanActivateFn = (route, state) => {
-  return inject(AuthService).active$;
+  const auth = inject(AuthService);
+  return waitForAuthentication(auth, auth.active$, state.url);
 };
 
 export const isAdministrator: CanActivateFn = (route, state) => {
-  return inject(AuthService).administrator$;
+  const auth = inject(AuthService);
+  return waitForAuthentication(auth, auth.administrator$, state.url);
 };
-
-/*
-@Injectable()
-export class AuthGuard implements CanActivateFn {
-  constructor(private _auth: AuthService) {}
-
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): Observable<boolean> {
-    return this._auth.loading$.pipe(
-      filter(loading => !loading),
-      switchMap(_ => this.authService.isAuthenticated$),
-      tap(isAuthenticated => isAuthenticated || this._auth.login(state.url)),
-    );
-  }
-}
-*/

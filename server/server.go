@@ -1,12 +1,12 @@
 package server
 
 import (
+	stdErrors "errors"
 	"fmt"
 	"io/fs"
 	"net/http"
 	"reflect"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/tonic"
@@ -15,7 +15,9 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/rclsilver/asl-bissieux/frontend"
+	"github.com/rclsilver/asl-bissieux/pkg/attachments"
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 	_auth "github.com/rclsilver/asl-bissieux/server/auth"
 	"github.com/rclsilver/asl-bissieux/server/handlers"
 	"github.com/rclsilver/asl-bissieux/version"
@@ -38,6 +40,7 @@ func (s *httpServer) WithAuthProvider(provider auth.AuthProvider) *httpServer {
 }
 
 func (s *httpServer) Build() error {
+	_auth.RegisterActions(handlers.CreateRefundAction, handlers.CreateAdjustmentAction)
 	tonic.SetBindHook(func(c *gin.Context, v interface{}) error {
 		val := reflect.ValueOf(v)
 		typ := reflect.TypeOf(v).Elem()
@@ -62,11 +65,12 @@ func (s *httpServer) Build() error {
 	})
 
 	engine := gin.New()
+	if _, browserSession := s.authProvider.(auth.BrowserAuthProvider); browserSession {
+		engine.Use(func(c *gin.Context) { c.Header("Cache-Control", "no-store"); c.Next() })
+	}
 
-	corsCfg := cors.DefaultConfig()
-	corsCfg.AllowAllOrigins = true
-	corsCfg.AllowHeaders = []string{"authorization", "content-type"}
-	engine.Use(cors.New(corsCfg))
+	// Frontend and API share an origin (including through the development
+	// proxy). Do not grant cross-origin browser access to the API.
 
 	infos := &openapi.Info{
 		Title:   "ASL",
@@ -74,6 +78,9 @@ func (s *httpServer) Build() error {
 	}
 
 	router := fizz.NewFromEngine(engine)
+	if err := router.Generator().OverrideDataType(reflect.TypeOf(money.Amount{}), "number", "double"); err != nil {
+		return err
+	}
 
 	router.GET("/api/spec.json", nil, router.OpenAPI(infos, "json"))
 
@@ -85,39 +92,49 @@ func (s *httpServer) Build() error {
 		}, tonic.Handler(Ping, http.StatusOK))
 	}
 
-	auth := router.Group("/api/auth", "02 - auth", "auth")
+	authGroup := router.Group("/api/auth", "02 - auth", "auth")
 	{
-		auth.GET("me", []fizz.OperationOption{
+		authGroup.GET("config", []fizz.OperationOption{fizz.Summary("Get public authentication configuration")}, tonic.Handler(s.publicAuthConfig, http.StatusOK))
+		authGroup.GET("login", []fizz.OperationOption{fizz.Summary("Start OIDC sign-in")}, s.beginLogin)
+		authGroup.GET("callback", []fizz.OperationOption{fizz.Summary("Complete OIDC sign-in")}, s.finishLogin)
+		authGroup.POST("logout", []fizz.OperationOption{fizz.Summary("End the application session")}, tonic.Handler(s.endLogin, http.StatusOK))
+
+		authGroup.GET("me", []fizz.OperationOption{
 			fizz.Summary("Get the current user details"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), tonic.Handler(_auth.UserInfos, http.StatusOK))
 
-		auth.GET("actions", []fizz.OperationOption{
+		authGroup.GET("access-requests/summary", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.PendingAccessRequests, http.StatusOK))
+
+		authGroup.GET("tour", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetTour, http.StatusOK))
+		authGroup.POST("tour/progress", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ViewTourStep, http.StatusOK))
+
+		authGroup.GET("actions", []fizz.OperationOption{
 			fizz.Summary("Get all the registered actions"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.ListActions, http.StatusOK))
 
-		auth.GET("users", []fizz.OperationOption{
+		authGroup.GET("users", []fizz.OperationOption{
 			fizz.Summary("Get all the registered users"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.ListUsers, http.StatusOK))
 
-		auth.POST("users", []fizz.OperationOption{
+		authGroup.POST("users", []fizz.OperationOption{
 			fizz.Summary("Register a new user"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.CreateUser, http.StatusCreated))
 
-		auth.GET("users/:user_id", []fizz.OperationOption{
+		authGroup.GET("users/:user_id", []fizz.OperationOption{
 			fizz.Summary("Get an existing user"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.GetUser, http.StatusOK))
 
-		auth.PUT("users/:user_id", []fizz.OperationOption{
+		authGroup.PUT("users/:user_id", []fizz.OperationOption{
 			fizz.Summary("Update an existing user"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.UpdateUser, http.StatusOK))
 
-		auth.DELETE("users/:user_id", []fizz.OperationOption{
+		authGroup.DELETE("users/:user_id", []fizz.OperationOption{
 			fizz.Summary("Delete an existing user"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireAdministrator(), tonic.Handler(_auth.DeleteUser, http.StatusNoContent))
@@ -215,6 +232,8 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateBudgetAction), tonic.Handler(handlers.CreateBudget, http.StatusCreated))
 
 		budgetGroup.POST(":budget_id/publish", []fizz.OperationOption{
+			fizz.Response("400", "Budget already published or inconsistent draft", APIError{}, nil, nil),
+			fizz.Response("403", "Publication is not permitted", APIError{}, nil, nil),
 			fizz.Summary("Publish a budget"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.PublishBudgetAction), tonic.Handler(handlers.PublishBudget, http.StatusOK))
@@ -225,9 +244,12 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateBudgetAction), tonic.Handler(handlers.UpdateBudget, http.StatusOK))
 
 		budgetGroup.DELETE(":budget_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budgets cannot be deleted", APIError{}, nil, nil),
 			fizz.Summary("Delete a budget"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteBudgetAction), tonic.Handler(handlers.DeleteBudget, http.StatusNoContent))
+
+		budgetGroup.GET(":budget_id/dashboard", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetBudgetDashboard, http.StatusOK))
 
 		budgetGroup.GET(":budget_id/expenses", []fizz.OperationOption{
 			fizz.Summary("Get the expenses"),
@@ -235,16 +257,19 @@ func (s *httpServer) Build() error {
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListExpenses, http.StatusOK))
 
 		budgetGroup.POST(":budget_id/expenses", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Create an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.CreateExpenseAction), tonic.Handler(handlers.CreateExpense, http.StatusCreated))
 
 		budgetGroup.PUT(":budget_id/expenses/:expense_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Update an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.UpdateExpenseAction), tonic.Handler(handlers.UpdateExpense, http.StatusOK))
 
 		budgetGroup.DELETE(":budget_id/expenses/:expense_id", []fizz.OperationOption{
+			fizz.Response("403", "Published budget expenses are locked", APIError{}, nil, nil),
 			fizz.Summary("Delete an expense"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAction(handlers.DeleteExpenseAction), tonic.Handler(handlers.DeleteExpense, http.StatusNoContent))
@@ -254,6 +279,9 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListCotisations, http.StatusOK))
 
+		budgetGroup.GET(":budget_id/cotisations/:cotisation_id/entries", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.ListFinancialEntries, http.StatusOK))
+		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/entries/preview", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.PreviewFinancialEntry, http.StatusOK))
+		budgetGroup.POST(":budget_id/cotisations/:cotisation_id/entries", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.CreateFinancialEntry, http.StatusCreated))
 		budgetGroup.GET(":budget_id/cotisations/:cotisation_id/payments", []fizz.OperationOption{
 			fizz.Summary("Get the payments"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -284,6 +312,14 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.PreviewBudgetEmail, http.StatusOK))
 	}
+
+	dashboardGroup := router.Group("/api/dashboard", "07 - dashboard", "read-only dashboard summaries")
+	dashboardGroup.GET("directory", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetDirectoryQuality, http.StatusOK))
+	dashboardGroup.GET("emails", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmailDashboard, http.StatusOK))
+
+	mailingGroup := router.Group("/api/mailing-lists", "08 - mailing lists", "OVH mailing list synchronization")
+	mailingGroup.GET("preview", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAdministrator(), tonic.Handler(handlers.PreviewMailingLists, http.StatusOK))
+	mailingGroup.POST("sync", nil, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), _auth.RequireAdministrator(), tonic.Handler(handlers.SyncMailingLists, http.StatusOK))
 
 	emailGroup := router.Group("/api/email", "06 - email", "manages the emails")
 	{
@@ -374,6 +410,12 @@ func (s *httpServer) Build() error {
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
 		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmail, http.StatusOK))
 
+		emailGroup.GET(":email_id/status", []fizz.OperationOption{
+			fizz.Summary("Get email delivery status without rendering its content"),
+			fizz.Response(fmt.Sprint(http.StatusNotFound), "Not Found", APIError{}, nil, nil),
+			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
+		}, _auth.RequireAuthentication(s.authProvider), _auth.RequireEnabled(), tonic.Handler(handlers.GetEmailStatus, http.StatusOK))
+
 		emailGroup.DELETE(":email_id", []fizz.OperationOption{
 			fizz.Summary("Delete an email"),
 			fizz.Response(fmt.Sprint(http.StatusInternalServerError), "Server Error", APIError{}, nil, nil),
@@ -395,31 +437,41 @@ func (s *httpServer) Build() error {
 		}, tonic.Handler(handlers.TrackEmail, http.StatusOK))
 	}
 
-	router.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
-		"google_oauth": {
-			SecurityScheme: &openapi.SecurityScheme{
-				Type:        "oauth2",
-				Description: "Google authentication",
-				Flows: &openapi.OAuthFlows{
-					Implicit: &openapi.OAuthFlow{
-						AuthorizationURL: "https://accounts.google.com/o/oauth2/v2/auth",
-						TokenURL:         "https://www.googleapis.com/oauth2/v4/token",
-						Scopes: map[string]string{
-							"openid":  "",
-							"profile": "",
-							"email":   "",
+	if _, browserSession := s.authProvider.(auth.BrowserAuthProvider); browserSession {
+		router.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+			"application_session": {SecurityScheme: &openapi.SecurityScheme{
+				Type: "apiKey", In: "cookie", Name: "asl_session",
+				Description: "Server-side session established through OIDC Authorization Code with PKCE. Writes also require the X-XSRF-TOKEN header and the configured application origin.",
+			}},
+		})
+		router.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{{"application_session": []string{}}})
+	} else {
+		router.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+			"google_oauth": {
+				SecurityScheme: &openapi.SecurityScheme{
+					Type:        "oauth2",
+					Description: "Google authentication",
+					Flows: &openapi.OAuthFlows{
+						Implicit: &openapi.OAuthFlow{
+							AuthorizationURL: "https://accounts.google.com/o/oauth2/v2/auth",
+							TokenURL:         "https://www.googleapis.com/oauth2/v4/token",
+							Scopes: map[string]string{
+								"openid":  "",
+								"profile": "",
+								"email":   "",
+							},
 						},
 					},
 				},
 			},
-		},
-	})
+		})
 
-	router.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{
-		{
-			"google_oauth": []string{},
-		},
-	})
+		router.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{
+			{
+				"google_oauth": []string{},
+			},
+		})
+	}
 
 	if len(router.Errors()) != 0 {
 		return fmt.Errorf("fizz errors: %v", router.Errors())
@@ -432,26 +484,34 @@ func (s *httpServer) Build() error {
 	return nil
 }
 
-func (s *httpServer) Serve() error {
+// Handler includes protections for both the embedded SPA and every API route.
+func (s *httpServer) Handler() (http.Handler, error) {
 	if s.apiRouter == nil {
 		if err := s.Build(); err != nil {
-			return nil
+			return nil, err
 		}
 	}
 
 	// Frontend
 	dist, err := fs.Sub(frontend.Dist, "dist/asl-bissieux")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	frontend := http.FileServer(http.FS(dist))
-	http.Handle("/", frontend)
+	mux := http.NewServeMux()
+	mux.Handle("/", frontendHandler(dist))
 
 	// API
-	http.Handle("/api/", withLogging(s.apiRouter))
+	mux.Handle("/api/", withLogging(s.apiRouter))
+	return browserProtections(mux, cfg), nil
+}
 
+func (s *httpServer) Serve() error {
+	handler, err := s.Handler()
+	if err != nil {
+		return err
+	}
 	logrus.Debugf("starting server on %s:%d", cfg.ListenAddress, cfg.ListenPort)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), nil)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort), handler)
 }
 
 func errHook(ctx *gin.Context, e error) (int, interface{}) {
@@ -461,6 +521,9 @@ func errHook(ctx *gin.Context, e error) (int, interface{}) {
 		code, msg = http.StatusBadRequest, e.Error()
 	} else {
 		switch {
+		case stdErrors.Is(e, attachments.ErrTooLarge):
+			code, msg = http.StatusRequestEntityTooLarge, e.Error()
+
 		case errors.IsBadRequest(e), errors.IsNotValid(e), errors.IsNotSupported(e), errors.IsNotProvisioned(e):
 			code, msg = http.StatusBadRequest, e.Error()
 

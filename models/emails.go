@@ -2,14 +2,8 @@ package models
 
 import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
+	"github.com/rclsilver/asl-bissieux/pkg/templates"
 )
-
-func init() {
-	db.RegisterMigration(&EmailTemplate{})
-	db.RegisterMigration(&Attachment{})
-	db.RegisterMigration(&EmailCampaign{})
-	db.RegisterMigration(&Email{})
-}
 
 type BuiltEmail struct {
 	Subject string `json:"subject"`
@@ -19,9 +13,10 @@ type BuiltEmail struct {
 type EmailTemplate struct {
 	db.Model
 
-	Label   string `json:"label" gorm:"notNull"`
-	Subject string `json:"subject" gorm:"notNull"`
-	Message string `json:"message" gorm:"notNull"`
+	Label        string                     `json:"label" gorm:"notNull"`
+	Subject      string                     `json:"subject" gorm:"notNull"`
+	Message      string                     `json:"message" gorm:"notNull"`
+	CustomFields templates.FieldDescription `json:"custom_fields" gorm:"-"`
 
 	Attachments []*Attachment    `json:"attachments,omitempty"`
 	Campaigns   []*EmailCampaign `json:"campaigns,omitempty"`
@@ -96,6 +91,8 @@ type EmailState string
 
 const (
 	Waiting EmailState = "WAITING"
+	Sending EmailState = "SENDING"
+	Unknown EmailState = "UNKNOWN"
 	Sent    EmailState = "SENT"
 	Error   EmailState = "ERROR"
 	Read    EmailState = "READ"

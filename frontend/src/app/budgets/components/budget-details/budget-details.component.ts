@@ -1,13 +1,24 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   BehaviorSubject,
+  of,
+  tap,
+  Subject,
+  catchError,
   combineLatest,
   map,
-  of,
   shareReplay,
   switchMap,
   take,
+  takeUntil,
 } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -19,23 +30,67 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { CotisationDataSource } from '../../datasources/cotisation.datasource';
 import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table.component';
-import { PaymentListComponent } from '../payment-list/payment-list.component';
-import { N } from '@angular/cdk/keycodes';
+import {
+  COTISATION_DIALOG_OPTIONS,
+  PaymentListComponent,
+} from '../payment-list/payment-list.component';
 import { EmptyDataSource } from 'src/app/shared/datasources/empty.datasource';
+import { PaymentState, paymentState, paymentClass } from '../../payment-state';
 
 @Component({
   selector: 'app-budget-details',
   templateUrl: './budget-details.component.html',
   styleUrls: ['./budget-details.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-export class BudgetDetailsComponent implements OnInit {
-  readonly STATE_OK = 1;
-  readonly STATE_DOING = 2;
-  readonly STATE_KO = 3;
+export class BudgetDetailsComponent implements OnInit, OnDestroy {
+  budgetLoading = true;
+  budgetError = false;
+  coverage = '';
+  cotisationFilter = '';
+  readonly coverageLabels: Record<string, string> = {
+    received: 'Avec encaissement net',
+    remaining: 'Reste à encaisser',
+    settled: 'Lots à jour',
+    partial: 'Partiellement réglés',
+    unpaid: 'Sans paiement',
+    overpaid: 'Trop-perçus',
+  };
+  private readonly _destroy$ = new Subject<void>();
+  private readonly _refresh$ = new BehaviorSubject<void>(undefined);
+  readonly STATE_OK = PaymentState.Done;
+  readonly STATE_DOING = PaymentState.Doing;
+  readonly STATE_KO = PaymentState.Waiting;
+  readonly STATE_OVERPAID = PaymentState.Overpaid;
+
+  formatAmount(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount);
+  }
+
+  formatRate(amount: number): string {
+    return (
+      new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      }).format(amount) + ' €'
+    );
+  }
 
   private readonly _auth = inject(AuthService);
   private readonly _api = inject(ApiService);
   private readonly _route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  filterCoverage(coverage: string) {
+    this.router.navigate([], {
+      relativeTo: this._route,
+      queryParams: { coverage: coverage || null, cotisation: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   private readonly _notifications = inject(NotificationsService);
 
   private _budget$ = new BehaviorSubject<
@@ -46,13 +101,13 @@ export class BudgetDetailsComponent implements OnInit {
   // expenses
   readonly expensesColumns = [
     new Column('label', {
-      label: 'Label',
+      label: 'Libellé',
       canSort: true,
       canFilter: true,
     }),
     new Column('amount', {
-      label: 'Amount',
-      render: (v) => `${v} €`,
+      label: 'Montant',
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
   ];
@@ -66,36 +121,14 @@ export class BudgetDetailsComponent implements OnInit {
   );
   readonly canCreateExpense$ = combineLatest([
     this.budget$,
-    this._auth.administrator$,
     this._auth.allowed$('budget.CreateExpense'),
-  ]).pipe(
-    map(([budget, administrator, allowed]) => {
-      if (administrator) {
-        return true;
-      }
-
-      if (!budget?.draft) {
-        return false;
-      }
-
-      return allowed;
-    })
-  );
+  ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
 
   canEditExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.administrator$]).pipe(
-      switchMap(([budget, administrator]) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget?.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.EditExpense');
-      })
-    );
+    return combineLatest([
+      this.budget$,
+      this._auth.allowed$('budget.UpdateExpense'),
+    ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
   }
 
   editExpense(expense?: APISchemas['ModelsExpense']) {
@@ -115,80 +148,60 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   canDeleteExpense(_: APISchemas['ModelsExpense']) {
-    return combineLatest([this.budget$, this._auth.administrator$]).pipe(
-      switchMap(([budget, administrator]) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget?.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.DeleteExpense');
-      })
-    );
+    return combineLatest([
+      this.budget$,
+      this._auth.allowed$('budget.DeleteExpense'),
+    ]).pipe(map(([budget, allowed]) => !!budget?.draft && allowed));
   }
 
   deleteExpense(expense: APISchemas['ModelsExpense']) {
+    const budget = this._budget$.value;
+    if (!budget?.id || !budget.draft) return;
     this._notifications
       .showConfirm({
-        title: 'Delete an expense',
-        message: `Are you sure to delete the expense ${expense.label}?`,
+        title: 'Supprimer une dépense',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer la dépense ${expense.label} ?`,
         class: 'warn',
       })
       .afterClosed()
       .subscribe((confirm) => {
-        if (confirm) {
-          this._api
-            .deleteExpense(this._budget$.value?.id!, expense.id!)
-            .subscribe({
-              next: () => {
-                this.refreshExpenses();
-                this._notifications.showDialog({
-                  title: 'Info',
-                  message: `The expense ${expense.label} has been deleted`,
-                  level: NotificationDialogLevel.Info,
-                });
-              },
-              error: this._api.handleError('Unable to delete the expense'),
-            });
+        if (
+          confirm &&
+          this._budget$.value?.id === budget.id &&
+          this._budget$.value?.draft
+        ) {
+          this._api.deleteExpense(budget.id!, expense.id!).subscribe({
+            next: () => {
+              this.refreshExpenses();
+              this._notifications.showDialog({
+                title: 'Info',
+                message: `La dépense ${expense.label} a été supprimée`,
+                level: NotificationDialogLevel.Info,
+              });
+            },
+            error: this._api.handleError('Impossible de supprimer la dépense'),
+          });
         }
       });
   }
 
   refreshExpenses() {
-    return this.expenses$.pipe(take(1)).subscribe((ds) => {
-      if (ds) {
-        ds.load();
-      }
-    });
+    this.refreshBudget();
   }
 
   // cotisations
   readonly cotisationsColumns = [
     new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'state',
-      (cotisation) => {
-        const amount = cotisation?.amount ?? 0;
-        const paid = cotisation?.paid ?? 0;
-        const remaining = amount - paid;
-
-        if (!remaining) {
-          return this.STATE_OK;
-        } else if (paid >= amount / 2) {
-          return this.STATE_DOING;
-        } else {
-          return this.STATE_KO;
-        }
-      },
+      paymentState,
       {
         label: '',
         canSort: true,
       }
     ),
     new Column('unit.number', {
-      label: 'Unit',
+      label: 'Lot',
       canSort: true,
       defaultSort: true,
       canFilter: true,
@@ -204,7 +217,7 @@ export class BudgetDetailsComponent implements OnInit {
           last_name: member.last_name!,
         })),
       {
-        label: 'Members',
+        label: 'Membres',
         canSort: true,
         canFilter: true,
         filterFunc: (members, pattern) => {
@@ -245,29 +258,29 @@ export class BudgetDetailsComponent implements OnInit {
       }
     ),
     new Column('unit.address', {
-      label: 'Address',
+      label: 'Adresse',
       canFilter: true,
     }),
     new Column('unit.share', {
-      label: 'Share',
+      label: 'Parts',
       canSort: true,
     }),
     new Column('amount', {
-      label: 'Amount',
-      render: (v) => `${v} €`,
+      label: 'Montant',
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
     new Column('paid', {
-      label: 'Paid',
-      render: (v) => `${v} €`,
+      label: 'Réglé',
+      render: (v) => this.formatAmount(v),
       canSort: true,
     }),
     new CustomRenderColumn<APISchemas['ModelsCotisationResult'], number>(
       'remaining',
-      (row) => (row?.amount ?? 0) - (row?.paid ?? 0),
+      (row) => row.remaining ?? (row?.amount ?? 0) - (row?.paid ?? 0),
       {
-        label: 'Remaining',
-        render: (v) => `${v} €`,
+        label: 'Solde',
+        render: (v) => this.formatAmount(v),
         canSort: true,
       }
     ),
@@ -289,18 +302,15 @@ export class BudgetDetailsComponent implements OnInit {
     map((ds) =>
       ds ? ds : new EmptyDataSource<APISchemas['ModelsCotisationResult']>()
     ),
-    switchMap((ds) => ds.results$),
+    switchMap((ds) =>
+      ds instanceof CotisationDataSource ? ds.allResults$ : ds.results$
+    ),
     map(
       (cotisations) =>
         cotisations
           .map((cotisation) => {
             const id = cotisation.unit?.number ?? 0;
-            const cls =
-              cotisation.amount == cotisation.paid
-                ? 'payment-done'
-                : cotisation.paid ?? 0 >= (cotisation.amount ?? 0) / 2
-                ? 'payment-doing'
-                : 'payment-waiting';
+            const cls = paymentClass(cotisation);
 
             return {
               unit: id,
@@ -317,25 +327,28 @@ export class BudgetDetailsComponent implements OnInit {
 
   readonly cotisationsRowActions$ = this._budget$.pipe(
     map((budget) => {
-      const actions: CustomRowAction<APISchemas['ModelsBudgetResult']>[] = [];
+      const actions: CustomRowAction<APISchemas['ModelsCotisationResult']>[] =
+        [];
 
       if (!budget?.draft) {
         actions.push(
-          new CustomRowAction<APISchemas['ModelsBudgetResult']>(
+          new CustomRowAction<APISchemas['ModelsCotisationResult']>(
             'list',
-            'Manage the payments',
-            'Manage payments',
+            'Consulter la cotisation',
+            'Consulter la cotisation',
             (row) =>
               this._notifications
                 .showForm(PaymentListComponent, {
+                  ...COTISATION_DIALOG_OPTIONS,
                   data: {
                     budgetId: this._budget$.value?.id,
                     cotisationId: row.id,
+                    unitNumber: row.unit?.number,
                   },
                 })
                 .afterClosed()
                 .subscribe(() => {
-                  this.refreshCotisations();
+                  this.refreshBudget();
                 })
           )
         );
@@ -354,12 +367,44 @@ export class BudgetDetailsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadBudget();
+    combineLatest([this._route.queryParamMap, this.cotisations$])
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(([p, source]) => {
+        const scope = p.get('coverage') ?? '';
+        this.coverage = Object.hasOwn(this.coverageLabels, scope) ? scope : '';
+        this.cotisationFilter = p.get('cotisation') ?? '';
+        source?.setScope(this.coverage, this.cotisationFilter);
+      });
+    combineLatest([this._route.paramMap, this._refresh$])
+      .pipe(
+        tap(() => {
+          this.budgetLoading = true;
+          this.budgetError = false;
+          this._budget$.next(null);
+        }),
+        switchMap(([params]) =>
+          this._api.getBudget(params.get('id')!).pipe(
+            catchError(() => {
+              this.budgetError = true;
+              return of(null);
+            })
+          )
+        ),
+        takeUntil(this._destroy$)
+      )
+      .subscribe((budget) => {
+        this.budgetLoading = false;
+        this._budget$.next(budget);
+      });
   }
 
-  loadBudget() {
-    this._route.paramMap
-      .pipe(switchMap((params) => this._api.getBudget(params.get('id')!)))
-      .subscribe((budget) => this._budget$.next(budget));
+  @HostListener('window:focus')
+  refreshBudget() {
+    this._refresh$.next();
+  }
+
+  ngOnDestroy(): void {
+    this._destroy$.next();
+    this._destroy$.complete();
   }
 }

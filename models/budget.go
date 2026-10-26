@@ -5,13 +5,8 @@ import (
 
 	"github.com/rclsilver/asl-bissieux/pkg/auth"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
+	"github.com/rclsilver/asl-bissieux/pkg/money"
 )
-
-func init() {
-	db.RegisterMigration(&Budget{})
-	db.RegisterMigration(&Expense{})
-	db.RegisterMigration(&Payment{})
-}
 
 type Budget struct {
 	db.Model
@@ -26,8 +21,25 @@ type Budget struct {
 type BudgetResult struct {
 	Budget
 
-	Amount float64 `json:"amount"`
-	Paid   float64 `json:"paid"`
+	Amount     money.Amount   `json:"amount"`
+	Called     money.Amount   `json:"called"`
+	Adjustment money.Amount   `json:"adjustment"`
+	Refunded   money.Amount   `json:"refunded"`
+	GrossPaid  money.Amount   `json:"gross_paid"`
+	Paid       money.Amount   `json:"paid"`
+	Preview    *BudgetPreview `json:"preview,omitempty" gorm:"-"`
+}
+
+// Informative rates are shown to six decimal places. Actual unit cotisations
+// use exact integer-cent allocation, never a multiplication of these rates.
+type BudgetPreview struct {
+	Amount          money.Amount `json:"amount"`
+	TotalShares     int64        `json:"total_shares"`
+	Months          int          `json:"months"`
+	AnnualPerShare  money.Amount `json:"annual_per_share"`
+	MonthlyPerShare money.Amount `json:"monthly_per_share"`
+	Ready           bool         `json:"ready"`
+	Message         string       `json:"message"`
 }
 
 func NewBudget(label string) *Budget {
@@ -49,11 +61,11 @@ type Expense struct {
 	BudgetID string  `json:"budget_id" gorm:"notNull"`
 	Budget   *Budget `json:"budget,omitempty" gorm:"notNull;references:ID"`
 
-	Label  string  `json:"label" gorm:"notNull"`
-	Amount float64 `json:"amount" gorm:"notNull"`
+	Label  string       `json:"label" gorm:"notNull"`
+	Amount money.Amount `json:"amount" gorm:"notNull"`
 }
 
-func NewExpense(budgetID, label string, amount float64) *Expense {
+func NewExpense(budgetID, label string, amount money.Amount) *Expense {
 	e := &Expense{
 		BudgetID: budgetID,
 		Label:    label,
@@ -79,16 +91,22 @@ type Cotisation struct {
 	UnitID string `json:"unit_id" gorm:"notNull"`
 	Unit   *Unit  `json:"unit,omitempty" gorm:"notNull;references:ID"`
 
-	Amount float64 `json:"amount" gorm:"notNull"`
+	Amount money.Amount `json:"amount" gorm:"notNull"`
 }
 
 type CotisationResult struct {
 	Cotisation
 
-	Paid float64 `json:"paid"`
+	Paid          money.Amount `json:"paid"`
+	InitialAmount money.Amount `json:"initial_amount" gorm:"-"`
+	Adjustment    money.Amount `json:"adjustment"`
+	Refunded      money.Amount `json:"refunded"`
+	GrossPaid     money.Amount `json:"gross_paid" gorm:"-"`
+	Remaining     money.Amount `json:"remaining" gorm:"-"`
+	PaymentState  int          `json:"payment_state" gorm:"-"`
 }
 
-func NewCotisation(budgetID, unitID string, amount float64) *Cotisation {
+func NewCotisation(budgetID, unitID string, amount money.Amount) *Cotisation {
 	c := &Cotisation{
 		BudgetID: budgetID,
 		UnitID:   unitID,
@@ -114,12 +132,12 @@ type Payment struct {
 	UserID string     `json:"user_id" gorm:"notNull"`
 	User   *auth.User `json:"user,omitempty" gorm:"notNull;references:ID"`
 
-	Date    time.Time `json:"date" gorm:"notNull"`
-	Amount  float64   `json:"amount" gorm:"notNull"`
-	Comment string    `json:"comment"`
+	Date    time.Time    `json:"date" gorm:"notNull"`
+	Amount  money.Amount `json:"amount" gorm:"notNull"`
+	Comment string       `json:"comment"`
 }
 
-func NewPayment(cotisationID, userID string, date time.Time, amount float64, comment string) *Payment {
+func NewPayment(cotisationID, userID string, date time.Time, amount money.Amount, comment string) *Payment {
 	p := &Payment{
 		CotisationID: cotisationID,
 		UserID:       userID,

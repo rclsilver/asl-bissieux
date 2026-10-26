@@ -4,10 +4,6 @@ import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
-func init() {
-	db.RegisterMigration(&Unit{})
-}
-
 type Unit struct {
 	db.Model
 

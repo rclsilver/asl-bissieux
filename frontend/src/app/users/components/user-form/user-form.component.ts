@@ -1,93 +1,133 @@
-import { Component, Inject, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { BehaviorSubject, finalize } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
-import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
-import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import {
+  accessLabels,
+  accessState,
+  permissionGroup,
+  permissionLabel,
+  providerLabel,
+} from '../../user-labels';
 
 @Component({
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-export class UserFormComponent implements OnInit {
-  private readonly _notifications = inject(NotificationsService);
-  private readonly _builder = inject(FormBuilder);
-  private readonly _api = inject(ApiService);
-
-  private _saving$ = new BehaviorSubject(false);
-  readonly saving$ = this._saving$.asObservable();
-
-  private _actions$ = new BehaviorSubject<string[]>([]);
-  readonly actions$ = this._actions$.asObservable();
-
+export class UserFormComponent implements OnInit, OnDestroy {
+  private readonly api = inject(ApiService);
+  private readonly builder = inject(FormBuilder);
+  private readonly destroy$ = new Subject<void>();
   readonly form: FormGroup;
-
+  readonly permissionLabel = permissionLabel;
+  readonly providerLabel = providerLabel;
+  readonly accessLabels = accessLabels;
+  readonly accessState = accessState;
+  groups: { label: string; actions: string[] }[] = [];
+  loadingActions = true;
+  actionsError = false;
+  saving = false;
+  error = '';
   constructor(
     @Inject(MAT_DIALOG_DATA)
-    public readonly data: {
-      user?: APISchemas['AuthUser'];
-    },
-    private readonly _dialogRef: MatDialogRef<UserFormComponent>
+    public readonly data: { user?: APISchemas['AuthUser'] },
+    private readonly dialog: MatDialogRef<UserFormComponent>
   ) {
-    this.form = this._builder.group({
-      username: [this.data.user?.username, [Validators.required]],
-      enabled: [this.data.user?.enabled],
-      admin: [this.data.user?.admin],
-      actions: [this.data.user?.actions],
+    this.form = this.builder.group({
+      username: [
+        data.user?.username ?? '',
+        [Validators.required, Validators.maxLength(320)],
+      ],
+      admin: [!!data.user?.admin],
+      actions: [data.user?.actions ?? []],
     });
-
-    if (this.data.user) {
-      this.form.markAllAsTouched();
-    }
   }
-
   ngOnInit() {
     this.loadActions();
   }
-
   loadActions() {
-    this._api
+    if (this.saving) return;
+    this.loadingActions = true;
+    this.actionsError = false;
+    this.api
       .listActions()
-      .subscribe((actions) => this._actions$.next(actions));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (actions) => {
+          const all = [
+            ...new Set([...actions, ...(this.data.user?.actions ?? [])]),
+          ];
+          const groups = new Map<string, string[]>();
+          for (const action of all) {
+            const group = permissionGroup(action);
+            groups.set(group, [...(groups.get(group) ?? []), action]);
+          }
+          this.groups = [...groups].map(([label, actions]) => ({
+            label,
+            actions: actions.sort((a, b) =>
+              permissionLabel(a).localeCompare(permissionLabel(b), 'fr')
+            ),
+          }));
+          this.loadingActions = false;
+        },
+        error: () => {
+          this.loadingActions = false;
+          this.actionsError = true;
+        },
+      });
   }
-
   cancel() {
-    this._dialogRef.close(false);
+    if (!this.saving) this.dialog.close(false);
   }
-
   submit() {
-    this._saving$.next(true);
-
-    const payload: Partial<APISchemas['AuthUser']> = {
-      username: this.form.value.username,
-      enabled: this.form.value.enabled,
-      admin: this.form.value.admin,
-      actions: this.form.value.actions,
+    if (this.saving || this.loadingActions || this.actionsError) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const v = this.form.getRawValue();
+    const body: APISchemas['UpdateUserInput'] = {
+      username: v.username.trim(),
+      enabled: this.data.user?.enabled ?? false,
+      admin: v.admin,
+      actions: v.actions,
+      expected_updated_at: this.data.user?.updated_at,
     };
-
-    const result$ = !this.data.user?.id
-      ? this._api.createUser(payload)
-      : this._api.updateUser(this.data.user.id, payload);
-
-    result$.pipe(finalize(() => this._saving$.next(false))).subscribe({
-      next: (user) => {
-        this._notifications
-          .showDialog({
-            title: 'Success',
-            message: this.data.user?.id
-              ? `User ${user?.username} has been updated`
-              : `User ${user?.username} has been created`,
-            level: NotificationDialogLevel.Info,
-          })
-          .afterClosed()
-          .subscribe(() => this._dialogRef.close(true));
+    if (!body.username) {
+      this.form.controls['username'].setErrors({ required: true });
+      return;
+    }
+    this.saving = true;
+    this.error = '';
+    this.form.disable();
+    const request = this.data.user?.id
+      ? this.api.updateUser(this.data.user.id, body)
+      : this.api.createUser(body);
+    request.pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => this.dialog.close(true),
+      error: (e) => {
+        this.saving = false;
+        this.form.enable();
+        this.error =
+          e.data?.message ??
+          'Impossible d’enregistrer les droits. La saisie est conservée.';
       },
-      error: this._api.handleError(
-        this.data.user?.id ? 'Unable to update user' : 'Unable to create user'
-      ),
     });
+  }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

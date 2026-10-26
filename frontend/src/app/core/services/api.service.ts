@@ -1,5 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { APIPaths, APIRequests, APIResponse, APISchemas } from '../api/openapi';
+import {
+  APIPaths,
+  APIRequests,
+  APIResponse,
+  APISchemas,
+  APIRequest,
+} from '../api/openapi';
 import { catchError, filter, map, tap, throwError } from 'rxjs';
 import {
   HttpErrorResponse,
@@ -18,12 +24,86 @@ export class ApiService {
   private readonly _notifications = inject(NotificationsService);
   private readonly _http = inject(HttpClient);
 
+  getAuthConfig() {
+    return this.request('/api/auth/config', { method: 'get' });
+  }
+
+  logoutSession() {
+    return this.request('/api/auth/logout', { method: 'post' });
+  }
+
   getCurrentUser() {
     return this.request('/api/auth/me', {
       method: 'get',
     });
   }
 
+  getTour() {
+    return this.request('/api/auth/tour', { method: 'get' });
+  }
+  viewTourStep(body: APISchemas['ViewTourStepInput']) {
+    return this.request('/api/auth/tour/progress', { method: 'post', body });
+  }
+
+  listFinancialEntries(budgetId: string, cotisationId: string) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries',
+      {
+        method: 'get',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+      }
+    ).pipe(map((r) => r ?? []));
+  }
+  previewFinancialEntry(
+    budgetId: string,
+    cotisationId: string,
+    body: APISchemas['PreviewFinancialEntryInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries/preview',
+      {
+        method: 'post',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+        body,
+      }
+    );
+  }
+  createFinancialEntry(
+    budgetId: string,
+    cotisationId: string,
+    body: APISchemas['CreateFinancialEntryInput']
+  ) {
+    return this.request(
+      '/api/budget/{budget_id}/cotisations/{cotisation_id}/entries',
+      {
+        method: 'post',
+        urlParams: { budget_id: budgetId, cotisation_id: cotisationId },
+        body,
+      }
+    );
+  }
+  getBudgetDashboard(budgetId: string, year: number) {
+    return this.request('/api/budget/{budget_id}/dashboard', {
+      method: 'get',
+      urlParams: { budget_id: budgetId },
+      query: { year },
+    });
+  }
+  getDirectoryQuality() {
+    return this.request('/api/dashboard/directory', { method: 'get' });
+  }
+  previewMailingLists() {
+    return this.request('/api/mailing-lists/preview', { method: 'get' });
+  }
+  syncMailingLists(token: string) {
+    return this.request('/api/mailing-lists/sync', {
+      method: 'post',
+      body: { token },
+    });
+  }
+  getEmailDashboard() {
+    return this.request('/api/dashboard/emails', { method: 'get' });
+  }
   listBudgets() {
     return this.request('/api/budget', {
       method: 'get',
@@ -337,9 +417,14 @@ export class ApiService {
     }).pipe(map((r) => r ?? []));
   }
 
-  listUsers() {
+  getPendingAccessRequests() {
+    return this.request('/api/auth/access-requests/summary', { method: 'get' });
+  }
+
+  listUsers(query: APIRequest<'/api/auth/users', 'get'>['query'] = {}) {
     return this.request('/api/auth/users', {
       method: 'get',
+      query,
     }).pipe(map((r) => r ?? []));
   }
 
@@ -504,10 +589,13 @@ export class ApiService {
     });
   }
 
-  listEmailCampaigns() {
+  listEmailCampaigns(
+    query: APIRequest<'/api/email/campaigns', 'get'>['query'] = {}
+  ) {
     return this.request('/api/email/campaigns', {
       method: 'get',
-    }).pipe(map((r) => r ?? []));
+      query,
+    });
   }
 
   createEmailCampaign(payload: APISchemas['CreateEmailCampaignInput']) {
@@ -535,13 +623,27 @@ export class ApiService {
     });
   }
 
-  listEmails(campaignId: string) {
+  listEmails(
+    campaignId: string,
+    query: APIRequest<
+      '/api/email/campaigns/{campaign_id}/emails',
+      'get'
+    >['query'] = {}
+  ) {
     return this.request('/api/email/campaigns/{campaign_id}/emails', {
       method: 'get',
       urlParams: {
         campaign_id: campaignId,
       },
-    }).pipe(map((r) => r ?? []));
+      query,
+    });
+  }
+
+  getEmailStatus(emailId: string) {
+    return this.request('/api/email/{email_id}/status', {
+      method: 'get',
+      urlParams: { email_id: emailId },
+    });
   }
 
   getEmail(emailId: string) {
@@ -585,7 +687,12 @@ export class ApiService {
     return (error: APIError) =>
       this._notifications.showDialog({
         title: 'Error',
-        message: `${message}: HTTP ${error.status} ${error.statusText}`,
+        message:
+          error.status >= 400 &&
+          error.status < 500 &&
+          typeof error.data?.message === 'string'
+            ? `${message}: ${error.data.message}`
+            : `${message}: HTTP ${error.status} ${error.statusText}`,
         level: NotificationDialogLevel.Error,
       });
   }
@@ -607,7 +714,8 @@ export class ApiService {
 
     if ('query' in options && options.query) {
       for (const [name, value] of Object.entries(options.query)) {
-        params.set(
+        if (value === undefined || value === null) continue;
+        params = params.set(
           name,
           typeof value === 'object'
             ? JSON.stringify(value)
@@ -633,11 +741,7 @@ export class ApiService {
 
     return new HttpRequest<Result>(
       (method ?? 'get').toUpperCase() as
-        | 'DELETE'
-        | 'GET'
-        | 'HEAD'
-        | 'JSONP'
-        | 'OPTIONS',
+        'DELETE' | 'GET' | 'HEAD' | 'JSONP' | 'OPTIONS',
       uri,
       body,
       init
@@ -647,7 +751,7 @@ export class ApiService {
   private request<
     Path extends APIPaths,
     Options extends APIRequests<Path>,
-    Result extends APIResponse<Path, Options['method']>
+    Result extends APIResponse<Path, Options['method']>,
   >(path: Path, options?: Options) {
     options = (options ?? {}) as Options;
 

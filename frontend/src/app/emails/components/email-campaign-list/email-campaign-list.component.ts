@@ -1,86 +1,88 @@
-import { Component, ViewChild, inject } from '@angular/core';
-import { combineLatest, map } from 'rxjs';
-import { APISchemas } from 'src/app/core/api/openapi';
-import { ApiService } from 'src/app/core/services/api.service';
-import { AuthService } from 'src/app/core/services/auth.service';
+import {
+  Component,
+  ViewChild,
+  inject,
+  ChangeDetectionStrategy,
+} from "@angular/core";
+import { APISchemas } from "src/app/core/api/openapi";
+import { ApiService } from "src/app/core/services/api.service";
+import { AuthService } from "src/app/core/services/auth.service";
 import {
   CrudTableComponent,
   CustomRowAction,
-} from 'src/app/shared/components/crud-table/crud-table.component';
-import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
-import { Column, DateRender } from 'src/app/shared/models/column.model';
-import { NotificationsService } from 'src/app/shared/services/notifications.service';
-import { EmailCampaignDataSource } from '../../datasources/campaign.datasource';
+} from "src/app/shared/components/crud-table/crud-table.component";
+import { NotificationDialogLevel } from "src/app/shared/components/notification-dialog/notification-dialog.component";
+import { Column, DateRender } from "src/app/shared/models/column.model";
+import { NotificationsService } from "src/app/shared/services/notifications.service";
+import { EmailCampaignDataSource } from "../../datasources/campaign.datasource";
 
 @Component({
-  selector: 'app-campaign-email-list',
-  templateUrl: './email-campaign-list.component.html',
-  styleUrls: ['./email-campaign-list.component.scss'],
+  selector: "app-campaign-email-list",
+  templateUrl: "./email-campaign-list.component.html",
+  styleUrls: ["./email-campaign-list.component.scss"],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailCampaignListComponent {
+  ngOnInit() {
+    this.datasource.load();
+  }
+
   private readonly _api = inject(ApiService);
   private readonly _auth = inject(AuthService);
   private readonly _notifications = inject(NotificationsService);
 
   readonly columns = [
-    new Column('title', {
-      label: 'Title',
+    new Column("title", {
+      label: "Titre",
       canSort: true,
       canFilter: true,
       routeTo: (v) => {
         return `/emails/campaigns/${v.id}`;
       },
     }),
-    new Column('created_at', {
-      label: 'Date',
+    new Column("created_at", {
+      label: "Date",
       canSort: true,
       render: DateRender(),
     }),
-    new Column<APISchemas['ModelsEmail'][] | undefined>('emails', {
-      label: 'Emails',
-      render: (emails) => {
-        var byState = (emails ?? [])
-          .map((email) => ({
-            [email.state!]: 1,
-          }))
-          .reduce((acc, val) => {
-            Object.keys(val).forEach((key) => {
-              if (acc[key]) {
-                acc[key] += val[key];
-              } else {
-                acc[key] = 1;
-              }
-            });
-
-            return acc;
-          }, {});
-
-        return Object.keys(byState)
-          .sort((a, b) => (a < b ? -1 : 1))
-          .map((key) => `${byState[key]} ${key}`)
-          .join(' / ');
+    new Column<APISchemas["ModelsEmailCounts"] | undefined>("counts", {
+      label: "E-mails",
+      render: (counts) => {
+        if (!counts?.total) return "Aucun e-mail";
+        return [
+          [counts.successful, counts.successful === 1 ? "envoyé" : "envoyés"],
+          [counts.waiting, "en attente"],
+          [counts.sending, "en cours"],
+          [counts.error, "en erreur"],
+          [counts.unknown, "à vérifier"],
+        ]
+          .filter(([count]) => Number(count) > 0)
+          .map(([count, label]) => `${count} ${label}`)
+          .join(" / ");
       },
     }),
   ];
   readonly datasource = new EmailCampaignDataSource();
 
   @ViewChild(CrudTableComponent, { static: true })
-  table!: CrudTableComponent<APISchemas['ModelsEmail']>;
+  table!: CrudTableComponent<APISchemas["ModelsEmailCampaignSummary"]>;
 
   refresh() {
     this.datasource.load();
   }
 
-  canDelete(_: APISchemas['ModelsEmail']) {
-    return this._auth.allowed$('email.DeleteEmailCampaign');
+  canDelete(_: APISchemas["ModelsEmailCampaignSummary"]) {
+    return this._auth.allowed$("email.DeleteEmailCampaign");
   }
 
-  delete(campaign: APISchemas['ModelsEmailCampaign']) {
+  delete(campaign: APISchemas["ModelsEmailCampaignSummary"]) {
     this._notifications
       .showConfirm({
-        title: 'Delete a campaign',
-        message: `Are you sure to delete the campaign ${campaign.title}?`,
-        class: 'warn',
+        title: "Supprimer une campagne",
+        confirmLabel: "Supprimer",
+        message: `Supprimer la campagne « ${campaign.title} » ?`,
+        class: "warn",
       })
       .afterClosed()
       .subscribe((confirm) => {
@@ -89,12 +91,12 @@ export class EmailCampaignListComponent {
             next: () => {
               this.refresh();
               this._notifications.showDialog({
-                title: 'Info',
-                message: `The campaign ${campaign.title} has been deleted`,
+                title: "Info",
+                message: `La campagne « ${campaign.title} » a été supprimée.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the campaign'),
+            error: this._api.handleError("Impossible de supprimer la campagne"),
           });
         }
       });

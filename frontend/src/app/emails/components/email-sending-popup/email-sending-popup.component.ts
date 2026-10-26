@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, Inject, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Inject,
+  OnDestroy,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -6,8 +13,10 @@ import {
   BehaviorSubject,
   Subject,
   combineLatest,
-  concatAll,
-  delay,
+  concatMap,
+  catchError,
+  finalize,
+  tap,
   map,
   of,
   takeUntil,
@@ -18,8 +27,10 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-email-sending-popup',
   templateUrl: './email-sending-popup.component.html',
   styleUrls: ['./email-sending-popup.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-export class EmailSendingPopupComponent implements AfterViewInit {
+export class EmailSendingPopupComponent implements AfterViewInit, OnDestroy {
   private readonly _api = inject(ApiService);
   private readonly _notifications = inject(NotificationsService);
 
@@ -60,32 +71,33 @@ export class EmailSendingPopupComponent implements AfterViewInit {
   ngAfterViewInit() {
     of(...this.data.emails)
       .pipe(
-        map((email) => of(email).pipe(delay(500))),
-        concatAll(),
+        concatMap((email) =>
+          this._api.sendEmail(email.id!, { wait: true }).pipe(
+            tap(() => this._sent$.next(this._sent$.value + 1)),
+            catchError(() => {
+              this._errors$.next(this._errors$.value + 1);
+              return of(null);
+            }),
+            finalize(() => this._current$.next(this._current$.value + 1))
+          )
+        ),
         takeUntil(this._cancel$)
       )
-      .subscribe((email) => {
-        this._current$.next(this._current$.value + 1);
+      .subscribe();
+  }
 
-        this._api
-          .sendEmail(email.id!, { wait: true })
-          .pipe(takeUntil(this._cancel$))
-          .subscribe({
-            next: () => {
-              this._sent$.next(this._sent$.value + 1);
-            },
-            error: () => {
-              this._errors$.next(this._errors$.value + 1);
-            },
-          });
-      });
+  ngOnDestroy() {
+    this._cancel$.next();
+    this._cancel$.complete();
   }
 
   abort() {
     this._notifications
       .showConfirm({
-        title: 'Abort',
-        message: 'Are you sure you want to stop the email sending?',
+        title: 'Arrêter les envois restants',
+        confirmLabel: 'Arrêter les envois restants',
+        message:
+          'Arrêter les envois restants ? Les messages déjà envoyés restent envoyés et la requête en cours peut encore aboutir. Vérifie les états avant toute relance.',
         class: 'warn',
       })
       .afterClosed()

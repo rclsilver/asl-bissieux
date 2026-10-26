@@ -1,6 +1,8 @@
-<h2>Budgets</h2>
+<h1>Budgets</h1>
 
 <app-crud-table
+  tableLabel="Budgets"
+  createLabel="Ajouter un budget"
   [columns]="columns"
   [dataSource]="datasource"
   [canCreate]="canCreate$"
@@ -12,7 +14,11 @@
 >
   <ng-container matColumnDef="draft">
     <td mat-cell *matCellDef="let budget">
-      <mat-checkbox [checked]="budget.columns.draft.value" disabled></mat-checkbox>
+      <mat-checkbox
+        aria-label="Budget en brouillon"
+        [checked]="budget.columns.draft.value"
+        disabled
+      ></mat-checkbox>
     </td>
   </ng-container>
 </app-crud-table>

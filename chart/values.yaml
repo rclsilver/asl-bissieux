@@ -5,9 +5,9 @@
 replicaCount: 1
 
 image:
-  repository: rclsilver/asl-bissieux
+  repository: ghcr.io/rclsilver/asl-bissieux
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # Defaults to the packaged chart's appVersion. Required for a source checkout.
   tag: ""
 
 imagePullSecrets: []
@@ -80,8 +80,16 @@ tolerations: []
 affinity: {}
 
 auth:
+  provider: 'google'
   client_id: ''
   client_secret: ''
+  oidc:
+    issuer: ''
+    publicURL: ''
+    label: 'Se connecter'
+    sessionDuration: '8h'
+    existingSecret: ''
+    secretKey: 'client-secret'
 
 postgresql:
   hostname: ''
@@ -89,6 +97,10 @@ postgresql:
   user: ''
   timezone: 'Europe/Paris'
   existingSecret: asl-bissieux-postgresql
+
+# Existing Secret with OVH_* and APP_ML_* keys, injected as environment variables.
+mailingLists:
+  existingSecret: ''
 
 smtp:
   host: 'localhost'

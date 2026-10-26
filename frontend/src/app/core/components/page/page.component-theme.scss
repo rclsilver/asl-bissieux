@@ -1,11 +1,5 @@
-@use "sass:map";
-@use "@angular/material" as mat;
-
 @mixin page-component-theme($theme) {
-  $color-config: mat.get-color-config($theme);
-  $primary: map.get($color-config, "primary");
-
-  #left-menu > a.active {
-    background-color: mat.get-color-from-palette($primary, 0.4);
-  }
+  #top-menu { background: var(--asl-header); color: var(--asl-header-ink); }
+  #left-menu > a.active { background: var(--asl-tint); font-weight: 600; }
+  .skip-link { background: var(--asl-surface); color: var(--asl-ink); }
 }

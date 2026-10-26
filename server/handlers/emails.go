@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"bytes"
+	stdErrors "errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclsilver/asl-bissieux/controllers"
 	"github.com/rclsilver/asl-bissieux/models"
+	"github.com/rclsilver/asl-bissieux/pkg/attachments"
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
@@ -166,10 +167,29 @@ type addAttachmentIn struct {
 }
 
 func AddAttachmentMiddleware(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, attachments.MaxRequestBytes())
+	defer func() {
+		if c.Request.MultipartForm != nil {
+			_ = c.Request.MultipartForm.RemoveAll()
+		}
+	}()
+	if err := c.Request.ParseMultipartForm(attachments.Current().MaxFileBytes); err != nil {
+		var tooLarge *http.MaxBytesError
+		if stdErrors.As(err, &tooLarge) {
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": "Téléversement trop volumineux."})
+		} else {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Formulaire de pièce jointe invalide."})
+		}
+		return
+	}
 	file, err := c.FormFile("content")
 	if err != nil {
 		logrus.WithContext(c).WithError(err).Error("unable to get file form field")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if err := attachments.CheckFileSize(file.Size); err != nil {
+		c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -210,10 +230,15 @@ func AddAttachmentMiddleware(c *gin.Context) {
 		return
 	}
 
-	var content bytes.Buffer
-	if _, err := io.Copy(&content, f); err != nil {
+	defer f.Close()
+	content, err := io.ReadAll(io.LimitReader(f, attachments.Current().MaxFileBytes+1))
+	if err != nil {
 		logrus.WithContext(c).WithError(err).Error("unable to read the file")
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if err := attachments.CheckFileSize(int64(len(content))); err != nil {
+		c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -224,7 +249,7 @@ func AddAttachmentMiddleware(c *gin.Context) {
 	c.Set("name", name[0])
 	c.Set("inline", inline)
 	c.Set("content_type", contentType[0])
-	c.Set("content", content.Bytes())
+	c.Set("content", content)
 }
 
 func AddAttachment(c *gin.Context, in *addAttachmentIn) (*models.Attachment, error) {
@@ -281,12 +306,19 @@ func RemoveAttachment(c *gin.Context, in *removeAttachmentIn) error {
 	return nil
 }
 
-type listEmailCampaignsIn struct{}
+type listEmailCampaignsIn struct {
+	State     string `query:"state"`
+	Page      int    `query:"page"`
+	PageSize  int    `query:"page_size"`
+	Query     string `query:"query"`
+	Sort      string `query:"sort"`
+	Direction string `query:"direction"`
+}
 
-func ListEmailCampaigns(c *gin.Context, in *listEmailCampaignsIn) ([]*models.EmailCampaign, error) {
+func ListEmailCampaigns(c *gin.Context, in *listEmailCampaignsIn) (*models.EmailCampaignPage, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.ListEmailCampaigns(db)
+	result, err := controllers.ListEmailCampaignPage(db, controllers.CampaignPageOptions{Page: in.Page, PageSize: in.PageSize, Query: in.Query, Sort: in.Sort, Direction: in.Direction}, in.State)
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get campaigns")
 		return nil, err
@@ -359,13 +391,19 @@ func DeleteEmailCampaign(c *gin.Context, in *deleteEmailCampaignIn) error {
 }
 
 type listEmailsIn struct {
-	CampaignID string `path:"campaign_id"`
+	CampaignID string            `path:"campaign_id"`
+	Page       int               `query:"page"`
+	PageSize   int               `query:"page_size"`
+	Query      string            `query:"query"`
+	Sort       string            `query:"sort"`
+	Direction  string            `query:"direction"`
+	State      models.EmailState `query:"state"`
 }
 
-func ListEmails(c *gin.Context, in *listEmailsIn) ([]*models.Email, error) {
+func ListEmails(c *gin.Context, in *listEmailsIn) (*models.EmailPage, error) {
 	db := db.Connection(c)
 
-	result, err := controllers.ListEmails(db, in.CampaignID)
+	result, err := controllers.ListEmailPage(db, in.CampaignID, controllers.EmailPageOptions{PageOptions: controllers.PageOptions{Page: in.Page, PageSize: in.PageSize, Query: in.Query, Sort: in.Sort, Direction: in.Direction}, State: in.State})
 	if err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get emails")
 		return nil, err
@@ -427,7 +465,7 @@ type sendEmailIn struct {
 func SendEmail(c *gin.Context, in *sendEmailIn) error {
 	db := db.Connection(c)
 
-	if err := controllers.SendEmail(c, db, in.EmailID, in.Wait); err != nil {
+	if err := controllers.SendEmail(c.Request.Context(), db, in.EmailID, in.Wait); err != nil {
 		if !errors.IsNotFound(err) {
 			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to send email")
 		}
@@ -446,19 +484,11 @@ type setErrorEmailIn struct {
 }
 
 // SetEmailError set mail state to ERROR
-func SetEmailError(c *gin.Context, in *trackEmailIn) error {
+func SetEmailError(c *gin.Context, in *setErrorEmailIn) error {
 	db := db.Connection(c)
 
-	email, err := controllers.GetEmail(db, in.EmailID, true)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
-		}
-		return err
-	} else if email.State != models.Waiting {
-		if err := controllers.MarkAsError(c, db, email.ID); err != nil {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
-		}
+	if err := controllers.MarkAsError(c.Request.Context(), db, in.EmailID); err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to reset email")
 		return err
 	}
 
@@ -473,19 +503,21 @@ type trackEmailIn struct {
 func TrackEmail(c *gin.Context, in *trackEmailIn) error {
 	db := db.Connection(c)
 
-	email, err := controllers.GetEmail(db, in.EmailID, true)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
-		}
-	} else if email.State == models.Sent {
-		if err := controllers.MarkAsRead(c, db, email.ID); err != nil {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
-		}
+	if err := controllers.MarkAsRead(c.Request.Context(), db, in.EmailID); err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to track email")
 	}
 
-	c.Header("Content-Type", "image/png")
-	c.Writer.Write([]byte{})
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "image/png", trackingPixel)
 
 	return nil
+}
+
+// GetEmailStatus exposes an existing delivery error without rendering a template.
+func GetEmailStatus(c *gin.Context, in *getEmailIn) (*models.EmailStatus, error) {
+	result, err := controllers.GetEmailStatus(db.Connection(c), in.EmailID)
+	if err != nil && !errors.IsNotFound(err) {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email status")
+	}
+	return result, err
 }

@@ -1,6 +1,7 @@
 package version
 
 var (
-	Version string
-	Commit  string
+	// Overridden at build time by the Makefile; go run keeps explicit development values.
+	Version = "dev"
+	Commit  = "unknown"
 )

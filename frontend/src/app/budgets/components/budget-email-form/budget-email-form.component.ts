@@ -1,203 +1,356 @@
-import { Component, Inject, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  combineLatest,
-  map,
-  startWith,
-  takeUntil,
-} from 'rxjs';
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
-import { ApiService } from 'src/app/core/services/api.service';
-import { EmailTemplatePreviewComponent } from 'src/app/emails/components/email-template-preview/email-template-preview.component';
+import { ApiService, APIError } from 'src/app/core/services/api.service';
+import { AuthService } from 'src/app/core/services/auth.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { PaymentState, paymentState } from '../../payment-state';
+import { validateTemplateValues } from 'src/app/shared/components/template-data-editor/template-data-validation';
+
+type Recipient = {
+  member: APISchemas['ModelsMember'];
+  name: string;
+  lots: number[];
+};
 
 @Component({
   selector: 'app-budget-email-form',
   templateUrl: './budget-email-form.component.html',
   styleUrls: ['./budget-email-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class BudgetEmailFormComponent implements OnInit, OnDestroy {
-  private _destroyed$ = new Subject<void>();
-
-  private readonly _notifications = inject(NotificationsService);
-  private readonly _builder = inject(FormBuilder);
-  private readonly _api = inject(ApiService);
-
-  readonly form: FormGroup;
-
-  private _templates$ = new BehaviorSubject<
-    APISchemas['ModelsEmailTemplate'][]
-  >([]);
-  readonly templates$ = this._templates$.asObservable();
-
-  private _members$ = new BehaviorSubject<APISchemas['ModelsMember'][]>([]);
-  readonly members$: Observable<APISchemas['ModelsMember'][]>;
+  private readonly destroyed$ = new Subject<void>();
+  private readonly notifications = inject(NotificationsService);
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  private cotisations: APISchemas['ModelsCotisationResult'][] = [];
+  private revision = 0;
+  private previewRevision = -1;
+  templates: APISchemas['ModelsEmailTemplate'][] = [];
+  recipients: Recipient[] = [];
+  missingEmailCount = 0;
+  ready = false;
+  loading = false;
+  loadError = '';
+  error = '';
+  previewing = false;
+  creating = false;
+  allowedToCreate = false;
+  previewResult?: APISchemas['ModelsBuiltEmail'];
+  previewRecipient?: Recipient;
+  readonly form = new FormGroup({
+    template: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        (control) =>
+          this.templates.some((template) => template.id === control.value)
+            ? null
+            : { selection: true },
+      ],
+    }),
+    data: new FormControl('{}', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        (control) =>
+          validateTemplateValues(
+            control.value,
+            this.selectedTemplate?.custom_fields?.fields
+          ),
+      ],
+    }),
+    to_doing: new FormControl(false, { nonNullable: true }),
+    to_paid: new FormControl(false, { nonNullable: true }),
+    previewMember: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        (control) =>
+          this.recipients.some(
+            (recipient) => recipient.member.id === control.value
+          )
+            ? null
+            : { selection: true },
+      ],
+    }),
+  });
 
   constructor(
     @Inject(MAT_DIALOG_DATA)
-    public readonly data: {
-      budget: APISchemas['ModelsBudget'];
-    },
-    private readonly _dialogRef: MatDialogRef<BudgetEmailFormComponent>
+    public readonly data: { budget: APISchemas['ModelsBudget'] },
+    private readonly dialog: MatDialogRef<BudgetEmailFormComponent>
   ) {
-    this.form = this._builder.group({
-      template: ['', [Validators.required]],
-      data: ['{}', [Validators.required]],
-      to_paid: [false],
-      to_doing: [false],
-      previewMode: [true],
-      previewMember: [null],
+    this.form.valueChanges.pipe(takeUntil(this.destroyed$)).subscribe(() => {
+      this.revision++;
+      this.updateRecipients();
+      this.form.controls.data.updateValueAndValidity({ emitEvent: false });
     });
-
-    this.members$ = combineLatest([
-      this._members$,
-      this.form.valueChanges.pipe(
-        map((value) => (value.previewMember ?? '') as string),
-        startWith('')
-      ),
-    ]).pipe(
-      map(([members, filter]) => {
-        if (filter === '') {
-          return members;
-        }
-
-        const f = filter.toLowerCase();
-
-        return members.filter(
-          (m) =>
-            m.first_name?.toLowerCase().includes(f) ||
-            m.last_name?.toLowerCase().includes(f) ||
-            m.id?.toLowerCase().includes(f)
-        );
-      })
-    );
-
-    this.form.valueChanges
-      .pipe(takeUntil(this._destroyed$))
-      .subscribe((values) => {
-        if (values.previewMode) {
-          this.form.controls['previewMember'].addValidators(
-            Validators.required
-          );
-        } else {
-          this.form.controls['previewMember'].clearValidators();
-        }
-      });
+    this.auth
+      .allowed$('budget.SendEmail')
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((allowed) => (this.allowedToCreate = allowed));
   }
 
   ngOnInit() {
-    this.loadTemplates();
-    this.loadMembers();
+    this.load();
   }
-
-  loadTemplates() {
-    this._api
-      .listEmailTemplates()
-      .subscribe((result) => this._templates$.next(result));
-  }
-
-  loadMembers() {
-    this._api.listMembers().subscribe((result) => this._members$.next(result));
-  }
-
   ngOnDestroy() {
-    this._destroyed$.next();
-    this._destroyed$.complete();
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
-  templateDisplay(templateId?: string) {
-    if (!templateId) {
-      return '';
+  load() {
+    if (this.loading || this.creating) return;
+    if (this.ready && this.form.controls.data.invalid) {
+      this.error =
+        'Corrige les valeurs supplémentaires avant d’actualiser les destinataires.';
+      return;
     }
-
-    const template = this._templates$.value.filter((m) => m.id === templateId);
-
-    if (!template.length) {
-      return '';
+    if (!this.data.budget.id) {
+      this.loadError =
+        'Le budget n’est plus disponible. Ferme cette fenêtre puis réessaie.';
+      return;
     }
-
-    return template[0].label ?? templateId;
+    this.loading = true;
+    this.ready = false;
+    this.loadError = '';
+    this.error = '';
+    this.revision++;
+    forkJoin({
+      templates: this.api.listEmailTemplates(),
+      cotisations: this.api.listCotisations(this.data.budget.id),
+    })
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe({
+        next: ({ templates, cotisations }) => {
+          this.templates = templates;
+          this.cotisations = cotisations;
+          this.updateRecipients();
+          this.form.controls.template.updateValueAndValidity({
+            emitEvent: false,
+          });
+          this.loading = false;
+          this.ready = true;
+        },
+        error: () => {
+          this.loading = false;
+          this.loadError =
+            'Impossible de charger les modèles et les destinataires. Réessaie sans fermer cette fenêtre.';
+        },
+      });
   }
 
-  previewMemberDisplay(memberId?: string) {
-    if (!memberId) {
-      return '';
-    }
-
-    const member = this._members$.value.filter((m) => m.id === memberId);
-
-    if (!member.length) {
-      return '';
-    }
-
-    return `${member[0].first_name} ${member[0].last_name}`;
+  get selectedRecipient() {
+    return this.recipients.find(
+      (recipient) =>
+        recipient.member.id === this.form.controls.previewMember.value
+    );
+  }
+  get selectedTemplate(): APISchemas['ModelsEmailTemplate'] | undefined {
+    return this.templates.find(
+      (template) => template.id === this.form.controls.template.value
+    );
+  }
+  get canPreview() {
+    return (
+      this.ready &&
+      this.form.valid &&
+      this.recipients.length > 0 &&
+      !this.previewing &&
+      !this.creating
+    );
+  }
+  get previewCurrent() {
+    return !!this.previewResult && this.previewRevision === this.revision;
+  }
+  get canPrepare() {
+    return this.allowedToCreate && this.canPreview && this.previewCurrent;
   }
 
-  cancel() {
-    this._dialogRef.close(false);
+  private updateRecipients() {
+    const members = new Map<string, Recipient>();
+    for (const cotisation of this.cotisations) {
+      const state = paymentState(cotisation);
+      if (state === PaymentState.Doing && !this.form.controls.to_doing.value)
+        continue;
+      if (
+        (state === PaymentState.Done || state === PaymentState.Overpaid) &&
+        !this.form.controls.to_paid.value
+      )
+        continue;
+      for (const member of cotisation.unit?.members ?? []) {
+        if (!member.id) continue;
+        let recipient = members.get(member.id);
+        if (!recipient) {
+          recipient = {
+            member,
+            name:
+              [member.first_name, member.last_name].filter(Boolean).join(' ') ||
+              member.email ||
+              'Membre',
+            lots: [],
+          };
+          members.set(member.id, recipient);
+        }
+        const number = cotisation.unit?.number;
+        if (number !== undefined && !recipient.lots.includes(number))
+          recipient.lots.push(number);
+      }
+    }
+    this.missingEmailCount = [...members.values()].filter(
+      (recipient) => !recipient.member.email
+    ).length;
+    this.recipients = [...members.values()]
+      .filter((recipient) => !!recipient.member.email)
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    this.recipients.forEach((recipient) =>
+      recipient.lots.sort((a, b) => a - b)
+    );
+    if (!this.selectedRecipient)
+      this.form.controls.previewMember.setValue(
+        this.recipients[0]?.member.id ?? '',
+        { emitEvent: false }
+      );
+    this.form.controls.previewMember.updateValueAndValidity({
+      emitEvent: false,
+    });
+  }
+
+  private payload() {
+    const values = this.form.getRawValue();
+    const data = JSON.parse(values.data);
+    if (!data || typeof data !== 'object' || Array.isArray(data))
+      throw new Error('invalid data');
+    return {
+      template_id: values.template,
+      data,
+      send_to_doing: values.to_doing,
+      send_to_paid: values.to_paid,
+    };
   }
 
   preview() {
-    try {
-      const data = JSON.parse(this.form.value.data);
-
-      this._api
-        .previewBudgetEmail(this.data.budget.id!, {
-          template_id: this.form.value.template,
-          member_id: this.form.value.previewMember,
-          data,
-        })
-        .subscribe({
-          next: (result) => {
-            this._notifications.show(EmailTemplatePreviewComponent, {
-              data: {
-                subject: result?.subject,
-                message: result?.message,
-              },
-            });
-          },
-          error: this._api.handleError('Unable to generate the preview'),
-        });
-    } catch (error) {
-      this._notifications.showDialog({
-        title: 'Error',
-        message: `Unable to generate preview: ${error}`,
-        level: NotificationDialogLevel.Error,
-      });
+    if (!this.canPreview) {
+      this.form.markAllAsTouched();
+      return;
     }
+    let payload;
+    try {
+      payload = {
+        ...this.payload(),
+        member_id: this.form.controls.previewMember.value,
+      };
+    } catch {
+      this.error =
+        'Corrige les valeurs supplémentaires avant de prévisualiser le message.';
+      return;
+    }
+    const revision = this.revision;
+    this.previewRevision = -1;
+    this.previewing = true;
+    this.error = '';
+    this.api
+      .previewBudgetEmail(this.data.budget.id!, payload)
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe({
+        next: (result) => {
+          this.previewing = false;
+          if (revision !== this.revision) {
+            this.error =
+              'Les informations ont changé pendant le calcul. Relance l’aperçu.';
+            return;
+          }
+          if (
+            typeof result?.subject !== 'string' ||
+            typeof result?.message !== 'string'
+          ) {
+            this.error = 'L’aperçu est incomplet. Réessaie.';
+            return;
+          }
+          this.previewResult = result;
+          this.previewRecipient = this.selectedRecipient;
+          this.previewRevision = revision;
+        },
+        error: (error) => {
+          this.previewing = false;
+          this.error = this.describeError(error, 'prévisualiser le message');
+        },
+      });
   }
 
   submit() {
+    if (!this.canPrepare) return;
+    let payload;
     try {
-      const payload: Partial<APISchemas['SendBudgetEmailInput']> = {
-        template_id: this.form.value.template,
-        data: JSON.parse(this.form.value.data),
-        send_to_doing: this.form.value.to_doing,
-        send_to_paid: this.form.value.to_paid,
-      };
-
-      this._api.sendBudgetEmail(this.data.budget.id!, payload).subscribe({
+      payload = this.payload();
+    } catch {
+      this.error =
+        'Corrige les valeurs supplémentaires avant de créer les e-mails.';
+      return;
+    }
+    this.creating = true;
+    this.form.disable({ emitEvent: false });
+    this.error = '';
+    this.api
+      .sendBudgetEmail(this.data.budget.id!, payload)
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe({
         next: () => {
-          this._dialogRef.close(true);
-          this._notifications.showDialog({
-            title: 'Success',
-            message: `Emails created for budget ${this.data.budget.label}`,
+          this.creating = false;
+          this.dialog.close(true);
+          this.notifications.showDialog({
+            title: 'Préparation terminée',
+            message:
+              'Retrouve les e-mails dans E-mails > Campagnes pour les vérifier et les envoyer.',
             level: NotificationDialogLevel.Info,
           });
         },
-        error: this._api.handleError('Unable to create emails'),
+        error: (error) => {
+          this.form.enable({ emitEvent: false });
+          this.creating = false;
+          this.error = this.describeError(error, 'créer les e-mails');
+        },
       });
-    } catch (error) {
-      this._notifications.showDialog({
-        title: 'Error',
-        message: `Unable to generate e-mail: ${error}`,
-        level: NotificationDialogLevel.Error,
-      });
-    }
+  }
+
+  private describeError(error: APIError, operation: string) {
+    if (operation === 'créer les e-mails' && error.status === 0)
+      return 'La réponse n’a pas été reçue. Tes valeurs sont conservées. Vérifie E-mails > Campagnes avant de relancer la création.';
+    if (error.status === 401)
+      return 'Ta session a expiré. Ferme cette fenêtre puis reconnecte-toi.';
+    if (error.status === 403)
+      return 'Tes droits ne permettent pas cette opération.';
+    if (error.status === 404)
+      return 'Le budget, le modèle ou le membre n’est plus disponible. Ferme puis rouvre cette fenêtre.';
+    const message =
+      typeof error.data?.message === 'string' ? error.data.message : '';
+    if (
+      message.includes('ne fait pas partie des destinataires sélectionnés') ||
+      message.includes('n’a pas d’adresse e-mail')
+    )
+      return 'Ce membre ne fait plus partie des destinataires disponibles. Actualise les destinataires puis relance l’aperçu.';
+    const missing = /map has no entry for key "([^"]+)"/.exec(message);
+    if (missing)
+      return `Le modèle attend la valeur « ${missing[1]} ». Vérifie les valeurs supplémentaires et le modèle, puis réessaie.`;
+    return error.status === 400
+      ? `Impossible de ${operation}. Vérifie le modèle et ses valeurs, puis réessaie.`
+      : `Impossible de ${operation} pour le moment. Tes valeurs sont conservées ; réessaie.`;
+  }
+
+  cancel() {
+    if (!this.creating) this.dialog.close(false);
   }
 }

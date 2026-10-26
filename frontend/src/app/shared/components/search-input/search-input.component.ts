@@ -1,11 +1,13 @@
 import {
   Component,
+  ChangeDetectorRef,
   ElementRef,
   EventEmitter,
   Input,
   OnDestroy,
   Output,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { BehaviorSubject, fromEvent, merge, Subject } from 'rxjs';
 import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
@@ -15,6 +17,8 @@ import { Column } from '../../models/column.model';
   selector: 'app-search-input',
   templateUrl: './search-input.component.html',
   styleUrls: ['./search-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class SearchInputComponent implements OnDestroy {
   private _destroyed$ = new Subject<void>();
@@ -33,6 +37,11 @@ export class SearchInputComponent implements OnDestroy {
   @Input() set columns(columns: Column[] | null) {
     this._columns.next(!columns ? [] : columns);
   }
+
+  @ViewChild('trigger', { read: ElementRef })
+  private _trigger?: ElementRef<HTMLButtonElement>;
+
+  constructor(private readonly _changeDetector: ChangeDetectorRef) {}
 
   @Output() onPatternChange = new EventEmitter<string>();
 
@@ -65,7 +74,8 @@ export class SearchInputComponent implements OnDestroy {
 
   show(): void {
     this._folded$.next(false);
-    setTimeout(() => this._input!.nativeElement.focus());
+    this._changeDetector.detectChanges();
+    this._input?.nativeElement.focus();
   }
 
   clear($event: UIEvent): void {
@@ -73,6 +83,8 @@ export class SearchInputComponent implements OnDestroy {
     this._input!.nativeElement.value = '';
     this._clear$.next();
     this._folded$.next(true);
+    this._changeDetector.detectChanges();
+    this._trigger?.nativeElement.focus();
   }
 
   get pattern(): string {

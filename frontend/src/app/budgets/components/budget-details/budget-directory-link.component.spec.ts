@@ -1,0 +1,202 @@
+import { provideZoneChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { BehaviorSubject, of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthService } from 'src/app/core/services/auth.service';
+import { NotificationsService } from 'src/app/shared/services/notifications.service';
+import { BudgetsModule } from '../../budgets.module';
+import { BudgetDetailsComponent } from './budget-details.component';
+
+describe('Budget payment map', () => {
+  let http: HttpTestingController;
+  let routeParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  beforeEach(async () => {
+    routeParams = new BehaviorSubject(convertToParamMap({ id: 'budget-test' }));
+    queryParams = new BehaviorSubject(convertToParamMap({}));
+    await TestBed.configureTestingModule({
+      imports: [BudgetsModule, NoopAnimationsModule],
+      providers: [
+        provideZoneChangeDetection(),
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: routeParams,
+            queryParamMap: queryParams,
+          },
+        },
+        { provide: AuthService, useValue: { allowed$: () => of(false) } },
+        {
+          provide: NotificationsService,
+          useValue: { showForm: vi.fn(), showDialog: vi.fn() },
+        },
+      ],
+    }).compileComponents();
+    http = TestBed.inject(HttpTestingController);
+  });
+  afterEach(() => http.verify());
+  it('clears the previous budget while navigating and exposes a retryable failure', () => {
+    const f = TestBed.createComponent(BudgetDetailsComponent);
+    f.detectChanges();
+    http
+      .expectOne('/api/budget/budget-test')
+      .flush({ id: 'budget-test', label: 'Ancien budget', draft: true });
+    f.detectChanges();
+    for (const r of http.match((r) =>
+      r.url.startsWith('/api/budget/budget-test/')
+    ))
+      r.flush([]);
+    routeParams.next(convertToParamMap({ id: 'new' }));
+    f.detectChanges();
+    expect(f.nativeElement.textContent).not.toContain('Ancien budget');
+    http
+      .expectOne('/api/budget/new')
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    f.detectChanges();
+    expect(f.nativeElement.textContent).toContain('Réessayer le budget');
+    expect(f.nativeElement.querySelector('mat-progress-spinner')).toBeNull();
+    f.componentInstance.refreshBudget();
+    http
+      .expectOne('/api/budget/new')
+      .flush({ id: 'new', label: 'Nouveau budget', draft: true });
+    f.detectChanges();
+    for (const r of http.match((r) => r.url.startsWith('/api/budget/new/')))
+      r.flush([]);
+    expect(f.nativeElement.textContent).toContain('Nouveau budget');
+  });
+  it('applies a recovery filter while keeping all financial states on the map', async () => {
+    queryParams.next(convertToParamMap({ coverage: 'remaining' }));
+    const f = TestBed.createComponent(BudgetDetailsComponent);
+    f.detectChanges();
+    http
+      .expectOne('/api/budget/budget-test')
+      .flush({ id: 'budget-test', label: 'Budget', draft: false, amount: 200 });
+    f.detectChanges();
+    for (const req of http.match((r) =>
+      r.url.startsWith('/api/budget/budget-test/')
+    )) {
+      req.flush(
+        req.request.url.endsWith('/cotisations')
+          ? [
+              {
+                id: 'paid',
+                amount: 100,
+                paid: 120,
+                remaining: -20,
+                payment_state: 4,
+                unit: {
+                  id: 'one',
+                  number: 1,
+                  members: [],
+                  address: 'Trop-perçu',
+                },
+              },
+              {
+                id: 'unpaid',
+                amount: 100,
+                paid: 0,
+                remaining: 100,
+                payment_state: 3,
+                unit: {
+                  id: 'two',
+                  number: 2,
+                  members: [],
+                  address: 'Reste à payer',
+                },
+              },
+            ]
+          : []
+      );
+    }
+    f.detectChanges();
+    const table = f.nativeElement.querySelector('#cotisations table');
+    expect(table.textContent).toContain('Reste à payer');
+    expect(table.textContent).not.toContain('Trop-perçu');
+    const tabs = Array.from(
+      f.nativeElement.querySelectorAll('[role="tab"]')
+    ) as HTMLElement[];
+    tabs.find((t) => t.textContent?.includes('Carte'))!.click();
+    await f.whenStable();
+    f.detectChanges();
+    expect(
+      f.nativeElement
+        .querySelector('#unit-01')
+        .classList.contains('payment-overpaid')
+    ).toBe(true);
+  });
+  it('shows payment colors without responding to lot clicks or keyboard activation', async () => {
+    const fixture = TestBed.createComponent(BudgetDetailsComponent);
+    fixture.detectChanges();
+    http.expectOne('/api/budget/budget-test').flush({
+      id: 'budget-test',
+      label: 'Budget test',
+      draft: false,
+      amount: 100,
+      paid: 120,
+    });
+    fixture.detectChanges();
+    for (const request of http.match((request) =>
+      request.url.startsWith('/api/budget/budget-test/')
+    )) {
+      request.flush(
+        request.request.url.endsWith('/cotisations')
+          ? [
+              {
+                id: 'cotisation-test',
+                amount: 100,
+                paid: 120,
+                remaining: -20,
+                payment_state: 4,
+                unit: { id: 'unit-test', number: 1, members: [] },
+              },
+            ]
+          : []
+      );
+    }
+    fixture.detectChanges();
+    const tabs = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="tab"]')
+    ) as HTMLElement[];
+    tabs.find((tab) => tab.textContent?.includes('Carte'))!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const unit = fixture.nativeElement.querySelector('#unit-01') as SVGGElement;
+    expect(unit.classList.contains('payment-overpaid')).toBe(true);
+    unit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    unit.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    );
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('a[href*="/members"]')
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector(
+        '#units [tabindex], #units [role="button"]'
+      )
+    ).toBeNull();
+    expect(
+      fixture.nativeElement
+        .querySelector('app-interactive-map svg')
+        .getAttribute('role')
+    ).toBe('img');
+    expect(unit.classList.contains('payment-overpaid')).toBe(true);
+    expect(unit.classList.contains('unit-selected')).toBe(false);
+    expect(unit.classList.contains('unit-hover')).toBe(false);
+    http.expectNone('/api/member');
+  });
+});

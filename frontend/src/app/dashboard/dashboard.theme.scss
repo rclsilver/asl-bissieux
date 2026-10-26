@@ -1,0 +1,7 @@
+@mixin dashboard-theme($theme) {
+  app-dashboard {
+    a, a:visited { color: var(--asl-ink); text-decoration: underline; text-underline-offset: .22em; }
+    a:hover { text-decoration-thickness: 2px; }
+    a:focus-visible { outline: 2px solid var(--asl-primary); outline-offset: 3px; }
+  }
+}

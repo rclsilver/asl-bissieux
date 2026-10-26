@@ -1,6 +1,8 @@
-<h2>Units</h2>
+<h1>Lots</h1>
 
 <app-crud-table
+  tableLabel="Lots"
+  createLabel="Ajouter un lot"
   [columns]="columns"
   [dataSource]="datasource"
   [canCreate]="canCreate$"
@@ -8,4 +10,5 @@
   (edit)="edit($event)"
   [canDelete]="canDelete.bind(this)"
   (delete)="delete($event)"
-></app-crud-table>
+>
+</app-crud-table>

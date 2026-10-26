@@ -1,0 +1,86 @@
+name: Validate
+
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches: [dev, master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.22.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend checks and production build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run test:unit
+          npm test
+          npm run build
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.19.0
+      - name: Start disposable Smocker for OVH contract tests
+        run: |
+          docker run -d --name smocker-contract --network host \
+            -e SMOCKER_MOCK_SERVER_LISTEN_PORT=8280 \
+            -e SMOCKER_CONFIG_LISTEN_PORT=8281 \
+            -e SMOCKER_LOG_LEVEL=warning \
+            ghcr.io/smocker-dev/smocker:1.0.0@sha256:4cc38db5e8b10a826d38496f2f63781f16a81f0837fa8776be24b9deb726642e
+          curl --fail --silent --show-error --retry 15 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:8281/version
+      - name: Go tests including PostgreSQL and Smocker integration tests
+        env:
+          TEST_DATABASE_URL: postgres://test:test@localhost:5432/test?sslmode=disable
+          TEST_SMOCKER: '1'
+          REQUIRE_HELM: '1'
+        run: |
+          go test -count=1 ./...
+          go test -race -count=1 ./pkg/auth
+      - name: Stop disposable Smocker
+        if: always()
+        run: docker rm -f smocker-contract || true
+      - name: Check Go module integrity and known vulnerabilities
+        run: |
+          go mod verify
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          govulncheck ./...
+      - name: Build and audit deployable images
+        run: |
+          docker build --build-arg VERSION=0.0.0-ci --build-arg COMMIT="${{ github.sha }}" -t local/asl-bissieux:ci .
+          test "$(docker run --rm --network none local/asl-bissieux:ci --version)" = "asl-bissieux version 0.0.0-ci (commit ${{ github.sha }})"
+          docker build -t local/asl-smtp:ci smtp-mock
+          docker create --name app-audit local/asl-bissieux:ci
+          docker cp app-audit:/app/asl-bissieux "$RUNNER_TEMP/asl-bissieux"
+          docker rm app-audit
+          docker create --name smtp-audit local/asl-smtp:ci
+          docker cp smtp-audit:/smtpmocksrv "$RUNNER_TEMP/smtpmocksrv"
+          docker rm smtp-audit
+          govulncheck -mode=binary "$RUNNER_TEMP/asl-bissieux"
+          govulncheck -mode=binary "$RUNNER_TEMP/smtpmocksrv"

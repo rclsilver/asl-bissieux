@@ -1,16 +1,5 @@
 .content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-
-  & > * input {
-    width: 100%;
-  }
-
-  // Avoid scrolling with final checkbox
-  &:after {
-    content: " ";
-    display: block;
-    height: 10px;
-  }
+  gap: 1rem;
 }

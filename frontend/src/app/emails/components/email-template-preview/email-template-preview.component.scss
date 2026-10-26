@@ -1,0 +1,17 @@
+h1,
+.content {
+  overflow-wrap: anywhere;
+}
+.content {
+  max-inline-size: 100%;
+  overflow: auto;
+}
+:host ::ng-deep .content img {
+  max-inline-size: 100%;
+  height: auto;
+}
+
+.content:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}

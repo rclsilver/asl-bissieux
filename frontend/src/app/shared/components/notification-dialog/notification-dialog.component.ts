@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export enum NotificationDialogLevel {
@@ -16,6 +16,8 @@ export type NotificationDialogData = {
 @Component({
   templateUrl: './notification-dialog.component.html',
   styleUrls: ['./notification-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class NotificationDialogComponent {
   constructor(

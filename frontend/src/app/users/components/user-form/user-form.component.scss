@@ -1,9 +1,19 @@
 .content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-
-  & > * input {
-    width: 100%;
-  }
+  gap: 1rem;
+  min-width: 0;
+}
+mat-form-field {
+  width: 100%;
+}
+p,
+dd {
+  overflow-wrap: anywhere;
+}
+dd {
+  margin: 0.25rem 0 1rem;
+}
+summary {
+  cursor: pointer;
 }

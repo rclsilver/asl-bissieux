@@ -49,6 +49,7 @@ type createMemberIn struct {
 	Email       string `json:"email"`
 	PhoneNumber string `json:"phone_number"`
 	Address     string `json:"address"`
+	Bureau      *bool  `json:"bureau"`
 }
 
 const (
@@ -58,6 +59,9 @@ const (
 // CreateMember create a member
 func CreateMember(c *gin.Context, in *createMemberIn) (*models.Member, error) {
 	row := models.NewMember(in.FirstName, in.LastName, in.PhoneNumber, in.Email, in.Address)
+	if in.Bureau != nil {
+		row.Bureau = *in.Bureau
+	}
 	db := db.Connection(c)
 
 	if err := db.Create(row).Error; err != nil {
@@ -101,12 +105,15 @@ func UpdateMember(c *gin.Context, in *updateMemberIn) (*models.Member, error) {
 	row.Email = in.Email
 	row.PhoneNumber = in.PhoneNumber
 	row.Address = in.Address
+	if in.Bureau != nil {
+		row.Bureau = *in.Bureau
+	}
 
-	if err := db.Updates(&row).Error; err != nil {
+	if err := db.Model(&row).Select("first_name", "last_name", "email", "phone_number", "address", "bureau").Updates(&row).Error; err != nil {
 		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update member")
 		return nil, err
 	}
-	logrus.WithContext(c.Request.Context()).Error("member %s updated", row.ID)
+	logrus.WithContext(c.Request.Context()).Infof("member %s updated", row.ID)
 
 	return &row, nil
 }

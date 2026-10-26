@@ -478,19 +478,12 @@ type trackEmailIn struct {
 func TrackEmail(c *gin.Context, in *trackEmailIn) error {
 	db := db.Connection(c)
 
-	email, err := controllers.GetEmail(db, in.EmailID, true)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to get email")
-		}
-	} else if email.State == models.Sent {
-		if err := controllers.MarkAsRead(c, db, email.ID); err != nil {
-			logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to update email")
-		}
+	if err := controllers.MarkAsRead(c.Request.Context(), db, in.EmailID); err != nil {
+		logrus.WithContext(c.Request.Context()).WithError(err).Error("unable to track email")
 	}
 
-	c.Header("Content-Type", "image/png")
-	c.Writer.Write([]byte{})
+	c.Header("Cache-Control", "no-store")
+	c.Data(http.StatusOK, "image/png", trackingPixel)
 
 	return nil
 }

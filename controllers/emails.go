@@ -376,6 +376,10 @@ func MarkAsError(c context.Context, tx *gorm.DB, emailID string) error {
 }
 
 func MarkAsRead(c context.Context, tx *gorm.DB, emailID string) error {
+	// The tracker is public: malformed identifiers must never reach PostgreSQL.
+	if err := validateUUID(emailID); err != nil {
+		return nil
+	}
 	if err := tx.WithContext(c).Model(&models.Email{}).Where("id = ? AND state = ?", emailID, models.Sent).Updates(map[string]any{
 		"state": models.Read,
 	}).Error; err != nil {

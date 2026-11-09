@@ -118,6 +118,19 @@ func TestSynchronizationThroughSmocker(t *testing.T) {
 	if err := tx.Create(bob).Error; err != nil {
 		t.Fatal(err)
 	}
+	// Members must own a lot to be listed; a member without lot stays out.
+	unit := models.NewUnit(1, "Fixture 1", 1)
+	if err := tx.Create(unit).Error; err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range []*models.Member{alice, bob} {
+		if err := tx.Exec("INSERT INTO member_unit(member_id,unit_id) VALUES (?,?)", m.ID, unit.ID).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := tx.Create(models.NewMember("Carol", "Fixture", "", "carol@example.invalid", "")).Error; err != nil {
+		t.Fatal(err)
+	}
 	plan, err := controllers.PreviewMailingLists(tx)
 	if err != nil {
 		t.Fatal(err)

@@ -480,14 +480,15 @@ la description Keycloak ci-dessus reste celle du Compose public pour un nouveau 
 
 L’écran administrateur **Listes de diffusion** compare et synchronise les abonnés
 Membres et Bureau avec l’annuaire. La case **Membre du bureau** est indépendante
-des droits applicatifs. Le client utilise `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`,
+des droits applicatifs. Le client utilise `OVH_ENDPOINT` et soit le compte de service IAM
+(`OVH_CLIENT_ID`, `OVH_CLIENT_SECRET`), soit l’ancien triplet `OVH_APPLICATION_KEY`,
 `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` ; les cibles sont définies par
 `APP_ML_DOMAIN`, `APP_ML_MEMBERS`, `APP_ML_BUREAU`.
 Ces trois cibles passent par Viper, section YAML `ml` et options `--ml-*`.
 Voir [configuration et vérification](docs/listes-diffusion-ovh.md).
 En développement, Compose configure automatiquement **Smocker** avec des
 identifiants fictifs ; les ajouts/retraits et les tâches asynchrones sont simulés.
-En production, définir les quatre variables `OVH_*` du client officiel et les
+En production, définir `OVH_ENDPOINT`, les identifiants IAM et les
 trois cibles `APP_ML_*` ci-dessus. Le chart n’installe aucun simulateur.
 La migration 0007 initialise cette appartenance à faux. Sans configuration, aucune liste
 réelle n’est lue ou modifiée et l’écran indique que la connexion reste à configurer.

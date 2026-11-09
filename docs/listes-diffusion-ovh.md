@@ -1,6 +1,6 @@
 # Synchronisation des listes OVH
 
-Les deux listes **Membres** et **Bureau** sont synchronisées manuellement depuis l’écran administrateur « Listes de diffusion ». La liste Membres contient les e-mails valides de toutes les fiches membres actives. Bureau contient ceux des fiches cochées **Membre du bureau**. Les adresses sont normalisées (espaces de bord retirés, minuscules) et dédupliquées ; une personne multi-lots ou une adresse partagée n’est inscrite qu’une fois. L’appartenance au bureau ne confère aucun droit applicatif.
+Les deux listes **Membres** et **Bureau** sont synchronisées manuellement depuis l’écran administrateur « Listes de diffusion ». La liste Membres contient les e-mails valides des fiches membres possédant au moins un lot ; les membres sans lot n’en font partie d’aucune liste (ni Membres, ni Bureau). Bureau contient ceux des fiches cochées **Membre du bureau**. Les adresses sont normalisées (espaces de bord retirés, minuscules) et dédupliquées ; une personne multi-lots ou une adresse partagée n’est inscrite qu’une fois. L’appartenance au bureau ne confère aucun droit applicatif.
 
 Les règles ont été confirmées par Thomas le 21 octobre 2026 : case Bureau, ajouts **et retraits**. Les membres supprimés ou les changements d’e-mail sont pris en compte dans l’aperçu suivant. Une fiche sans e-mail ou avec une adresse invalide bloque l’application pour éviter des retraits fondés sur un annuaire incomplet.
 
@@ -20,16 +20,16 @@ ml:
 | Variable | Valeur attendue |
 | --- | --- |
 | `OVH_ENDPOINT` | Nom d’endpoint officiel, par exemple `ovh-eu` ; URL HTTP(S) explicite pour Smocker |
-| `OVH_APPLICATION_KEY` | Application key OVH |
-| `OVH_APPLICATION_SECRET` | Application secret OVH |
-| `OVH_CONSUMER_KEY` | Consumer key OVH |
+| `OVH_CLIENT_ID` | Identifiant du compte de service IAM (recommandé) |
+| `OVH_CLIENT_SECRET` | Secret du compte de service IAM (recommandé) |
+| `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` | Ancien mode (alternative, ne pas combiner avec l’IAM) ; utilisé par Smocker en développement |
 | `APP_ML_DOMAIN` | Domaine hébergeant les listes, par exemple `example.invalid` |
 | `APP_ML_MEMBERS` | Nom local de la liste Membres, par exemple `membres` |
 | `APP_ML_BUREAU` | Nom local de la liste Bureau, par exemple `bureau` |
 
-Les sept paramètres sont requis dès que l’un est renseigné. Les trois cibles peuvent venir de Viper plutôt que de variables d’environnement. Une configuration partielle ou invalide bloque les opérations, sans afficher les valeurs secrètes. Si tous les paramètres sont absents ou vides, la fonction reste non configurée et ne contacte pas OVH. L’endpoint n’a pas de valeur implicite. Les noms de listes sont **sans `@domaine`** et doivent être distincts. Une URL d’endpoint ne doit contenir ni identifiants, ni paramètres, ni fragment, ni barre oblique finale.
+Les paramètres sont requis dès que l’un est renseigné : endpoint, les trois cibles et un jeu d’identifiants complet, soit IAM (`OVH_CLIENT_ID` + `OVH_CLIENT_SECRET`), soit l’ancien triplet. Mélanger les deux est refusé. Les trois cibles peuvent venir de Viper plutôt que de variables d’environnement. Une configuration partielle ou invalide bloque les opérations, sans afficher les valeurs secrètes. Si tous les paramètres sont absents ou vides, la fonction reste non configurée et ne contacte pas OVH. L’endpoint n’a pas de valeur implicite. Les noms de listes sont **sans `@domaine`** et doivent être distincts. Une URL d’endpoint ne doit contenir ni identifiants, ni paramètres, ni fragment, ni barre oblique finale.
 
-En production, définir directement les quatre variables standard du client Go OVH `OVH_*` et les trois variables applicatives `APP_ML_*` ci-dessus. Aucun `APP_ML_*` supplémentaire n’est nécessaire pour les identifiants ou le mode de simulation. `dev/ovh-mailing-lists.env.example` décrit cette configuration avec des valeurs fictives. Le chart accepte `mailingLists.existingSecret` : le Secret existant doit contenir les sept clés portant exactement ces noms. Elles sont injectées via `secretKeyRef` dans l’environnement, sans montage de fichier. Le Secret OIDC reste indépendant. **Helm étant absent du poste, lint et rendu du chart n’ont pas été exécutés.** Aucune configuration distante n’est créée par cette livraison.
+En production, définir `OVH_ENDPOINT`, les identifiants IAM `OVH_CLIENT_ID` et `OVH_CLIENT_SECRET` (ou l’ancien triplet) et les trois variables applicatives `APP_ML_*` ci-dessus. Aucun `APP_ML_*` supplémentaire n’est nécessaire pour les identifiants ou le mode de simulation. `dev/ovh-mailing-lists.env.example` décrit cette configuration avec des valeurs fictives. Le chart accepte `mailingLists.existingSecret` : le Secret existant doit contenir `OVH_ENDPOINT`, les trois `APP_ML_*` et un jeu d’identifiants (les clés d’identifiants absentes sont ignorées). Elles sont injectées via `secretKeyRef` dans l’environnement, sans montage de fichier. Le Secret OIDC reste indépendant. **Helm étant absent du poste, lint et rendu du chart n’ont pas été exécutés.** Aucune configuration distante n’est créée par cette livraison.
 
 Le Compose public est réservé au développement : il fixe une configuration Smocker fictive et ne reprend pas les identifiants OVH de l’environnement hôte. Après modification d’un environnement Compose privé, **recréer** le conteneur pour charger ses nouvelles variables :
 
@@ -39,7 +39,7 @@ docker compose up -d --no-deps server
 
 Un simple `restart` ne recharge pas les variables Compose. Ne jamais mettre les valeurs réelles dans Git, Angular, les logs ou une commande affichée. Les identifiants Google ne sont pas des identifiants OVH.
 
-Les droits du consumer key OVH doivent permettre GET, POST et DELETE des abonnés des deux listes ciblées, ainsi que GET de `/email/domain/{domain}/task/mailinglist` pour vérifier les opérations en attente. L’application ne modifie ni les modérateurs, ni les paramètres ou l’existence des listes. Restreindre la clé aux ressources concernées.
+Les droits du compte de service IAM (politique limitée aux deux listes) ou de la consumer key doivent permettre GET, POST et DELETE des abonnés des deux listes ciblées, ainsi que GET de `/email/domain/{domain}/task/mailinglist` pour vérifier les opérations en attente. L’application ne modifie ni les modérateurs, ni les paramètres ou l’existence des listes. Restreindre la clé aux ressources concernées.
 
 ## Développement avec Smocker
 

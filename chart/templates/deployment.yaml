@@ -34,12 +34,21 @@ spec:
           args: [ server ]
           env:
             {{- if .Values.mailingLists.existingSecret }}
-            {{- range $name := list "OVH_ENDPOINT" "OVH_APPLICATION_KEY" "OVH_APPLICATION_SECRET" "OVH_CONSUMER_KEY" "APP_ML_DOMAIN" "APP_ML_MEMBERS" "APP_ML_BUREAU" }}
+            {{- range $name := list "OVH_ENDPOINT" "APP_ML_DOMAIN" "APP_ML_MEMBERS" "APP_ML_BUREAU" }}
             - name: {{ $name }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $.Values.mailingLists.existingSecret | quote }}
                   key: {{ $name }}
+            {{- end }}
+            {{- /* Credentials: IAM service account or legacy keys; the application rejects incomplete or mixed sets. */}}
+            {{- range $name := list "OVH_CLIENT_ID" "OVH_CLIENT_SECRET" "OVH_APPLICATION_KEY" "OVH_APPLICATION_SECRET" "OVH_CONSUMER_KEY" }}
+            - name: {{ $name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.mailingLists.existingSecret | quote }}
+                  key: {{ $name }}
+                  optional: true
             {{- end }}
             {{- end }}
             - name: APP_DB_DIALECT

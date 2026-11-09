@@ -29,7 +29,9 @@ type Config struct {
 	ApplicationKey    string `json:"application_key"`
 	ApplicationSecret string `json:"application_secret"`
 	ConsumerKey       string `json:"consumer_key"`
-	Domain            string `json:"domain"`
+	ClientID          string `json:"client_id"`
+	ClientSecret      string `json:"client_secret"`
+	Domain           string `json:"domain"`
 	Members           string `json:"members_list"`
 	Bureau            string `json:"bureau_list"`
 }
@@ -42,6 +44,8 @@ func LoadConfig() (*Config, error) {
 		ApplicationKey:    os.Getenv("OVH_APPLICATION_KEY"),
 		ApplicationSecret: os.Getenv("OVH_APPLICATION_SECRET"),
 		ConsumerKey:       os.Getenv("OVH_CONSUMER_KEY"),
+		ClientID:          os.Getenv("OVH_CLIENT_ID"),
+		ClientSecret:      os.Getenv("OVH_CLIENT_SECRET"),
 		Domain:            targets.Domain,
 		Members:           targets.Members,
 		Bureau:            targets.Bureau,
@@ -49,10 +53,25 @@ func LoadConfig() (*Config, error) {
 	if cfg == (Config{}) {
 		return nil, nil
 	}
-	if !validEndpoint(cfg.Endpoint) || cfg.ApplicationKey == "" || cfg.ApplicationSecret == "" || cfg.ConsumerKey == "" || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
+	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() ||!validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
 		return nil, errors.New("configuration OVH incomplète ou listes invalides")
 	}
 	return &cfg, nil
+}
+
+// UsesOAuth2 reports whether the IAM service account (client credentials) is
+// used instead of the legacy application/consumer key triplet.
+func (c *Config) UsesOAuth2() bool { return c.ClientID != "" || c.ClientSecret != "" }
+
+// validCredentials requires exactly one complete credential set: the IAM
+// service account (OVH_CLIENT_ID/OVH_CLIENT_SECRET) or the legacy triplet.
+// Mixing both is rejected to avoid an ambiguous authentication mode.
+func (c *Config) validCredentials() bool {
+	legacy := c.ApplicationKey != "" || c.ApplicationSecret != "" || c.ConsumerKey != ""
+	if c.UsesOAuth2() {
+		return !legacy && c.ClientID != "" && c.ClientSecret != ""
+	}
+	return c.ApplicationKey != "" && c.ApplicationSecret != "" && c.ConsumerKey != ""
 }
 
 // Like the OVH SDK, accept official endpoint names or an explicit HTTP(S) URL.

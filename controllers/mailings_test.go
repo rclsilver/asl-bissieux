@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/rclsilver/asl-bissieux/internal/testdb"
@@ -58,6 +59,17 @@ func TestMailingSynchronization(t *testing.T) {
 	if err := tx.Create(member).Error; err != nil {
 		t.Fatal(err)
 	}
+	// Only members owning a lot are listed: Alice has one, Bob has none.
+	unit := models.NewUnit(1, "Fixture 1", 1)
+	if err := tx.Create(unit).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Exec("INSERT INTO member_unit(member_id,unit_id) VALUES (?,?)", member.ID, unit.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Create(models.NewMember("Bob", "Fixture", "", "bob@example.invalid", "")).Error; err != nil {
+		t.Fatal(err)
+	}
 	cfg := &mailings.Config{Domain: "example.invalid", Members: "membres", Bureau: "bureau"}
 	oldLoad, oldNew := loadMailingConfig, newMailingProvider
 	defer func() { loadMailingConfig = oldLoad; newMailingProvider = oldNew }()
@@ -67,6 +79,9 @@ func TestMailingSynchronization(t *testing.T) {
 	plan, err := PreviewMailingLists(tx)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if got := strings.Join(plan.Lists[0].Expected, ","); got != "alice@example.invalid" {
+		t.Fatalf("member without lot must not be listed: %q", got)
 	}
 	if _, err := SyncMailingLists(tx, "stale"); err == nil || provider.calls != 0 {
 		t.Fatal("stale preview caused writes")

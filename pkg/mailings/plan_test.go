@@ -70,6 +70,29 @@ func TestViperMailingConfigAndOVHEnvironment(t *testing.T) {
 	if cfg, err := load(); err != nil || cfg == nil || *cfg != (Config{Endpoint: "ovh-eu", ApplicationKey: "fixture-key", ApplicationSecret: "DO-NOT-LEAK", ConsumerKey: "fixture-consumer", Domain: "example.invalid", Members: "membres", Bureau: "bureau"}) {
 		t.Fatalf("environment configuration not loaded: %v", err)
 	}
+	// IAM service account replaces the legacy triplet; mixing both is rejected.
+	for _, name := range []string{"OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY"} {
+		t.Setenv(name, "")
+	}
+	t.Setenv("OVH_CLIENT_ID", "fixture-client")
+	t.Setenv("OVH_CLIENT_SECRET", "DO-NOT-LEAK")
+	if cfg, err := load(); err != nil || cfg == nil || !cfg.UsesOAuth2() || cfg.ClientID != "fixture-client" {
+		t.Fatalf("IAM configuration not loaded: %v", err)
+	}
+	t.Setenv("OVH_CONSUMER_KEY", "fixture-consumer")
+	if cfg, err := load(); cfg != nil || err == nil || strings.Contains(err.Error(), "DO-NOT-LEAK") {
+		t.Fatal("mixed IAM and legacy credentials must be rejected")
+	}
+	t.Setenv("OVH_CONSUMER_KEY", "")
+	t.Setenv("OVH_CLIENT_SECRET", "")
+	if cfg, err := load(); cfg != nil || err == nil {
+		t.Fatal("incomplete IAM credentials must be rejected")
+	}
+	t.Setenv("OVH_CLIENT_ID", "")
+	t.Setenv("OVH_CLIENT_SECRET", "")
+	for name, value := range values {
+		t.Setenv(name, value)
+	}
 	for _, bad := range []struct{ name, value string }{
 		{"APP_ML_BUREAU", "membres"},
 		{"OVH_ENDPOINT", "not-an-endpoint"},

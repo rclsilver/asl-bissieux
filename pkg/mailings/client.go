@@ -20,7 +20,13 @@ type Client struct {
 }
 
 func NewClient(cfg *Config) (*Client, error) {
-	api, err := ovh.NewClient(cfg.Endpoint, cfg.ApplicationKey, cfg.ApplicationSecret, cfg.ConsumerKey)
+	var api *ovh.Client
+	var err error
+	if cfg.UsesOAuth2() {
+		api, err = ovh.NewOAuth2Client(cfg.Endpoint, cfg.ClientID, cfg.ClientSecret)
+	} else {
+		api, err = ovh.NewClient(cfg.Endpoint, cfg.ApplicationKey, cfg.ApplicationSecret, cfg.ConsumerKey)
+	}
 	if err != nil {
 		return nil, err
 	}

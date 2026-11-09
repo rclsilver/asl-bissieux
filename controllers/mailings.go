@@ -17,7 +17,10 @@ var newMailingProvider = func(cfg *mailings.Config) (mailings.Provider, error) {
 
 func mailingPlan(tx *gorm.DB, cfg *mailings.Config, provider mailings.Provider) (*mailings.Plan, error) {
 	var rows []models.Member
-	if err := tx.Select("id", "email", "bureau", "first_name", "last_name").Order("id").Find(&rows).Error; err != nil {
+	// Only members owning at least one existing lot belong to the lists.
+	if err := tx.Select("id", "email", "bureau", "first_name", "last_name").
+		Where("EXISTS (SELECT 1 FROM member_unit mu JOIN unit u ON u.id = mu.unit_id AND u.deleted_at IS NULL WHERE mu.member_id = member.id)").
+		Order("id").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	members := make([]mailings.Member, 0, len(rows))

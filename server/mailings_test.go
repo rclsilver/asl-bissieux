@@ -13,7 +13,7 @@ import (
 
 func TestMailingAccessAndMemberBureau(t *testing.T) {
 	// Keep the HTTP authorization test offline even with a configured operator shell.
-	for _, name := range []string{"OVH_ENDPOINT", "OVH_CLIENT_ID", "OVH_CLIENT_SECRET", "OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY", "APP_ML_DOMAIN", "APP_ML_MEMBERS", "APP_ML_BUREAU", "APP_ML_BUREAU_TYPE"} {
+	for _, name := range []string{"OVH_ENDPOINT", "OVH_CLIENT_ID", "OVH_CLIENT_SECRET", "OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY", "APP_ML_DOMAIN", "APP_ML_MEMBERS", "APP_ML_BUREAU", "APP_ML_BUREAU_TYPE", "APP_ML_MAIN_ADDRESS"} {
 		t.Setenv(name, "")
 	}
 	tx, _ := testdb.Open(t)

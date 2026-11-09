@@ -17,6 +17,8 @@ type mailingConfig struct {
 	// BureauType selects how the Bureau group is stored at OVH: "mailing-list"
 	// (default) or "redirection" (one bureau@domain redirection per recipient).
 	BureauType string `mapstructure:"bureau_type"`
+	// MainAddress is always present in both groups (the lot owners association address).
+	MainAddress string `mapstructure:"main_address"`
 }
 
 func (c *mailingConfig) SetDefaults() { *c = mailingConfig{} }
@@ -38,6 +40,7 @@ type Config struct {
 	Members           string `json:"members_list"`
 	Bureau            string `json:"bureau_list"`
 	BureauType        string `json:"bureau_type"`
+	MainAddress       string `json:"main_address"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -54,11 +57,12 @@ func LoadConfig() (*Config, error) {
 		Members:           targets.Members,
 		Bureau:            targets.Bureau,
 		BureauType:        targets.BureauType,
+		MainAddress:       targets.MainAddress,
 	}
 	if cfg == (Config{}) {
 		return nil, nil
 	}
-	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau || !cfg.validBureauType() {
+	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau || !cfg.validBureauType() || !cfg.validMainAddress() {
 		return nil, errors.New("configuration OVH incomplète ou listes invalides")
 	}
 	return &cfg, nil
@@ -103,4 +107,12 @@ func (c *Config) UsesRedirection() bool { return c.BureauType == BureauRedirecti
 
 func (c *Config) validBureauType() bool {
 	return c.BureauType == "" || c.BureauType == BureauMailingList || c.BureauType == BureauRedirection
+}
+
+func (c *Config) validMainAddress() bool {
+	if c.MainAddress == "" {
+		return true
+	}
+	_, ok := Canonical(c.MainAddress)
+	return ok
 }

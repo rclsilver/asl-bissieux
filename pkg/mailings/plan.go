@@ -67,6 +67,11 @@ func BuildPlan(cfg *Config, members []Member, current map[string][]string, pendi
 			expected["bureau"][email] = true
 		}
 	}
+	// The configured main address belongs to both groups, whatever the directory holds.
+	if main, ok := Canonical(cfg.MainAddress); ok {
+		expected["membres"][main] = true
+		expected["bureau"][main] = true
+	}
 	sort.Slice(plan.Invalid, func(i, j int) bool { return plan.Invalid[i].ID < plan.Invalid[j].ID })
 	for _, group := range []string{"membres", "bureau"} {
 		name := cfg.Members

@@ -284,3 +284,22 @@ func TestBureauTypeConfiguration(t *testing.T) {
 		}
 	}
 }
+
+func TestMainAddressIsInBothGroups(t *testing.T) {
+	cfg := &Config{Domain: "example.invalid", Members: "membres", Bureau: "bureau", MainAddress: "not-an-address"}
+	if cfg.validMainAddress() {
+		t.Fatal("invalid main address accepted")
+	}
+	cfg.MainAddress = "Asl@Example.invalid"
+	if !cfg.validMainAddress() {
+		t.Fatal("valid main address rejected")
+	}
+	members := []Member{{ID: "1", Email: "alice@example.invalid", Bureau: true}, {ID: "2", Email: "asl@example.invalid"}}
+	p := BuildPlan(cfg, members, map[string][]string{"membres": {"asl@example.invalid"}, "bureau": {}})
+	if strings.Join(p.Lists[0].Expected, ",") != "alice@example.invalid,asl@example.invalid" || strings.Join(p.Lists[1].Expected, ",") != "alice@example.invalid,asl@example.invalid" {
+		t.Fatalf("main address missing or duplicated: %+v", p.Lists)
+	}
+	if len(p.Lists[0].Remove) != 0 || strings.Join(p.Lists[1].Add, ",") != "alice@example.invalid,asl@example.invalid" {
+		t.Fatalf("unexpected changes: %+v", p.Lists)
+	}
+}

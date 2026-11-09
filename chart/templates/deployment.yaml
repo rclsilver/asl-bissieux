@@ -42,7 +42,7 @@ spec:
                   key: {{ $name }}
             {{- end }}
             {{- /* Optional keys: credentials (IAM service account or legacy keys; the application rejects incomplete or mixed sets) and the Bureau storage type. */}}
-            {{- range $name := list "OVH_CLIENT_ID" "OVH_CLIENT_SECRET" "OVH_APPLICATION_KEY" "OVH_APPLICATION_SECRET" "OVH_CONSUMER_KEY" "APP_ML_BUREAU_TYPE" }}
+            {{- range $name := list "OVH_CLIENT_ID" "OVH_CLIENT_SECRET" "OVH_APPLICATION_KEY" "OVH_APPLICATION_SECRET" "OVH_CONSUMER_KEY" "APP_ML_BUREAU_TYPE" "APP_ML_MAIN_ADDRESS" }}
             - name: {{ $name }}
               valueFrom:
                 secretKeyRef:

@@ -35,3 +35,11 @@ summary:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 3px;
 }
+.pending {
+  border-inline-start: 4px solid var(--asl-primary);
+  padding-inline-start: 1rem;
+  margin-block: 1rem;
+}
+progress {
+  width: min(24rem, 100%);
+}

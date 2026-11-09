@@ -86,6 +86,46 @@ describe('Reviewed OVH list synchronization', () => {
     expect(f.nativeElement.textContent).toContain('ignorées');
     expect(f.componentInstance.plan?.can_apply).toBe(true);
   });
+  it('shows OVH task progress and follows it automatically until the lists are up to date', () => {
+    vi.useFakeTimers();
+    try {
+      const f = TestBed.createComponent(MailingsComponent);
+      f.detectChanges();
+      const queued = (tasks: number[], current: string[]) => ({
+        ...plan,
+        can_apply: false,
+        lists: [
+          {
+            ...plan.lists[0],
+            add: [],
+            remove: [],
+            current,
+            pending_tasks: tasks,
+          },
+          plan.lists[1],
+        ],
+      });
+      http.expectOne(preview).flush(queued([1, 2, 3, 4], ['former@example.invalid']));
+      f.detectChanges();
+      const text = () => f.nativeElement.textContent;
+      expect(text()).toContain('C’est normal');
+      expect(text()).toContain('0 tâche(s) terminée(s) sur 4');
+      expect(text()).toContain('4 tâche(s) en cours chez OVH');
+      vi.advanceTimersByTime(10000);
+      http.expectOne(preview).flush(queued([3, 4], ['former@example.invalid']));
+      f.detectChanges();
+      expect(text()).toContain('2 tâche(s) terminée(s) sur 4');
+      vi.advanceTimersByTime(10000);
+      http.expectOne(preview).flush(queued([], plan.lists[0].expected));
+      f.detectChanges();
+      expect(text()).not.toContain('OVH traite encore');
+      expect(text()).toContain('Les deux listes sont vérifiées à jour');
+      vi.advanceTimersByTime(60000);
+      http.expectNone(preview);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('clears administrative data and cancels a read when access is revoked', () => {
     const f = TestBed.createComponent(MailingsComponent);
     f.detectChanges();

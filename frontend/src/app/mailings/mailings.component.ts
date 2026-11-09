@@ -23,6 +23,8 @@ export class MailingsComponent implements OnInit, OnDestroy {
   private notifications = inject(NotificationsService);
   private destroyed = new Subject<void>();
   private cancelLoad = new Subject<void>();
+  private pollTimer?: ReturnType<typeof setTimeout>;
+  pendingPeak = 0;
   plan: APISchemas['MailingsPlan'] | null = null;
   loading = false;
   busy = false;
@@ -37,7 +39,7 @@ export class MailingsComponent implements OnInit, OnDestroy {
       .subscribe((allowed) => {
         this.allowed = allowed;
         this.cancelLoad.next();
-        this.plan = null;
+        this.setPlan(null);
         this.error = '';
         this.message = '';
         this.verified = false;
@@ -48,7 +50,7 @@ export class MailingsComponent implements OnInit, OnDestroy {
     if (!this.allowed || this.busy) return;
     this.cancelLoad.next();
     this.loading = true;
-    this.plan = null;
+    this.setPlan(null);
     this.error = '';
     this.message = '';
     this.verified = false;
@@ -60,7 +62,7 @@ export class MailingsComponent implements OnInit, OnDestroy {
         finalize(() => (this.loading = false))
       )
       .subscribe({
-        next: (p) => (this.plan = p),
+        next: (p) => this.setPlan(p),
         error: () =>
           (this.error =
             'Impossible de lire la configuration ou les listes OVH. Vérifie la connexion puis réessaie.'),
@@ -78,6 +80,45 @@ export class MailingsComponent implements OnInit, OnDestroy {
     return (
       this.plan?.lists?.some((l) => (l.pending_tasks?.length ?? 0) > 0) ?? false
     );
+  }
+  get pendingCount() {
+    return (
+      this.plan?.lists?.reduce(
+        (n, l) => n + (l.pending_tasks?.length ?? 0),
+        0
+      ) ?? 0
+    );
+  }
+  get pendingDone() {
+    return Math.max(0, this.pendingPeak - this.pendingCount);
+  }
+  // OVH applies changes one task at a time; follow them without user action.
+  private setPlan(plan: APISchemas['MailingsPlan'] | null) {
+    this.plan = plan;
+    clearTimeout(this.pollTimer);
+    const count = this.pendingCount;
+    if (!count) {
+      this.pendingPeak = 0;
+      return;
+    }
+    this.pendingPeak = Math.max(this.pendingPeak, count);
+    if (this.allowed) this.pollTimer = setTimeout(() => this.poll(), 10000);
+  }
+  private poll() {
+    if (!this.allowed || this.busy || this.loading || this.confirming) {
+      this.setPlan(this.plan);
+      return;
+    }
+    this.api
+      .previewMailingLists()
+      .pipe(takeUntil(this.cancelLoad), takeUntil(this.destroyed))
+      .subscribe({
+        next: (p) => {
+          this.setPlan(p);
+          if (!this.pendingCount) this.message = '';
+        },
+        error: () => this.setPlan(this.plan),
+      });
   }
   get synchronized() {
     return (
@@ -133,12 +174,12 @@ export class MailingsComponent implements OnInit, OnDestroy {
           )
           .subscribe({
             next: (r) => {
-              this.plan = r?.plan ?? null;
+              this.setPlan(r?.plan ?? null);
               this.verified = r?.verified ?? false;
               this.message = r?.message ?? '';
             },
             error: () => {
-              this.plan = null;
+              this.setPlan(null);
               this.error =
                 'Le résultat ne peut pas être confirmé ou l’aperçu a changé. Actualise les listes avant toute nouvelle tentative.';
             },
@@ -146,6 +187,7 @@ export class MailingsComponent implements OnInit, OnDestroy {
       });
   }
   ngOnDestroy() {
+    clearTimeout(this.pollTimer);
     this.destroyed.next();
     this.destroyed.complete();
     this.cancelLoad.complete();

@@ -56,11 +56,23 @@
       </ul>
     }
     @if (pending) {
-      <p role="status">
-        OVH traite encore des tâches pour ces listes. Attends leur fin puis
-        actualise ; aucun nouvel envoi de changements n’est autorisé pendant ce
-        traitement.
-      </p>
+      <div role="status" class="pending">
+        <p>
+          OVH traite encore des tâches pour ces listes. C’est normal : OVH
+          applique les changements un par un, ce qui peut prendre quelques
+          minutes. Cette page se met à jour automatiquement ; aucun nouvel envoi
+          de changements n’est autorisé pendant ce traitement.
+        </p>
+        <p>
+          {{ pendingDone }} tâche(s) terminée(s) sur {{ pendingPeak }},
+          {{ pendingCount }} en cours.
+        </p>
+        <progress
+          [max]="pendingPeak"
+          [value]="pendingDone"
+          aria-label="Avancement des tâches OVH"
+        ></progress>
+      </div>
     }
     @if (synchronized) {
       <p role="status">Les deux listes sont vérifiées à jour.</p>
@@ -73,6 +85,9 @@
         <p>
           {{ list.expected?.length }} adresse(s) attendue(s) ·
           {{ list.current?.length }} abonné(s) chez OVH
+          @if (list.pending_tasks?.length) {
+            · {{ list.pending_tasks?.length }} tâche(s) en cours chez OVH
+          }
         </p>
         <div class="changes">
           <div>

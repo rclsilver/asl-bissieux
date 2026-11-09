@@ -45,7 +45,8 @@
     @if (p.invalid?.length) {
       <p role="alert">
         {{ p.invalid?.length }} fiche(s) ont un e-mail absent ou invalide.
-        Corrige-les dans l’annuaire avant de synchroniser.
+        Elles sont ignorées par la synchronisation : corrige-les dans l’annuaire
+        pour les inclure.
       </p>
       <a mat-button routerLink="/members">Ouvrir l’annuaire</a>
       <ul>

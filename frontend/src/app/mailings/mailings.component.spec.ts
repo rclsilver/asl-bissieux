@@ -65,14 +65,14 @@ describe('Reviewed OVH list synchronization', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  it('identifies incomplete member records and prevents applying their plan', () => {
+  it('lists incomplete member records without blocking the synchronization', () => {
     const f = TestBed.createComponent(MailingsComponent);
     f.detectChanges();
     http
       .expectOne(preview)
       .flush({
         ...plan,
-        can_apply: false,
+        can_apply: true,
         invalid: [
           {
             id: 'member',
@@ -83,8 +83,8 @@ describe('Reviewed OVH list synchronization', () => {
       });
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('Alice Fixture');
-    f.componentInstance.sync();
-    http.expectNone(sync);
+    expect(f.nativeElement.textContent).toContain('ignorées');
+    expect(f.componentInstance.plan?.can_apply).toBe(true);
   });
   it('clears administrative data and cancels a read when access is revoked', () => {
     const f = TestBed.createComponent(MailingsComponent);

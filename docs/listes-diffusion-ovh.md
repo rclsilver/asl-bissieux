@@ -2,7 +2,7 @@
 
 Les deux listes **Membres** et **Bureau** sont synchronisées manuellement depuis l’écran administrateur « Listes de diffusion ». La liste Membres contient les e-mails valides des fiches membres possédant au moins un lot ; les membres sans lot n’en font partie d’aucune liste (ni Membres, ni Bureau). Bureau contient ceux des fiches cochées **Membre du bureau**. Les adresses sont normalisées (espaces de bord retirés, minuscules) et dédupliquées ; une personne multi-lots ou une adresse partagée n’est inscrite qu’une fois. L’appartenance au bureau ne confère aucun droit applicatif.
 
-Les règles ont été confirmées par Thomas le 21 octobre 2026 : case Bureau, ajouts **et retraits**. Les membres supprimés ou les changements d’e-mail sont pris en compte dans l’aperçu suivant. Une fiche sans e-mail ou avec une adresse invalide bloque l’application pour éviter des retraits fondés sur un annuaire incomplet.
+Les règles ont été confirmées par Thomas le 21 octobre 2026 : case Bureau, ajouts **et retraits**. Les membres supprimés ou les changements d’e-mail sont pris en compte dans l’aperçu suivant. Une fiche sans e-mail ou avec une adresse invalide est signalée dans l’aperçu mais ne bloque pas l’application : elle est simplement absente des listes attendues (son ancienne adresse éventuelle sera retirée).
 
 ## Configuration côté serveur
 
@@ -56,7 +56,7 @@ En configuration Compose standard, l’API simulée est publiée sur `127.0.0.1:
 ### Parcours de validation locale
 
 1. Dans une fiche membre disposant d’un e-mail valide, cocher **Membre du bureau**.
-2. Ouvrir **Listes de diffusion** et actualiser : contrôler les ajouts attendus et les retraits des deux anciennes adresses fictives. Les fiches invalides doivent être corrigées avant application.
+2. Ouvrir **Listes de diffusion** et actualiser : contrôler les ajouts attendus et les retraits des deux anciennes adresses fictives. Les fiches invalides sont signalées mais ne bloquent pas l’application.
 3. Appliquer : les demandes sont acceptées, sans annoncer immédiatement une synchronisation vérifiée si des tâches sont encore en attente.
 4. Attendre une seconde puis actualiser : les deux listes doivent correspondre aux membres et le bouton d’application doit être désactivé faute de différence.
 5. Décocher Bureau ou modifier un e-mail, puis recommencer : vérifier les retraits et ajouts correspondants. Les droits administrateur doivent rester identiques.

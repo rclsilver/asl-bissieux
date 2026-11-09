@@ -59,7 +59,7 @@ func PreviewMailingLists(tx *gorm.DB) (*mailings.Plan, error) {
 	return mailingPlan(tx.WithContext(ctx), cfg, provider)
 }
 func mailingVerified(plan *mailings.Plan) bool {
-	if plan == nil || !plan.Configured || len(plan.Invalid) > 0 {
+	if plan == nil || !plan.Configured {
 		return false
 	}
 	for _, l := range plan.Lists {

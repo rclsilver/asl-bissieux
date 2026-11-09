@@ -84,7 +84,6 @@ export class MailingsComponent implements OnInit, OnDestroy {
       !!this.plan?.configured &&
       !this.loading &&
       !this.pending &&
-      !this.plan.invalid?.length &&
       this.addCount + this.removeCount === 0
     );
   }

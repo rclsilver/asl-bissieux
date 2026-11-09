@@ -107,7 +107,9 @@ func BuildPlan(cfg *Config, members []Member, current map[string][]string, pendi
 		sort.Strings(p.Remove)
 		plan.Lists = append(plan.Lists, p)
 	}
-	plan.CanApply = len(plan.Invalid) == 0
+	// Members with a missing or invalid e-mail are reported but never block the
+	// synchronization: they are simply left out of the expected groups.
+	plan.CanApply = true
 	changes := 0
 	for _, list := range plan.Lists {
 		changes += len(list.Add) + len(list.Remove)

@@ -36,8 +36,8 @@ func TestPlanGroupsAndDeduplication(t *testing.T) {
 		t.Fatal("bureau changes must invalidate preview")
 	}
 	invalid := BuildPlan(cfg, []Member{{ID: "empty"}, {ID: "display", Email: "Alice <alice@example.invalid>"}}, current)
-	if invalid.CanApply || len(invalid.Invalid) != 2 {
-		t.Fatal("incomplete source must block synchronization")
+	if len(invalid.Invalid) != 2 || invalid.CanApply != (len(invalid.Lists[0].Add)+len(invalid.Lists[0].Remove)+len(invalid.Lists[1].Add)+len(invalid.Lists[1].Remove) > 0) {
+		t.Fatal("incomplete records must be reported without blocking synchronization")
 	}
 }
 func TestViperMailingConfigAndOVHEnvironment(t *testing.T) {

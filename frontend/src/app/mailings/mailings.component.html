@@ -1,0 +1,125 @@
+<h1>Listes de diffusion OVH</h1>
+<p>
+  Les membres de l’ASL alimentent la liste Membres. La case « Membre du bureau »
+  détermine la liste Bureau. Chaque adresse valide est inscrite une seule fois,
+  même pour plusieurs lots ou copropriétaires.
+</p>
+<button
+  mat-stroked-button
+  type="button"
+  (click)="refresh()"
+  [disabled]="!allowed || busy || loading"
+>
+  Actualiser l’aperçu
+</button>
+@if (!allowed) {
+  <p role="status">Cet écran est réservé aux administrateurs.</p>
+}
+@if (loading) {
+  <p role="status">Lecture des membres et des listes OVH…</p>
+}
+@if (error) {
+  <p role="alert">{{ error }}</p>
+}
+@if (message) {
+  <p role="status">{{ message }}</p>
+}
+@if (busy) {
+  <p role="status">
+    Demandes de synchronisation en cours… Ne ferme pas la page avant le
+    résultat.
+  </p>
+}
+@if (plan; as p) {
+  @if (!p.configured) {
+    <p role="status">
+      La connexion aux listes OVH reste à configurer. Aucune liste n’a été
+      modifiée.
+    </p>
+  } @else {
+    <p>
+      Domaine : {{ p.domain }}. Seuls les abonnés des deux listes ci-dessous
+      sont concernés ; les modérateurs et paramètres des listes restent
+      conservés.
+    </p>
+    @if (p.invalid?.length) {
+      <p role="alert">
+        {{ p.invalid?.length }} fiche(s) ont un e-mail absent ou invalide.
+        Corrige-les dans l’annuaire avant de synchroniser.
+      </p>
+      <a mat-button routerLink="/members">Ouvrir l’annuaire</a>
+      <ul>
+        @for (member of p.invalid ?? []; track member.id) {
+          <li>{{ member.name || 'Membre sans nom' }} — {{ member.reason }}</li>
+        }
+      </ul>
+    }
+    @if (pending) {
+      <p role="status">
+        OVH traite encore des tâches pour ces listes. Attends leur fin puis
+        actualise ; aucun nouvel envoi de changements n’est autorisé pendant ce
+        traitement.
+      </p>
+    }
+    @if (synchronized) {
+      <p role="status">Les deux listes sont vérifiées à jour.</p>
+    }
+    @for (list of p.lists ?? []; track list.group) {
+      <section [attr.aria-label]="'Liste ' + list.group">
+        <h2>
+          {{ list.group === 'bureau' ? 'Bureau' : 'Membres' }} — {{ list.name }}
+        </h2>
+        <p>
+          {{ list.expected?.length }} adresse(s) attendue(s) ·
+          {{ list.current?.length }} abonné(s) chez OVH
+        </p>
+        <div class="changes">
+          <div>
+            <h3>À ajouter ({{ list.add?.length }})</h3>
+            <ul>
+              @for (email of list.add ?? []; track email) {
+                <li>{{ email }}</li>
+              } @empty {
+                <li>Aucun ajout.</li>
+              }
+            </ul>
+          </div>
+          <div>
+            <h3>À retirer ({{ list.remove?.length }})</h3>
+            <ul>
+              @for (email of list.remove ?? []; track email) {
+                <li>{{ email }}</li>
+              } @empty {
+                <li>Aucun retrait.</li>
+              }
+            </ul>
+          </div>
+        </div>
+        <details>
+          <summary>Adresses attendues dans cette liste</summary>
+          <ul>
+            @for (email of list.expected ?? []; track email) {
+              <li>{{ email }}</li>
+            } @empty {
+              <li>Aucune adresse attendue.</li>
+            }
+          </ul>
+        </details>
+      </section>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="sync()"
+      [disabled]="!p.can_apply || loading || busy || confirming"
+    >
+      Appliquer {{ addCount }} ajout(s) et {{ removeCount }} retrait(s)
+    </button>
+    <p>
+      OVH traite les changements de façon asynchrone. Une demande acceptée ne
+      signifie pas que la liste est déjà à jour ; utilise Actualiser pour
+      vérifier son résultat.
+    </p>
+  }
+}

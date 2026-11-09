@@ -1,16 +1,54 @@
 .content {
+  line-height: 1.5;
+}
+.budget-name {
+  font-weight: 500;
+}
+section {
+  margin-block: 1.5rem;
+}
+h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem;
+}
+h3 {
+  font-size: 1rem;
+  margin-block: 0 1rem;
+  overflow-wrap: anywhere;
+}
+p {
+  margin-block: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.full-width {
+  inline-size: 100%;
+}
+.recipient-options {
+  display: grid;
+  gap: 0.5rem;
+}
+.recipient-count {
+  font-weight: 500;
+}
+.preview-block,
+.error-message {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 1rem;
+}
+.preview-message {
+  overflow: auto;
+  max-inline-size: 100%;
+}
+.form-actions {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  & > * input {
-    width: 100%;
-  }
-
-  // Avoid scrolling with final checkbox
-  &:after {
-    content: " ";
-    display: block;
-    height: 10px;
-  }
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 1rem;
+}
+.form-actions button {
+  min-block-size: 44px;
+  block-size: auto;
+  white-space: normal;
 }

@@ -1,13 +1,18 @@
 package smtp
 
-import "github.com/rclsilver/asl-bissieux/pkg/config"
+import (
+	"time"
+
+	"github.com/rclsilver/asl-bissieux/pkg/config"
+)
 
 type smtpConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	TLS      bool   `mapstructure:"tls"`
+	Host     string        `mapstructure:"host"`
+	Port     int           `mapstructure:"port"`
+	Username string        `mapstructure:"username"`
+	Password string        `mapstructure:"password"`
+	TLS      bool          `mapstructure:"tls"`
+	Timeout  time.Duration `mapstructure:"timeout"`
 	From     struct {
 		Name    string `mapstructure:"name"`
 		Address string `mapstructure:"address"`
@@ -23,6 +28,7 @@ type smtpConfig struct {
 func (c *smtpConfig) SetDefaults() {
 	c.Host = "localhost"
 	c.Port = 25
+	c.Timeout = 30 * time.Second
 	c.From.Address = "app@example.com"
 	c.From.Name = "app"
 }

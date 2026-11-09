@@ -5,9 +5,9 @@
 replicaCount: 1
 
 image:
-  repository: rclsilver/asl-bissieux
+  repository: ghcr.io/rclsilver/asl-bissieux
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # Defaults to the packaged chart's appVersion. Required for a source checkout.
   tag: ""
 
 imagePullSecrets: []
@@ -80,8 +80,16 @@ tolerations: []
 affinity: {}
 
 auth:
+  provider: 'google'
   client_id: ''
   client_secret: ''
+  oidc:
+    issuer: ''
+    publicURL: ''
+    label: 'Se connecter'
+    sessionDuration: '8h'
+    existingSecret: ''
+    secretKey: 'client-secret'
 
 postgresql:
   hostname: ''
@@ -89,6 +97,12 @@ postgresql:
   user: ''
   timezone: 'Europe/Paris'
   existingSecret: asl-bissieux-postgresql
+
+# Existing Secret injected as environment variables: OVH_ENDPOINT, APP_ML_DOMAIN/MEMBERS/BUREAU
+# and either OVH_CLIENT_ID + OVH_CLIENT_SECRET (IAM service account, recommended)
+# or the legacy OVH_APPLICATION_KEY/SECRET + OVH_CONSUMER_KEY.
+mailingLists:
+  existingSecret: ''
 
 smtp:
   host: 'localhost'

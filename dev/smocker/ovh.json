@@ -1,0 +1,21 @@
+[
+  {
+    "request": { "method": "GET", "path": "/auth/time" },
+    "dynamic_response": {
+      "engine": "go_template",
+      "script": "headers:\n  Content-Type: [application/json]\nbody: '{{ now | unixEpoch }}'\n"
+    }
+  },
+  {
+    "request": {
+      "method": { "matcher": "ShouldMatch", "value": "^(GET|POST|DELETE)$" },
+      "path": { "matcher": "ShouldMatch", "value": "^/email/domain/example\\.invalid/(mailingList/(membres|bureau)/subscriber(/[^/]+)?|task/mailinglist)$" },
+      "headers": {
+        "X-Ovh-Application": "smocker-development-key",
+        "X-Ovh-Consumer": "smocker-development-consumer",
+        "X-Ovh-Signature": { "matcher": "ShouldMatch", "value": "^\\$1\\$[0-9a-f]{40}$" }
+      }
+    },
+    "proxy": { "host": "OVH_FIXTURE_URL" }
+  }
+]

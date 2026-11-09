@@ -1,152 +1,276 @@
 <mat-toolbar>
+  <ng-content select="[table-filters]"></ng-content>
+  @if (selected.selected$ | async; as selection) {
+    @if (selection.length) {
+      <span class="selection-count" role="status"
+        >{{ selection.length }}
+        {{
+          selection.length === 1 ? "ligne sélectionnée" : "lignes sélectionnées"
+        }}</span
+      >
+    }
+  }
   <div class="spacer"></div>
 
-  <ng-container *ngFor="let action of toolbarActions">
+  @for (action of toolbarActions; track action) {
+    @if (!action.loading$ || !(action.loading$ | async)) {
+      <button
+        mat-icon-button
+        type="button"
+        (click)="action.func()"
+        [matTooltip]="action.tooltip"
+        [attr.aria-label]="action.tooltip"
+      >
+        <mat-icon aria-hidden="true">{{ action.icon }}</mat-icon>
+      </button>
+    }
+    @if (action.loading$ && (action.loading$ | async)) {
+      <mat-progress-spinner
+        mode="indeterminate"
+        diameter="20"
+        [matTooltip]="action.loadingTooltip || ''"
+        [attr.aria-label]="action.loadingTooltip || action.tooltip"
+      >
+      </mat-progress-spinner>
+    }
+  }
+
+  <app-search-input
+    [columns]="searchFields ?? (filters$ | async)"
+  ></app-search-input>
+
+  @if (canRefresh) {
     <button
-      *ngIf="!action.loading$ || !(action.loading$ | async)"
       mat-icon-button
       type="button"
-      (click)="action.func()"
-      [matTooltip]="action.tooltip"
+      (click)="refresh()"
+      [disabled]="loading$ | async"
+      matTooltip="Actualiser la liste"
+      aria-label="Actualiser la liste"
     >
-      <span class="fa fa-{{ action.icon }}"></span>
+      <mat-icon>refresh</mat-icon>
     </button>
-
-    <mat-progress-spinner
-      *ngIf="action.loading$ && (action.loading$ | async)"
-      mode="indeterminate"
-      diameter="20"
-      [matTooltip]="action.loadingTooltip || ''"
-    >
-    </mat-progress-spinner>
-  </ng-container>
-
-  <app-search-input [columns]="filters$ | async"></app-search-input>
+  }
 
   <button
-    mat-icon-button
-    *ngIf="canRefresh"
-    type="button"
-    (click)="refresh()"
-    [disabled]="loading$ | async"
-    matTooltip="Refresh data"
-  >
-    <mat-icon>refresh</mat-icon>
-  </button>
-
-  <button
-    mat-icon-button
+    mat-mini-fab
+    color="primary"
+    class="create-action"
     type="button"
     (click)="onEdit()"
-    matTooltip="Create a new resource"
+    [matTooltip]="createLabel"
+    [attr.aria-label]="createLabel"
     [disabled]="!(canCreate$ | async)"
   >
-    <mat-icon>add</mat-icon>
+    <mat-icon aria-hidden="true">add</mat-icon>
   </button>
 </mat-toolbar>
 
 <div class="table-container">
-  <table
-    mat-table
-    matSort
-    matSortDisableClear
-    [class.invisible]="!(loaded$ | async)"
+  <div
+    class="table-scroll"
+    [attr.inert]="remoteSource && (loading$ | async) ? '' : null"
+    role="region"
+    [attr.aria-label]="tableLabel"
+    tabindex="0"
   >
-    <!-- Allow to add custom column definitions -->
-    <ng-content></ng-content>
+    <table
+      mat-table
+      [class.stack-on-narrow]="stackOnNarrow"
+      matSort
+      [matSortActive]="remoteSource ? remoteSource.order.active : ''"
+      [matSortDirection]="remoteSource ? remoteSource.order.direction : ''"
+      matSortDisableClear
+      [class.invisible]="!(loaded$ | async)"
+      [attr.aria-label]="tableLabel"
+    >
+      <!-- Allow to add custom column definitions -->
+      <ng-content></ng-content>
 
-    <!-- Generate model columns -->
-    <ng-container *ngFor="let column of columnDefs$ | async">
-      <ng-container [matColumnDef]="column.name">
-        <ng-container *ngIf="column.canSort">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="{{ column.name }}">{{ column.label }}</th>
+      <!-- Generate model columns -->
+      @for (column of columnDefs$ | async; track column) {
+        <ng-container [matColumnDef]="column.name">
+          @if (column.canSort) {
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header="{{ column.name }}"
+            >
+              {{ column.label }}
+            </th>
+          }
+          @if (!column.canSort) {
+            <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
+          }
+          <td
+            mat-cell
+            *matCellDef="let row"
+            [attr.role]="stackOnNarrow ? 'cell' : null"
+          >
+            @if (stackOnNarrow) {
+              <span class="mobile-cell-label" aria-hidden="true">{{
+                column.label
+              }}</span>
+            }
+            @if (!row["columns"][column.name].route) {
+              <span>{{ row["columns"][column.name].display }}</span>
+            }
+            @if (row["columns"][column.name].route) {
+              <a [routerLink]="row['columns'][column.name].route">{{
+                row["columns"][column.name].display
+              }}</a>
+            }
+          </td>
         </ng-container>
-        <ng-container *ngIf="!column.canSort">
-          <th mat-header-cell *matHeaderCellDef>{{ column.label }}</th>
-        </ng-container>
+      }
+
+      <!-- Select column definition -->
+      <ng-container matColumnDef="_select_">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox
+            aria-label="Sélectionner toutes les lignes affichées"
+            (click)="$event.stopPropagation()"
+            (change)="toggleAll()"
+            [checked]="allSelected$ | async"
+            [indeterminate]="someSelected$ | async"
+          ></mat-checkbox>
+        </th>
         <td mat-cell *matCellDef="let row">
-          <span *ngIf="!row['columns'][column.name].route">{{ row['columns'][column.name].display }}</span>
-          <a *ngIf="row['columns'][column.name].route" [routerLink]="row['columns'][column.name].route">{{ row['columns'][column.name].display }}</a>
+          <mat-checkbox
+            [aria-label]="'Sélectionner ' + describeRow(row)"
+            [value]="row"
+            (click)="$event.stopPropagation()"
+            (change)="$event ? selected.toggle(row.original) : null"
+            [checked]="selected.isSelected(row.original)"
+          ></mat-checkbox>
         </td>
       </ng-container>
-    </ng-container>
 
-    <!-- Select column definition -->
-    <ng-container matColumnDef="_select_">
-      <th mat-header-cell *matHeaderCellDef>
-        <mat-checkbox (click)="$event.stopPropagation()" (change)="toggleAll()" [checked]="allSelected$ | async" [indeterminate]="someSelected$ | async"></mat-checkbox>
-      </th>
-      <td mat-cell *matCellDef="let row">
-        <mat-checkbox [value]="row" (click)="$event.stopPropagation()" (change)="$event ? selected.toggle(row.original) : null" [checked]="selected.isSelected(row.original)"></mat-checkbox>
-      </td>
-    </ng-container>
-
-    <!-- Action column definition -->
-    <ng-container matColumnDef="_actions_">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let row">
-        <ng-container *ngIf="(showActions$ | async) || (rowActions && rowActions!.length)">
-          <button mat-icon-button [matMenuTriggerFor]="menu">
-            <mat-icon>more_vert</mat-icon>
-          </button>
-          <mat-menu #menu="matMenu" xPosition="before">
-            <button [disabled]="!(canEditRow(row.original) | async)" mat-menu-item (click)="onEdit(row.original)">
-              <mat-icon>edit</mat-icon>
-              <span>Edit</span>
+      <!-- Action column definition -->
+      <ng-container matColumnDef="_actions_">
+        <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+        <td mat-cell *matCellDef="let row">
+          @if ((showActions$ | async) || (rowActions && rowActions!.length)) {
+            <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="menu"
+              [attr.aria-label]="'Actions pour ' + describeRow(row)"
+              matTooltip="Actions de la ligne"
+            >
+              <mat-icon>more_vert</mat-icon>
             </button>
-            <button [disabled]="!(canDeleteRow(row.original) | async)" mat-menu-item (click)="onDelete(row.original)">
-              <mat-icon>delete</mat-icon>
-              <span>Delete</span>
-            </button>
-            <ng-container *ngFor="let action of rowActions">
+            <mat-menu #menu="matMenu" xPosition="before">
               <button
-                *ngIf="action.show(row.original)"
-                [disabled]="action.disabled(row.original)"
+                [disabled]="!(canEditRow(row.original) | async)"
                 mat-menu-item
-                (click)="action.func(row.original)"
-                [matTooltip]="action.tooltip"
+                (click)="onEdit(row.original)"
               >
-                <mat-icon>{{ action.icon }}</mat-icon>
-                <span>{{ action.label }}</span>
+                <mat-icon>edit</mat-icon>
+                <span>Modifier</span>
               </button>
-            </ng-container>
-          </mat-menu>
-        </ng-container>
-      </td>
-    </ng-container>
-
-    <ng-container *ngIf="columns$ | async as columns">
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns" [class]="rowClass(row.original)"></tr>
-      <tr *matNoDataRow>
-        <td [attr.colspan]="columnsCount$ | async">
-          <div class="no-result">
-            <span *ngIf="!(error$ | async)">No result found</span>
-            <span *ngIf="error$ | async as error" class="error">
-              Error while loading data: {{ error!.message }} (HTTP
-              {{ error!.origin.status }} {{ error!.origin.statusText }})
-            </span>
-          </div>
+              <button
+                [disabled]="!(canDeleteRow(row.original) | async)"
+                mat-menu-item
+                (click)="onDelete(row.original)"
+              >
+                <mat-icon>delete</mat-icon>
+                <span>Supprimer</span>
+              </button>
+              @for (action of rowActions; track action) {
+                @if (action.show(row.original)) {
+                  <button
+                    [disabled]="action.disabled(row.original)"
+                    mat-menu-item
+                    (click)="action.func(row.original)"
+                    [matTooltip]="action.tooltip"
+                  >
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                    <span>{{ action.label }}</span>
+                  </button>
+                }
+              }
+            </mat-menu>
+          }
         </td>
-      </tr>
-    </ng-container>
-  </table>
+      </ng-container>
 
-  <div
-    *ngIf="(loaded$ | async) && (loading$ | async)"
-    class="loading"
-  >
+      @if (columns$ | async; as columns) {
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          [class]="rowClass(row.original)"
+        ></tr>
+        <tr *matNoDataRow>
+          <td [attr.colspan]="columnsCount$ | async">
+            <div class="no-result">
+              @if (error$ | async) {
+                <p class="error" role="alert">
+                  Impossible de charger la liste.
+                </p>
+                @if (canRefresh) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="refresh()"
+                    [disabled]="loading$ | async"
+                  >
+                    Réessayer
+                  </button>
+                }
+              } @else if (search.pattern) {
+                <p role="status">Aucun résultat pour cette recherche.</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="search.clear($event)"
+                >
+                  Effacer la recherche
+                </button>
+              } @else {
+                <p role="status">Aucune donnée à afficher.</p>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    </table>
+  </div>
+
+  @if ((loaded$ | async) && (loading$ | async)) {
+    <div class="loading">
+      <mat-progress-spinner
+        color="primary"
+        mode="indeterminate"
+      ></mat-progress-spinner>
+    </div>
+  }
+</div>
+
+@if (!(loaded$ | async)) {
+  <div class="loader">
+    <p role="status">Chargement de la liste…</p>
     <mat-progress-spinner
-      color="primary"
       mode="indeterminate"
+      diameter="32"
     ></mat-progress-spinner>
   </div>
-</div>
+}
 
-<div *ngIf="!(loaded$ | async)" class="loader">
-  <p>Fetching data from server...</p>
-  <mat-progress-spinner
-    mode="indeterminate"
-    diameter="32"
-  ></mat-progress-spinner>
-</div>
+@if (remoteSource && !(error$ | async)) {
+  @if (remoteSource.page$ | async; as page) {
+    <div class="pagination-shell">
+      <mat-paginator
+        [attr.aria-label]="'Pagination — ' + tableLabel"
+        [length]="page.total"
+        [pageIndex]="page.pageIndex"
+        [pageSize]="page.pageSize"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [showFirstLastButtons]="true"
+        [disabled]="!!(loading$ | async)"
+        (page)="remoteSource.setPage($event.pageIndex, $event.pageSize)"
+      ></mat-paginator>
+    </div>
+  }
+}

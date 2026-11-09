@@ -4,10 +4,6 @@ import (
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
 
-func init() {
-	db.RegisterMigration(&Member{})
-}
-
 type Member struct {
 	db.Model
 
@@ -17,6 +13,7 @@ type Member struct {
 	PhoneNumber string `json:"phone_number"`
 	Email       string `json:"email"`
 	Address     string `json:"address"`
+	Bureau      bool   `json:"bureau" gorm:"notNull;default:false"`
 
 	Units []*Unit `json:"units,omitempty" gorm:"many2many:member_unit"`
 }

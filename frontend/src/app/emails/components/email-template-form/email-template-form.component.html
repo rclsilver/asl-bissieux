@@ -1,37 +1,154 @@
 <h1 mat-dialog-title>
-  <ng-container *ngIf="!data.template">Create template</ng-container>
-  <ng-container *ngIf="data.template">Update template</ng-container>
+  {{
+    data.template ? 'Modifier le modèle d’e-mail' : 'Créer un modèle d’e-mail'
+  }}
 </h1>
-<form [formGroup]="form" (submit)="submit()">
+<form [formGroup]="form" (ngSubmit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>Label</mat-label>
-      <input matInput formControlName="label" [required]="true">
-      <mat-error *ngIf="form.controls['label'].touched && form.controls['label'].invalid">
-        <span *ngIf="form.controls['label'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['label'].errors!['server']">{{ form.controls['label'].errors!['server'] }}</span>
-      </mat-error>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Libellé du modèle</mat-label>
+      <input matInput formControlName="label" required />
+      <mat-hint>Nom interne pour retrouver ce modèle.</mat-hint>
+      <mat-error>Donne un libellé au modèle.</mat-error>
     </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Subject</mat-label>
-      <input matInput formControlName="subject" [required]="true">
-      <mat-error *ngIf="form.controls['subject'].touched && form.controls['subject'].invalid">
-        <span *ngIf="form.controls['subject'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['subject'].errors!['server']">{{ form.controls['subject'].errors!['server'] }}</span>
-      </mat-error>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Objet de l’e-mail</mat-label>
+      <input
+        #subjectInput
+        matInput
+        formControlName="subject"
+        required
+        (focus)="activateField('subject')"
+        (click)="rememberSelection('subject')"
+        (keyup)="rememberSelection('subject')"
+        (select)="rememberSelection('subject')"
+        (input)="rememberSelection('subject')"
+        (blur)="rememberSelection('subject')"
+      />
+      <mat-error>Renseigne l’objet de l’e-mail.</mat-error>
     </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Message</mat-label>
-      <textarea matInput rows="15" formControlName="message" [required]="true"></textarea>
-      <mat-error *ngIf="form.controls['message'].touched && form.controls['message'].invalid">
-        <span *ngIf="form.controls['message'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['message'].errors!['server']">{{ form.controls['message'].errors!['server'] }}</span>
-      </mat-error>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Corps du message</mat-label>
+      <textarea
+        #messageInput
+        matInput
+        rows="9"
+        formControlName="message"
+        required
+        (focus)="activateField('message')"
+        (click)="rememberSelection('message')"
+        (keyup)="rememberSelection('message')"
+        (select)="rememberSelection('message')"
+        (input)="rememberSelection('message')"
+        (blur)="rememberSelection('message')"
+      ></textarea>
+      <mat-hint
+        >Le corps accepte le Markdown et les expressions des modèles
+        existants.</mat-hint
+      >
+      <mat-error>Renseigne le corps du message.</mat-error>
     </mat-form-field>
+
+    <details class="variable-help">
+      <summary>Insérer une variable</summary>
+      <p>
+        Ces données sont renseignées automatiquement lors de la préparation
+        depuis un budget. Choisis une variable, puis sa destination. Elle
+        remplacera le texte sélectionné ou sera insérée au curseur.
+      </p>
+      <div class="insertion-controls">
+        <mat-form-field subscriptSizing="dynamic" class="variable-choice">
+          <mat-label>Variable à insérer</mat-label>
+          <mat-select [formControl]="variable">
+            @for (group of variableGroups; track group.label) {
+              <mat-optgroup [label]="group.label">
+                @for (item of group.variables; track item.id) {
+                  <mat-option [value]="item.id">{{ item.label }}</mat-option>
+                }
+              </mat-optgroup>
+            }
+            <mat-option value="custom"
+              >Valeur supplémentaire à renseigner</mat-option
+            >
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="target-choice">
+          <mat-label>Insérer dans</mat-label>
+          <mat-select [formControl]="target">
+            <mat-option value="subject">Objet de l’e-mail</mat-option>
+            <mat-option value="message">Corps du message</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if (selectedVariable; as item) {
+        <p>{{ item.description }}</p>
+        @if (item.snippet.includes('\n') && target.value === 'subject') {
+          <p role="status">
+            Ce bloc occupe plusieurs lignes. Choisis le corps du message comme
+            destination.
+          </p>
+        }
+        <p>
+          Exemple fictif :
+          <span class="example">{{ item.example || '(vide)' }}</span>
+        </p>
+      }
+      @if (variable.value === 'custom') {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Nom de la valeur supplémentaire</mat-label>
+          <input matInput [formControl]="customName" />
+          <mat-hint
+            >Lettres sans accent, chiffres et tiret bas ; commence par une
+            lettre ou un tiret bas.</mat-hint
+          >
+          <mat-error
+            >Choisis un nom valide qui ne remplace pas une donnée
+            automatique.</mat-error
+          >
+        </mat-form-field>
+        <p>
+          Cette valeur n’est pas automatique. Renseigne-la avec le même nom dans
+          Personnalisation lors de la préparation des e-mails du budget.
+        </p>
+      }
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="insertVariable()"
+        [disabled]="!canInsert"
+      >
+        Insérer la variable
+      </button>
+      <p role="status">{{ insertionStatus }}</p>
+    </details>
+    <details>
+      <summary>Syntaxe avancée et aperçu</summary>
+      <p>
+        Les expressions Go et les fonctions Sprig restent disponibles. Tu peux
+        écrire ou modifier les expressions directement. Les blocs de lots et de
+        dépenses parcourent des listes ; leur contexte change à l’intérieur du
+        bloc.
+      </p>
+      <p>
+        Enregistre le modèle, puis utilise Prévisualiser dans la liste des
+        modèles. Pour vérifier un membre et ses cotisations réels, passe par
+        Préparer les e-mails depuis un budget.
+      </p>
+      <p>
+        Les pièces jointes se gèrent depuis l’action Pièces jointes du modèle.
+      </p>
+    </details>
+    @if (error) {
+      <p role="alert">{{ error }}</p>
+    }
   </div>
-  <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="cancel()">Cancel</button>
-    <div class="spacer"></div>
-    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+  <div mat-dialog-actions class="form-actions">
+    <button mat-button type="button" (click)="cancel()" [disabled]="saving">
+      Annuler
+    </button>
+    <span class="spacer"></span>
+    <button mat-flat-button color="primary" type="submit" [disabled]="!canSave">
+      {{ saving ? 'Enregistrement…' : 'Enregistrer le modèle' }}
+    </button>
   </div>
 </form>

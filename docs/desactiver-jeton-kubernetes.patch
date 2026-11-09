@@ -1,0 +1,13 @@
+diff --git a/apps/misc.app.asl-bissieux.tf b/apps/misc.app.asl-bissieux.tf
+--- a/apps/misc.app.asl-bissieux.tf
++++ b/apps/misc.app.asl-bissieux.tf
+@@ -85,6 +85,9 @@
+       }
+ 
+       spec {
++        # ASL does not access the Kubernetes API.
++        automount_service_account_token = false
++
+         # Wait for the DB to accept connections before starting the app.
+         init_container {
+           name    = "check-postgresql"

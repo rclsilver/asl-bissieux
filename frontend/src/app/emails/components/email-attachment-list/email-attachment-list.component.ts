@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -14,6 +19,8 @@ import { CustomRowAction } from 'src/app/shared/components/crud-table/crud-table
   selector: 'app-email-attachment-list',
   templateUrl: './email-attachment-list.component.html',
   styleUrls: ['./email-attachment-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class EmailAttachmentListComponent {
   private readonly _api = inject(ApiService);
@@ -31,28 +38,28 @@ export class EmailAttachmentListComponent {
   readonly rowActions = [
     new CustomRowAction<APISchemas['ModelsAttachment']>(
       'download',
-      'Download the attachment',
-      'Download',
+      'Télécharger la pièce jointe',
+      'Télécharger',
       (row) => this.download(row)
     ),
   ];
 
   readonly columns = [
     new Column('name', {
-      label: 'Name',
+      label: 'Nom',
       canSort: true,
       canFilter: true,
     }),
     new Column('inline', {
-      label: 'Inline',
+      label: 'Intégrée au message',
       canSort: true,
     }),
     new Column('size', {
-      label: 'Size',
+      label: 'Taille',
       canSort: true,
     }),
     new Column('content_type', {
-      label: 'Content Type',
+      label: 'Type de fichier',
       canSort: true,
       canFilter: true,
     }),
@@ -93,7 +100,9 @@ export class EmailAttachmentListComponent {
         const pwa = window.open(url);
 
         if (!pwa || pwa.closed || typeof pwa.closed == 'undefined') {
-          alert('Please disable your Pop-up blocker and try again.');
+          alert(
+            'Autorise les fenêtres surgissantes pour cette application, puis réessaie.'
+          );
         }
       });
   }
@@ -101,8 +110,9 @@ export class EmailAttachmentListComponent {
   delete(attachment: APISchemas['ModelsAttachment']) {
     this._notifications
       .showConfirm({
-        title: 'Delete an attachment',
-        message: `Are you sure to delete the attachment ${attachment.name}?`,
+        title: 'Supprimer une pièce jointe',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer la pièce jointe « ${attachment.name} » ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -115,11 +125,13 @@ export class EmailAttachmentListComponent {
                 this.refresh();
                 this._notifications.showDialog({
                   title: 'Info',
-                  message: `The attachment ${attachment.name} has been deleted`,
+                  message: `La pièce jointe « ${attachment.name} » a été supprimée.`,
                   level: NotificationDialogLevel.Info,
                 });
               },
-              error: this._api.handleError('Unable to delete the attachment'),
+              error: this._api.handleError(
+                'Impossible de supprimer la pièce jointe'
+              ),
             });
         }
       });

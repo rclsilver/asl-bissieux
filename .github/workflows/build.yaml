@@ -7,9 +7,18 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
+permissions:
+  contents: read
+
 jobs:
+  validate:
+    uses: ./.github/workflows/validate.yaml
+
   build-docker:
+    needs: validate
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
 
     env:
       REGISTRY: ghcr.io
@@ -17,16 +26,14 @@ jobs:
       DOCKER_FILE: ./Dockerfile
 
     permissions:
-      contents: write
+      contents: read
       packages: write
-      id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          fetch-depth: ${{ !startsWith(github.ref, 'refs/tags/v') && 20 || 1 }}
-          fetch-tags: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          fetch-depth: 0
 
       - name: Login to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -43,17 +50,14 @@ jobs:
 
       - name: Generate the version
         id: version
+        env:
+          RELEASE_REF: ${{ github.ref }}
         run: |
-          if git describe --tags --exact-match 2>/dev/null; then
-            VERSION=$(git describe --tags --exact-match)
+          if [[ "$RELEASE_REF" == refs/tags/* ]]; then
+            VERSION="${RELEASE_REF#refs/tags/}"
+            [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           else
-            if git describe --tags --match 'v*.*.*' 2>/dev/null; then
-              VERSION=$(git describe --tags --match 'v*.*.*')
-            else
-              COMMIT_COUNT=$(git rev-list --all --count)
-              SHORT_HASH=$(git rev-parse --short HEAD)
-              VERSION="0.0.0-${COMMIT_COUNT}-${SHORT_HASH}"
-            fi
+            VERSION="0.0.0-dev.g${GITHUB_SHA}"
           fi
           echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Generated version: ${VERSION}"
@@ -65,15 +69,27 @@ jobs:
           context: .
           file: ${{ env.DOCKER_FILE }}
           push: true
+          build-args: |
+            VERSION=${{ steps.version.outputs.value }}
+            COMMIT=${{ github.sha }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.value }}
             ${{ startsWith(github.ref, 'refs/tags/v') && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.version=${{ steps.version.outputs.value }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
+  publish-release:
+    needs: build-docker
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: marvinpinto/action-automatic-releases@d68defdd11f9dcc7f52f35c1b7c236ee7513bcc1 # latest resolved 2026-10-26
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          title: ${{ steps.version.outputs.value }}
+          title: ${{ needs.build-docker.outputs.version }}

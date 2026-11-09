@@ -11,7 +11,9 @@ import { UnitsRouterModule } from './units.routes';
 import { UnitListComponent } from './components/unit-list/unit-list.component';
 import { UnitFormComponent } from './components/unit-form/unit-form.component';
 
+import { MatSelectModule } from '@angular/material/select';
 const material = [
+  MatSelectModule,
   MatButtonModule,
   MatDialogModule,
   MatFormFieldModule,

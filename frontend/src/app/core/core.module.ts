@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 
+import { MatMenuModule } from '@angular/material/menu';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -13,8 +14,10 @@ import { RouterModule } from '@angular/router';
 import { CoreRouterModule } from './core.routes';
 import { SharedModule } from '../shared/shared.module';
 import { WithGoogleAuthModule } from 'ngx-sign-in-with-google';
+import { TourPromptComponent } from '../tour/tour-prompt.component';
 
 const material = [
+  MatMenuModule,
   MatCardModule,
   MatListModule,
   MatSidenavModule,
@@ -31,6 +34,7 @@ const material = [
     WithGoogleAuthModule,
     ...material,
     SharedModule,
+    TourPromptComponent,
   ],
   declarations: [PageComponent],
   exports: [PageComponent],

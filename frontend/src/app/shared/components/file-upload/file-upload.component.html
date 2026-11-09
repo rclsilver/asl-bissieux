@@ -1,8 +1,20 @@
-<input type="file" class="file-input" (change)="onFileSelected($event)" #fileUpload>
+<input
+  type="file"
+  class="file-input"
+  (change)="onFileSelected($event)"
+  #fileUpload
+/>
 <div class="file-upload">
-  {{(filename$ | async) || "No file uploaded yet."}}
+  {{ (filename$ | async) || 'Aucun fichier sélectionné.' }}
 
-  <button mat-mini-fab color="primary" type="button" (click)="fileUpload.click()">
+  <button
+    mat-mini-fab
+    color="primary"
+    type="button"
+    (click)="fileUpload.click()"
+    aria-label="Choisir un fichier"
+    matTooltip="Choisir un fichier"
+  >
     <mat-icon>attach_file</mat-icon>
   </button>
 </div>

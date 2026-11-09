@@ -1,25 +1,35 @@
 <h1 mat-dialog-title>
-  <span *ngIf="sending$ | async">Sending e-mail {{current$ | async}} / {{total$ | async}}...</span>
-  <span *ngIf="!(sending$ | async)">
-    Sent {{total$ | async}}
-    <span [ngPlural]="(total$ | async) || 0">
-      <ng-template ngPluralCase="1">e-mail</ng-template>
-      <ng-template ngPluralCase="other">e-mails</ng-template>
-    </span>
-    <span *ngIf="errors$ | async as errors">
-      with {{errors}}
-      <span [ngPlural]="errors">
-        <ng-template ngPluralCase="1">error</ng-template>
-        <ng-template ngPluralCase="other">errors</ng-template>
-      </span>
-    </span>
-  </span>
+  @if (sending$ | async) {
+    <span
+      >Envoi en cours — {{ current$ | async }} /
+      {{ total$ | async }} terminés</span
+    >
+  }
+  @if (!(sending$ | async)) {
+    <span> Envoi terminé </span>
+  }
 </h1>
 <div mat-dialog-content class="content">
-  <mat-progress-bar *ngIf="sending$ | async" mode="determinate" [value]="progress$ | async"></mat-progress-bar>
-  <p>Sent: {{sent$ | async}} - Errors: {{errors$ | async}} - Remaining: {{remaining$ | async}}</p>
+  @if (sending$ | async) {
+    <mat-progress-bar
+      mode="determinate"
+      [value]="progress$ | async"
+    ></mat-progress-bar>
+  }
+  <p>
+    Envoyés : {{ sent$ | async }} — Erreurs ou résultats à vérifier :
+    {{ errors$ | async }} — Restants : {{ remaining$ | async }}
+  </p>
 </div>
 <div mat-dialog-actions class="buttons">
-  <button *ngIf="sending$ | async" mat-flat-button color="warn" type="button" (click)="abort()">Abort</button>
-  <button *ngIf="!(sending$ | async)" mat-button color="primary" type="button" (click)="close()">Close</button>
+  @if (sending$ | async) {
+    <button mat-flat-button color="warn" type="button" (click)="abort()">
+      Arrêter
+    </button>
+  }
+  @if (!(sending$ | async)) {
+    <button mat-button color="primary" type="button" (click)="close()">
+      Fermer
+    </button>
+  }
 </div>

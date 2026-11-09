@@ -6,11 +6,13 @@ import {
   Input,
   Output,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 export type UnitClickEvent = {
+  // Historical name: this is the number from the SVG, not the database UUID.
   unitId: number;
-  event: MouseEvent;
+  event: MouseEvent | KeyboardEvent;
 };
 
 export type UnitClasses = { [unitId: number]: string };
@@ -19,6 +21,13 @@ export type UnitClasses = { [unitId: number]: string };
   selector: 'app-interactive-map',
   templateUrl: './interactive-map.component.svg',
   styleUrls: ['./interactive-map.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
+  host: {
+    '[class.static-map]': '!interactive',
+    '[class.transparent-map]': 'transparentBackground',
+    '[class.fit-container]': 'fitContainer',
+  },
 })
 export class InteractiveMapComponent implements AfterViewInit {
   private readonly _svgWidth = 1871;
@@ -32,6 +41,34 @@ export class InteractiveMapComponent implements AfterViewInit {
   private _height?: number;
 
   private _classes: UnitClasses = {};
+  private readonly appliedClasses = new Map<number, string[]>();
+  private _highlightedUnits: number[] = [];
+  private _selectedUnit: number | null = null;
+  private activeUnit?: number;
+  private unitElements: { number: number; element: SVGGElement }[] = [];
+  private _interactive = true;
+  @Input() set interactive(value: boolean) {
+    this._interactive = value;
+    if (this.container) this.updateInteraction();
+  }
+  get interactive() {
+    return this._interactive;
+  }
+  @Input() label = 'Carte des lots';
+  @Input() transparentBackground = false;
+  @Input() fitContainer = false;
+  @Input() set highlightedUnits(units: number[]) {
+    this._highlightedUnits = units ?? [];
+    if (this.container) this.setSelection();
+  }
+  @Input() set selectedUnit(number: number | null) {
+    this._selectedUnit = number;
+    if (number !== null) this.activeUnit = number;
+    if (this.container) {
+      this.setSelection();
+      this.setTabStops();
+    }
+  }
 
   @Input() set width(v: number) {
     this._width = v;
@@ -87,25 +124,128 @@ export class InteractiveMapComponent implements AfterViewInit {
     this.setShowLabels(this._showLabels);
 
     this.foreachUnits((unitId, element) => {
-      element.onmouseenter = (e) => {
-        if (this.hoverClass) {
-          element.classList.add(this.hoverClass);
-        }
-      };
-
-      element.onmouseleave = (e) => {
-        if (this.hoverClass) {
-          element.classList.remove(this.hoverClass);
-        }
-      };
-
-      element.onclick = (event) => {
-        this.unitClick.emit({
-          unitId,
-          event,
-        });
-      };
+      this.unitElements.push({ number: unitId, element });
     });
+    this.unitElements.sort((a, b) => a.number - b.number);
+    this.updateInteraction();
+  }
+
+  private bindUnitEvents(unitId: number, element: SVGGElement) {
+    element.onmouseenter = (e) => {
+      if (this.interactive && this.hoverClass) {
+        element.classList.add(this.hoverClass);
+      }
+    };
+
+    element.onmouseleave = (e) => {
+      if (this.hoverClass) {
+        element.classList.remove(this.hoverClass);
+      }
+    };
+
+    element.onclick = (event) => {
+      if (!this.interactive) return;
+      this.unitClick.emit({
+        unitId,
+        event,
+      });
+    };
+    element.onfocus = () => {
+      if (!this.interactive) return;
+      this.activeUnit = unitId;
+      this.setTabStops();
+    };
+    element.onkeydown = (event) => {
+      if (!this.interactive) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (!event.repeat) this.unitClick.emit({ unitId, event });
+      } else {
+        const index = this.unitElements.findIndex(
+          (unit) => unit.number === unitId
+        );
+        let next: number;
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            next = Math.min(index + 1, this.unitElements.length - 1);
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            next = Math.max(index - 1, 0);
+            break;
+          case 'Home':
+            next = 0;
+            break;
+          case 'End':
+            next = this.unitElements.length - 1;
+            break;
+          default:
+            return;
+        }
+        event.preventDefault();
+        this.unitElements[next]?.element.focus();
+      }
+    };
+  }
+
+  private updateInteraction() {
+    this.unitElements.forEach(({ number, element }) => {
+      if (this.interactive) {
+        element.setAttribute('role', 'button');
+        element.removeAttribute('focusable');
+        this.bindUnitEvents(number, element);
+      } else {
+        element.removeAttribute('role');
+        element.setAttribute('focusable', 'false');
+        element.onclick = null;
+        element.onmouseenter = null;
+        element.onmouseleave = null;
+        element.onfocus = null;
+        element.onkeydown = null;
+        if (element.ownerDocument.activeElement === element) element.blur();
+      }
+      element.setAttribute(
+        'aria-label',
+        this.interactive ? `Consulter le lot ${number}` : `Lot ${number}`
+      );
+      if (!this.interactive && this.hoverClass)
+        element.classList.remove(this.hoverClass);
+    });
+    this.setSelection();
+    this.setTabStops();
+  }
+
+  private setSelection() {
+    this.foreachUnits((number, element) => {
+      element.classList.toggle(
+        'unit-highlighted',
+        this.interactive && this._highlightedUnits.includes(number)
+      );
+      element.classList.toggle(
+        'unit-selected',
+        this.interactive && this._selectedUnit === number
+      );
+      if (this.interactive && this._selectedUnit === number)
+        element.setAttribute('aria-current', 'true');
+      else element.removeAttribute('aria-current');
+    });
+  }
+  private setTabStops() {
+    if (!this.interactive) {
+      this.unitElements.forEach(({ element }) =>
+        element.removeAttribute('tabindex')
+      );
+      return;
+    }
+    if (!this.unitElements.some((unit) => unit.number === this.activeUnit))
+      this.activeUnit = this.unitElements[0]?.number;
+    this.unitElements.forEach((unit) =>
+      unit.element.setAttribute(
+        'tabindex',
+        unit.number === this.activeUnit ? '0' : '-1'
+      )
+    );
   }
 
   private setWidth(width: number) {
@@ -121,12 +261,13 @@ export class InteractiveMapComponent implements AfterViewInit {
       const cls = classes[unitId];
 
       // remove old classes
-      element.classList.forEach((c) => element.classList.remove(c));
+      for (const cls of this.appliedClasses.get(unitId) ?? [])
+        element.classList.remove(cls);
 
       // set class if defined
-      if (cls) {
-        element.classList.add(cls);
-      }
+      const next = (cls ?? '').split(/\s+/).filter(Boolean);
+      next.forEach((value) => element.classList.add(value));
+      this.appliedClasses.set(unitId, next);
     });
   }
 

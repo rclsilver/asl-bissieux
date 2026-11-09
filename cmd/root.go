@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/rclsilver/asl-bissieux/pkg/config"
+	"github.com/rclsilver/asl-bissieux/version"
 )
 
 var (
@@ -14,8 +16,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "asl-bissieux",
-	Short: "asl-bissieux server",
+	Use:     "asl-bissieux",
+	Short:   "asl-bissieux server",
+	Version: fmt.Sprintf("%s (commit %s)", version.Version, version.Commit),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)

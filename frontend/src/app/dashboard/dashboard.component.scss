@@ -1,0 +1,261 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+h2,
+dt,
+p,
+li {
+  overflow-wrap: anywhere;
+}
+p {
+  max-width: 75ch;
+  line-height: 1.55;
+}
+.dashboard-heading,
+.page-heading,
+.selectors,
+.budget-title,
+.map-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+.dashboard-heading,
+.map-heading {
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.page-heading h1,
+.map-heading h2 {
+  margin: 0;
+}
+.page-heading p,
+.map-heading p,
+.map-help {
+  color: var(--asl-muted);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+mat-form-field {
+  width: min(100%, 26rem);
+}
+.selectors mat-form-field {
+  width: 17rem;
+}
+.budget-title {
+  margin: 1.5rem 0 0.5rem;
+}
+.status-label {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--asl-tint);
+  color: var(--asl-primary);
+  border-radius: 6px;
+}
+.indicators,
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+.indicators {
+  background: var(--asl-surface);
+  border: 1px solid var(--asl-border);
+  border-radius: var(--asl-radius);
+  padding: 1.5rem;
+}
+dt,
+.calculation-note {
+  font-size: 0.875rem;
+  color: var(--asl-muted);
+}
+dd {
+  margin: 0.5rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.indicators a {
+  text-decoration: none;
+}
+.indicators a:hover {
+  text-decoration: underline;
+}
+summary {
+  cursor: pointer;
+  color: var(--asl-primary);
+  min-height: 44px;
+  align-content: center;
+}
+.inline-facts,
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+.inline-facts {
+  margin-bottom: 1rem;
+}
+.section {
+  border-top: 1px solid var(--asl-border);
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+  min-width: 0;
+}
+.section h2 {
+  margin: 0 0 1rem;
+}
+.section li {
+  margin-block: 0.5rem;
+}
+.map-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+.map-panel,
+.lot-detail,
+.selection-prompt {
+  background: var(--asl-surface);
+  border: 1px solid var(--asl-border);
+  border-radius: var(--asl-radius);
+  padding: 1.5rem;
+}
+.map-panel {
+  margin: 0;
+}
+.map-search {
+  width: 100%;
+}
+.map-results {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: var(--asl-tint);
+  border-radius: 10px;
+}
+.map-results p {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+.result-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 10rem;
+  overflow: auto;
+}
+.result-buttons [aria-pressed="true"] {
+  background: var(--asl-primary);
+  color: var(--asl-on-primary);
+}
+.legend {
+  font-size: 0.75rem;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+.dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--asl-map-neutral);
+}
+.settled {
+  background: var(--asl-map-settled);
+}
+.partial {
+  background: var(--asl-map-partial);
+}
+.unpaid {
+  background: var(--asl-map-unpaid);
+}
+.overpaid {
+  background: var(--asl-map-overpaid);
+}
+.map-context {
+  min-width: 0;
+  font-size: 0.875rem;
+}
+.lot-detail {
+  border-color: var(--asl-primary);
+  transition: box-shadow 180ms ease-out;
+}
+.lot-detail h3,
+.selection-prompt h2 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+}
+.lot-detail a[mat-stroked-button] {
+  height: auto;
+  min-height: 44px;
+  white-space: normal;
+  text-align: start;
+  padding: 12px;
+}
+.map-context .section {
+  margin-top: 1.5rem;
+}
+.map-context .section h2 {
+  font-size: 1.1rem;
+}
+.actions-list {
+  padding-left: 1.25rem;
+}
+.global-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(25rem, 100%), 1fr));
+  gap: 2rem;
+}
+@media (max-width: 1050px) {
+  .map-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .indicators {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .indicators dd {
+    font-size: 1.3rem;
+  }
+  .map-panel,
+  .lot-detail,
+  .selection-prompt {
+    padding: 1rem;
+  }
+  .selectors,
+  .selectors mat-form-field {
+    width: 100%;
+  }
+  .selectors mat-form-field {
+    width: auto;
+    flex: 1 1 12rem;
+  }
+  .global-modules {
+    gap: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lot-detail {
+    transition: none;
+  }
+}
+
+.comparison-section > summary {
+  font-size: 1.1rem;
+  font-weight: 650;
+}

@@ -22,7 +22,7 @@ export const DefaultValueRenderer: RenderFunctionFactory =
     value || defaultValue;
 
 export const DateRender: RenderFunctionFactory =
-  (format: string = 'Y-MM-dd HH:mm:ss') =>
+  (format: string = 'yyyy-MM-dd HH:mm:ss') =>
   (value: any) =>
     new DatePipe('en-us').transform(value, format);
 

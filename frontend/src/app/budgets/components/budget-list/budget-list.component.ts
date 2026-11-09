@@ -1,9 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { BudgetDataSource } from '../../datasources/budget.datasource';
 import { Column } from 'src/app/shared/models/column.model';
-import { combineLatest, map, of, switchMap } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 import { NotificationsService } from 'src/app/shared/services/notifications.service';
 import { ApiService } from 'src/app/core/services/api.service';
 import { BudgetFormComponent } from '../budget-form/budget-form.component';
@@ -15,6 +20,8 @@ import { BudgetEmailFormComponent } from '../budget-email-form/budget-email-form
   selector: 'app-budget-list',
   templateUrl: './budget-list.component.html',
   styleUrls: ['./budget-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class BudgetListComponent {
   private readonly _api = inject(ApiService);
@@ -32,13 +39,14 @@ export class BudgetListComponent {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'cloud',
-            'Publish the budget',
-            'Publish',
+            'Publier le budget',
+            'Publier',
             (row) =>
               this._notifications
                 .showConfirm({
-                  title: 'Publish the budget',
-                  message: `Confirm publishing the budget ${row.label}? Further modifications will be disabled.`,
+                  title: 'Publier le budget',
+                  confirmLabel: 'Publier',
+                  message: `Publier le budget ${row.label} ? Les dépenses et cotisations seront figées et le budget ne pourra plus être supprimé. Le libellé et les paiements resteront modifiables selon tes droits.`,
                   class: 'warn',
                 })
                 .afterClosed()
@@ -49,12 +57,12 @@ export class BudgetListComponent {
                         this.refresh();
                         this._notifications.showDialog({
                           title: 'Info',
-                          message: `The budget ${row.label} has been published`,
+                          message: `Le budget « ${row.label} » a été publié.`,
                           level: NotificationDialogLevel.Info,
                         });
                       },
                       error: this._api.handleError(
-                        'Unable to publish the budget'
+                        'Impossible de publier le budget'
                       ),
                     });
                   }
@@ -70,14 +78,16 @@ export class BudgetListComponent {
         actions.push(
           new CustomRowAction<APISchemas['ModelsBudgetResult']>(
             'mail',
-            'Send e-mail',
-            'E-mail',
+            'Préparer les e-mails',
+            'Préparer les e-mails',
             (row) =>
               this._notifications.showForm(BudgetEmailFormComponent, {
                 data: {
                   budget: row,
                 },
-                width: '480px',
+                width: '760px',
+                maxWidth: 'calc(100vw - 2rem)',
+                maxHeight: 'calc(100dvh - 2rem)',
               }),
             (row) => {
               return !row.draft;
@@ -92,7 +102,7 @@ export class BudgetListComponent {
 
   readonly columns = [
     new Column('label', {
-      label: 'Label',
+      label: 'Libellé',
       routeTo: (v) => {
         return `/budgets/${v.id}`;
       },
@@ -100,17 +110,25 @@ export class BudgetListComponent {
       canFilter: true,
     }),
     new Column('draft', {
-      label: 'Draft',
+      label: 'Brouillon',
       canSort: true,
     }),
     new Column('amount', {
-      label: 'Amount',
-      render: (v) => `${v} €`,
+      label: 'Montant',
+      render: (v) =>
+        new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(v),
       canSort: true,
     }),
     new Column('paid', {
-      label: 'Paid',
-      render: (v) => `${v} €`,
+      label: 'Réglé',
+      render: (v) =>
+        new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR',
+        }).format(v),
       canSort: true,
     }),
   ];
@@ -122,36 +140,14 @@ export class BudgetListComponent {
     this.datasource.load();
   }
 
-  canEdit(budget: APISchemas['ModelsBudgetResult']) {
-    return this._auth.administrator$.pipe(
-      switchMap((administrator) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.UpdateBudget');
-      })
-    );
+  canEdit(_: APISchemas['ModelsBudgetResult']) {
+    return this._auth.allowed$('budget.UpdateBudget');
   }
 
   canDelete(budget: APISchemas['ModelsBudgetResult']) {
-    return this._auth.administrator$.pipe(
-      switchMap((administrator) => {
-        if (administrator) {
-          return of(true);
-        }
-
-        if (!budget.draft) {
-          return of(false);
-        }
-
-        return this._auth.allowed$('budget.DeleteBudget');
-      })
-    );
+    return budget.draft
+      ? this._auth.allowed$('budget.DeleteBudget')
+      : of(false);
   }
 
   edit(budget?: APISchemas['ModelsBudgetResult']) {
@@ -172,8 +168,9 @@ export class BudgetListComponent {
   delete(budget: APISchemas['ModelsBudgetResult']) {
     this._notifications
       .showConfirm({
-        title: 'Delete a budget',
-        message: `Are you sure to delete the budget ${budget.label}?`,
+        title: 'Supprimer un budget',
+        confirmLabel: 'Supprimer',
+        message: `Supprimer le budget « ${budget.label} » ?`,
         class: 'warn',
       })
       .afterClosed()
@@ -184,11 +181,11 @@ export class BudgetListComponent {
               this.refresh();
               this._notifications.showDialog({
                 title: 'Info',
-                message: `The budget ${budget.label} has been deleted`,
+                message: `Le budget « ${budget.label} » a été supprimé.`,
                 level: NotificationDialogLevel.Info,
               });
             },
-            error: this._api.handleError('Unable to delete the budget'),
+            error: this._api.handleError('Impossible de supprimer le budget'),
           });
         }
       });

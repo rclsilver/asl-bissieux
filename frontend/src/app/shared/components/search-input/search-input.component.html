@@ -1,13 +1,42 @@
-<ng-container *ngIf="(columns$ | async)?.length">
-  <button *ngIf="this.folded$ | async" mat-icon-button type="button" (click)="show()" matTooltip="Filter data">
-    <mat-icon>search</mat-icon>
-  </button>
-  <mat-form-field *ngIf="!(this.folded$ | async)" subscriptSizing="dynamic">
-    <mat-label>{{ label$ | async }}</mat-label>
-    <input matInput #input>
-    <mat-icon matPrefix>search</mat-icon>
-    <button mat-icon-button matSuffix type="button" (click)="clear($event)" matTooltip="Clear filters">
-      <mat-icon>clear</mat-icon>
+@if ((columns$ | async)?.length) {
+  <div class="search-shell" [class.expanded]="!(folded$ | async)">
+    <button
+      #trigger
+      class="search-trigger"
+      mat-icon-button
+      type="button"
+      (click)="show()"
+      [attr.inert]="(folded$ | async) ? null : ''"
+      [attr.aria-hidden]="!(folded$ | async)"
+      matTooltip="Rechercher dans la liste"
+      aria-label="Rechercher dans la liste"
+    >
+      <mat-icon aria-hidden="true">search</mat-icon>
     </button>
-  </mat-form-field>
-</ng-container>
+    <mat-form-field
+      class="search-field"
+      subscriptSizing="dynamic"
+      floatLabel="always"
+      [attr.inert]="(folded$ | async) ? '' : null"
+      [attr.aria-hidden]="folded$ | async"
+    >
+      <mat-label>Rechercher</mat-label>
+      <input
+        matInput
+        #input
+        [attr.aria-label]="'Rechercher : ' + (label$ | async)"
+      />
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="clear($event)"
+        matTooltip="Effacer la recherche"
+        aria-label="Effacer la recherche"
+      >
+        <mat-icon aria-hidden="true">clear</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+}

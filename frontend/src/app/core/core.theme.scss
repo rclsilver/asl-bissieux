@@ -1,5 +1,5 @@
-@import "./components/page/page.component-theme.scss";
+@use "./components/page/page.component-theme" as page;
 
 @mixin core-theme($theme) {
-  @include page-component-theme($theme);
+  @include page.page-component-theme($theme);
 }

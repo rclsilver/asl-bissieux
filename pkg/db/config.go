@@ -23,7 +23,7 @@ type dbConfig struct {
 	Username string
 	Password string
 	Base     string
-	TimeZone string
+	TimeZone string `mapstructure:"time_zone"`
 }
 
 func (c *dbConfig) SetDefaults() {

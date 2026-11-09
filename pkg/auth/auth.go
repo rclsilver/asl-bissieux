@@ -41,7 +41,7 @@ func registerProvider(name Provider, provider AuthProvider) {
 
 type authConfig struct {
 	Provider   Provider
-	CreateUser bool
+	CreateUser bool `mapstructure:"create_user"`
 }
 
 func (c *authConfig) SetDefaults() {

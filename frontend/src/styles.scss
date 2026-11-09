@@ -1,71 +1,334 @@
-// Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
 @use "@angular/material" as mat;
+@use "normalize.css";
+@use "app/core/core.theme" as core;
+@use "app/shared/shared.theme" as shared;
+@use "app/dashboard/dashboard.theme" as dashboard;
 
-// Reset all CSS rules using normalize
-@import "~normalize.css";
-
-// Plus imports for other components in your app.
-@import "app/core/core.theme.scss";
-@import "app/shared/shared.theme.scss";
-
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
-@include mat.core();
-
-// Define dark theme
-$app-primary: mat.define-palette(mat.$blue-palette);
-$app-accent: mat.define-palette(mat.$grey-palette, A200, A100, A400);
-$app-warn: mat.define-palette(mat.$red-palette);
-
-$dark-theme: mat.define-dark-theme(
-  (
-    color: (
-      primary: $app-primary,
-      accent: $app-accent,
-      warn: $app-warn,
-    ),
-    typography: mat.define-typography-config(),
-    density: 0,
-  )
-);
-
-// Define light theme
-$light-theme: mat.define-light-theme(
-  (
-    color: (
-      primary: $app-primary,
-      accent: $app-accent,
-      warn: $app-warn,
-    ),
-  )
-);
-
-// Apply the dark theem by default
-@include mat.core-theme($dark-theme);
-@include mat.all-component-themes($dark-theme);
-@include core-theme($dark-theme);
-@include shared-theme($dark-theme);
-
-// Apply the light theme only when the user prefers light themes.
-@media (prefers-color-scheme: light) {
-  @include mat.core-color($light-theme);
-  @include mat.all-component-colors($light-theme);
-  @include core-theme($light-theme);
-  @include shared-theme($light-theme);
+// Tabbed views share the E-mails header; their tables join it without rounded corners.
+mat-tab-group,
+mat-tab-nav-panel {
+  --asl-table-radius: 0;
+}
+[mat-tab-nav-bar],
+mat-tab-group > mat-tab-header {
+  border-radius: 12px 12px 0 0;
+  background: var(--asl-surface);
 }
 
-// Common styles
+// Projected list controls share the same layout as search, refresh and add.
+.list-filters {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  font-size: 1rem;
+  font-weight: 400;
+  white-space: normal;
+
+  mat-form-field {
+    inline-size: 17rem;
+    max-inline-size: 100%;
+    @include mat.form-field-overrides(
+      (
+        container-height: 48px,
+        container-vertical-padding: 12px,
+        filled-with-label-container-padding-top: 20px,
+        filled-with-label-container-padding-bottom: 4px,
+      )
+    );
+  }
+}
+.context-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.context-field {
+  max-inline-size: 100%;
+  background: var(--asl-surface);
+  border-radius: 10px;
+  @include mat.form-field-overrides(
+    (
+      container-height: 48px,
+      container-vertical-padding: 12px,
+      outlined-container-shape: 10px,
+    )
+  );
+}
+.context-controls .context-refresh {
+  flex-shrink: 0;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 1px solid var(--asl-muted);
+  border-radius: 10px;
+  background: var(--asl-surface);
+  color: var(--asl-ink);
+}
+.list-help,
+.list-note {
+  margin-block: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--asl-muted);
+  max-inline-size: 75ch;
+}
+.list-help summary {
+  cursor: pointer;
+  min-block-size: 44px;
+  align-content: center;
+  color: var(--asl-primary);
+}
+
+@mixin graphite {
+  --asl-ground: #101821;
+  --asl-surface: #19232e;
+  --asl-raised: #22303e;
+  --asl-border: #3b4e60;
+  --asl-ink: #e5edf6;
+  --asl-muted: #adbdcf;
+  --asl-primary: #a8d8ff;
+  --asl-on-primary: #123149;
+  --asl-tint: #253b50;
+  --asl-header: #0c131b;
+  --asl-header-ink: #e5edf6;
+  --asl-nav-active: #273e54;
+  --asl-nav-ink: #b6dfff;
+  --asl-error: #ffb4ab;
+  --asl-on-error: #512a2a;
+  --asl-error-tint: #512a2a;
+  --asl-warning: #f3c77e;
+  --asl-surplus: #d3b5ff;
+  --asl-surplus-tint: #342545;
+  --asl-shadow: 0 8px 26px rgb(0 0 0 / 18%);
+}
+
+html {
+  color-scheme: light dark;
+  --asl-ground: #eef6fa;
+  --asl-surface: #fff;
+  --asl-raised: #f4f8fc;
+  --asl-border: #cbdce8;
+  --asl-ink: #142b48;
+  --asl-muted: #52697d;
+  --asl-primary: #124dc5;
+  --asl-on-primary: #fff;
+  --asl-tint: #e5efff;
+  --asl-header: #1246ae;
+  --asl-header-ink: #fff;
+  --asl-nav-active: #fff;
+  --asl-nav-ink: #1244a8;
+  --asl-error: #a72d36;
+  --asl-on-error: #fff;
+  --asl-error-tint: #ffedef;
+  --asl-warning: #855100;
+  --asl-surplus: #6d28d9;
+  --asl-surplus-tint: #f5f3ff;
+  --asl-shadow: 0 8px 26px rgb(20 43 72 / 7%);
+  --asl-radius: 16px;
+  --asl-map-settled: #a6ddba;
+  --asl-map-partial: #fac580;
+  --asl-map-unpaid: #ed9da7;
+  --asl-map-overpaid: #c4a3e8;
+  --asl-map-neutral: #d4dce2;
+  --asl-map-focus: #124dc5;
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: (
+        "Segoe UI",
+        Roboto,
+        sans-serif,
+      ),
+      density: 0,
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      primary: var(--asl-primary),
+      on-primary: var(--asl-on-primary),
+      primary-container: var(--asl-tint),
+      on-primary-container: var(--asl-ink),
+      surface: var(--asl-surface),
+      surface-dim: var(--asl-ground),
+      surface-bright: var(--asl-surface),
+      surface-container: var(--asl-raised),
+      surface-container-lowest: var(--asl-surface),
+      surface-container-low: var(--asl-surface),
+      surface-container-high: var(--asl-raised),
+      surface-container-highest: var(--asl-raised),
+      on-surface: var(--asl-ink),
+      on-surface-variant: var(--asl-muted),
+      outline: var(--asl-muted),
+      outline-variant: var(--asl-border),
+      error: var(--asl-error),
+      on-error: var(--asl-on-error),
+      error-container: var(--asl-error-tint),
+      on-error-container: var(--asl-error),
+    )
+  );
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 10px,
+      outlined-container-shape: 10px,
+      text-container-shape: 10px,
+    )
+  );
+  @include mat.form-field-overrides(
+    (
+      filled-container-shape: 10px,
+      outlined-container-shape: 10px,
+    )
+  );
+  @include mat.dialog-overrides(
+    (
+      container-shape: 20px,
+    )
+  );
+}
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  @include graphite;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    @include graphite;
+  }
+}
+@include core.core-theme(null);
+@include shared.shared-theme(null);
+@include dashboard.dashboard-theme(null);
+
 html,
 body {
   height: 100%;
 }
-
 body {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0;
+  font:
+    16px/1.5 "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: var(--asl-ground);
+  color: var(--asl-ink);
 }
-
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+::selection {
+  color: var(--asl-on-primary);
+  background: var(--asl-primary);
+}
+:focus-visible {
+  outline: 2px solid var(--asl-primary);
+  outline-offset: 3px;
+}
+input,
+textarea {
+  caret-color: var(--asl-primary);
+}
+* {
+  scrollbar-color: var(--asl-border) transparent;
+  scrollbar-width: thin;
+}
+h1 {
+  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+h2 {
+  font-size: 1.4rem;
+  line-height: 1.3;
+  font-weight: 650;
+}
+h3 {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  font-weight: 650;
+}
+h1,
+h2,
+h3 {
+  color: var(--asl-ink);
+}
+a,
+a:visited {
+  color: var(--asl-primary);
+  text-underline-offset: 0.22em;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
 .spacer {
   flex: 1 1 auto;
+}
+.mat-mdc-button-base {
+  letter-spacing: 0;
+}
+// M3 does not generate the former M2 warn/accent button variants automatically.
+button.mat-warn {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--asl-error),
+      filled-label-text-color: var(--mat-sys-on-error),
+    )
+  );
+}
+button.mat-accent {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--asl-raised),
+      filled-label-text-color: var(--asl-ink),
+    )
+  );
+}
+.mat-mdc-dialog-content {
+  line-height: 1.5;
+}
+.mat-mdc-dialog-title {
+  letter-spacing: -0.015em;
+}
+@media (max-width: 600px) {
+  // Material creates tbody outside the CRUD component's emulated CSS scope.
+  app-crud-table table.stack-on-narrow > tbody {
+    display: block;
+  }
+  .cotisation-dialog {
+    @include mat.dialog-overrides(
+      (
+        container-shape: 0,
+      )
+    );
+  }
+}
+.mat-mdc-header-cell {
+  font-weight: 650;
+  color: var(--asl-muted);
+  background: var(--asl-raised);
+}
+.mat-mdc-cell {
+  border-bottom-color: var(--asl-border);
+}
+.mat-mdc-table {
+  font-variant-numeric: tabular-nums;
+}
+.mat-mdc-paginator {
+  border-top: 1px solid var(--asl-border);
+}
+.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-shape: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

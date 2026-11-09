@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 
-import { Observable, switchMap, take } from 'rxjs';
+import { Observable, catchError, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
@@ -26,7 +26,12 @@ export class AuthInterceptor implements HttpInterceptor {
           });
         }
 
-        return next.handle(req);
+        return next.handle(req).pipe(
+          catchError((error) => {
+            if (error.status === 401) this._auth.sessionExpired();
+            return throwError(() => error);
+          })
+        );
       })
     );
   }

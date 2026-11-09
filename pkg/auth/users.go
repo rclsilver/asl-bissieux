@@ -2,14 +2,10 @@ package auth
 
 import (
 	"github.com/lib/pq"
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/rclsilver/asl-bissieux/pkg/db"
 )
-
-func init() {
-	db.RegisterMigration(&User{})
-}
 
 // AccessLevel is a type which represents an access level
 type AccessLevel int
@@ -17,11 +13,14 @@ type AccessLevel int
 // User represents an user which can open a session to the application
 type User struct {
 	db.Model
+	AccessStatus string         `json:"access_status" gorm:"-"`
+	Identities   []UserIdentity `json:"identities,omitempty" gorm:"-"`
 
-	Username string         `gorm:"uniqueIndex;notNull" json:"username"`
-	Enabled  bool           `gorm:"default:false;notNull" json:"enabled"`
-	Admin    bool           `gorm:"default:false;notNull" json:"admin"`
-	Actions  pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
+	Username    string         `gorm:"uniqueIndex;notNull" json:"username"`
+	Enabled     bool           `gorm:"default:false;notNull" json:"enabled"`
+	Admin       bool           `gorm:"default:false;notNull" json:"admin"`
+	Actions     pq.StringArray `gorm:"type:text[]" json:"actions,omitempty"`
+	TourVersion int            `gorm:"notNull;default:0" json:"tour_version"`
 }
 
 func NewUser(username string, enabled, administrator bool, actions []string) *User {

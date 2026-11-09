@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation du lot sécurité — ASL Bissieux</title>
+<style>
+  :root { color-scheme: light dark; font: 16px/1.55 system-ui, sans-serif; }
+  body { max-width: 56rem; margin: 2rem auto; padding: 0 1.25rem 3rem; }
+  h1 { line-height: 1.15; font-size: clamp(1.8rem, 5vw, 2.7rem); }
+  h2 { margin-top: 2.25rem; font-size: 1.3rem; }
+  label { display: flex; gap: .8rem; align-items: flex-start; padding: .8rem 0; border-bottom: 1px solid #8885; }
+  input { flex: none; width: 1.2rem; height: 1.2rem; margin-top: .25rem; accent-color: #178177; }
+  .intro { border-left: .25rem solid #178177; padding: .5rem 1rem; }
+  code { overflow-wrap: anywhere; font-size: .9em; }
+  small { display: block; opacity: .8; margin-top: .3rem; }
+  textarea { box-sizing: border-box; width: 100%; min-height: 7rem; padding: .8rem; font: inherit; border: 1px solid #8888; border-radius: .4rem; background: transparent; color: inherit; }
+  @media print { body { margin: 0; max-width: none; } label { break-inside: avoid; } }
+</style>
+<main>
+<p>ASL Bissieux · 26 octobre 2026</p>
+<h1>Validation du lot sécurité</h1>
+<div class="intro">
+  <p><strong>Corrections commitées localement sur dev, sans publication ni déploiement.</strong>
+  La chart reste inchangée. Aucun changement de schéma ou suppression de données.</p>
+  <p>Pièces jointes : <strong>10 Mio par fichier et 20 Mio par modèle</strong>, selon ton choix.
+  Le jeton Kubernetes fait l'objet d'un patch préparé, encore non appliqué.</p>
+</div>
+
+<h2>Contrôles automatiques effectués</h2>
+<p>Ces cases sont déjà cochées parce que les vérifications ont réussi sur des données fictives.</p>
+<label><input type="checkbox" checked disabled><span><strong>Pixel léger et répétable.</strong> Tous les états testés ; aucun SELECT ni rendu ; seul SENT passe à READ, une seule fois. Même PNG transparent pour un identifiant inconnu ou invalide.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Contenus chargés seulement quand nécessaires.</strong> Listes, aperçus et suppressions sans contenu de pièce jointe ; téléchargement et livraison conservés.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Plafonds des pièces jointes.</strong> Taille individuelle, total, suppression libérant le quota et ajouts simultanés vérifiés. Contrôle des tailles réelles en base avant livraison, même avec des métadonnées erronées.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Téléversement HTTP.</strong> 413 pour les dépassements, flux sans taille annoncée borné, 400 pour un formulaire invalide, droits conservés, fichiers temporaires nettoyés.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Protections HTTP.</strong> Iframes bloquées, nosniff, CSP sur SPA/API/erreurs ; aucun CORS ouvert ; HSTS seulement pour TLS ou configuration HTTPS explicite.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Suite backend.</strong> Tous les tests Go passent avec PostgreSQL jetable et OVH simulé par Smocker. <code>go vet ./...</code> et <code>go mod verify</code> passent.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Contexte Docker.</strong> Un vrai COPY sur un contexte fictif exclut configurations privées, clés et sauvegardes ; conserve migrations et scripts SQL nécessaires.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Workflow CI contrôlé statiquement.</strong> Action de release épinglée par SHA, permissions séparées et déclencheurs conservés. Aucune CI ni release déclenchée.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Image finale construite.</strong> Version <code>0.0.0-security-review</code>, code <code>60f9ff8</code>, utilisateur <code>10001:10001</code>. Build Angular de production inclus ; aucun serveur lancé.</span></label>
+<label><input type="checkbox" checked disabled><span><strong>Patch Terraform applicable.</strong> <code>git apply --check</code> réussit sur le dépôt réel. Fichiers d'infrastructure préexistants préservés ; aucun apply.</span></label>
+
+<h2>Recette humaine sur l'environnement de validation</h2>
+<p>À effectuer une fois l'application démarrée pour la recette. Les services ASL étaient arrêtés et n'ont pas été relancés pendant ces corrections. Utiliser des destinataires fictifs et le SMTP de test.</p>
+<label><input type="checkbox"><span><strong>Connexion Google et navigation.</strong> Se connecter, visiter membres, budgets et e-mails, recharger une URL directe, puis se déconnecter. Aucun écran bloqué ni erreur réseau nouvelle.</span></label>
+<label><input type="checkbox"><span><strong>Pièce jointe habituelle.</strong> Sur un modèle fictif, ajouter un petit document, vérifier nom/taille, afficher l'aperçu, télécharger puis supprimer. Le contenu téléchargé reste identique.</span></label>
+<label><input type="checkbox"><span><strong>Plafond par fichier.</strong> Essayer un fichier de plus de 10 Mio : erreur compréhensible et aucune nouvelle pièce jointe. Un fichier de 10 Mio maximum reste accepté si le total le permet.<small>10 Mio = 10 485 760 octets. Ne pas utiliser de document sensible pour ce test.</small></span></label>
+<label><input type="checkbox"><span><strong>Plafond par modèle.</strong> Sur un modèle vide, ajouter deux fichiers de 10 Mio, puis un troisième petit fichier : les deux premiers sont acceptés, le troisième refusé. Supprimer un fichier puis réessayer : l'espace est libéré.</span></label>
+<label><input type="checkbox"><span><strong>Envoi simulé.</strong> Envoyer un e-mail fictif avec pièce jointe au SMTP de test. Vérifier la réception, le document et le passage à SENT. Le pixel doit faire passer à READ lorsqu'il est effectivement chargé.</span></label>
+<label><input type="checkbox"><span><strong>CSP en observation.</strong> Dans la console du navigateur, examiner les violations signalées pendant connexion, navigation, modales et aperçus. Vérifier polices, icônes, cartes et Google. Ne pas activer la CSP détaillée bloquante tant que les violations utiles ne sont pas résolues.</span></label>
+
+<h2>Après autorisation d'une publication ou d'un déploiement</h2>
+<p>Ces étapes ne sont pas exécutées dans ce lot et ne constituent pas une autorisation de modifier la production.</p>
+<label><input type="checkbox"><span><strong>CI réelle.</strong> Vérifier les tests et le packaging sur le candidat. Helm manque localement : les tests qui exigent son exécutable restent à confirmer en CI. L'action de release historique déclare node12 : vérifier sa compatibilité avant une publication autorisée.</span></label>
+<label><input type="checkbox"><span><strong>HTTPS public.</strong> Configurer <code>APP_HTTP_PUBLIC_HTTPS=true</code> derrière l'Ingress HTTPS, puis vérifier HSTS, nosniff, DENY et CSP sur la réponse publique. Ne pas activer HSTS sur une URL HTTP de développement.</span></label>
+<label><input type="checkbox"><span><strong>Jeton Kubernetes.</strong> Relire le patch et le plan Terraform ; après application autorisée, vérifier l'absence de montage du jeton dans le nouveau pod et le bon fonctionnement PostgreSQL/SMTP. Aucun contenu de Secret n'a besoin d'être affiché.</span></label>
+<label><input type="checkbox"><span><strong>CSP détaillée.</strong> Après recette satisfaisante, activer <code>APP_HTTP_CSP_REPORT_ONLY=false</code> puis refaire la connexion et les parcours utiles. L'observation seule ne bloque pas les scripts.</span></label>
+
+<h2>Décisions conservées et points de suivi</h2>
+<ul>
+<li>Accès à l'environnement depuis les modèles : risque accepté provisoirement pour des auteurs de confiance ; fonction toujours présente.</li>
+<li>PostgreSQL sans TLS dans le cluster : choix accepté ; cela ne prouve pas un chiffrement du réseau.</li>
+<li>Chart : inchangée, hors périmètre ; la production Terraform utilise déjà un Secret SMTP.</li>
+<li>Limites globales JSON/rendu, délais HTTP et limitation de débit public : suivi distinct encore à arbitrer. Le pixel léger ne garantit pas une résistance à une saturation.</li>
+<li>Aucun test de charge, changement de production, accès OVH réel ou nouvelle connexion Google réelle n'est revendiqué.</li>
+</ul>
+<h2>Notes de recette</h2>
+<textarea aria-label="Notes de recette" placeholder="Observations, cas refusé ou point à reprendre…"></textarea>
+<p><small>Fiche autonome, sans appel réseau. Les cases manuelles sont à cocher pendant la recette ; imprimer pour conserver les annotations.</small></p>
+</main>
+</html>

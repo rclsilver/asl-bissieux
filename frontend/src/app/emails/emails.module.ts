@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
+import { TemplateDataEditorComponent } from '../shared/components/template-data-editor/template-data-editor.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmailsRouterModule } from './emails.routes';
 import { EmailsComponent } from './emails.component';
@@ -32,6 +34,7 @@ const material = [
   MatInputModule,
   MatTableModule,
   MatTooltipModule,
+  MatSelectModule,
   MatProgressBarModule,
 ];
 
@@ -52,6 +55,7 @@ const material = [
     CommonModule,
     SharedModule,
     ReactiveFormsModule,
+    TemplateDataEditorComponent,
     ...material,
     EmailsRouterModule,
   ],

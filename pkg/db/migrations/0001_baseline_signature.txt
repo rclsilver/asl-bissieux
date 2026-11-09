@@ -1,0 +1,150 @@
+column:attachment:content:{"type": "bytea", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:content_type:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 8, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:email_template_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 10, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:inline:{"type": "bool", "scale": null, "length": null, "default": "false", "identity": "NO", "nullable": "NO", "position": 9, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:name:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:attachment:size:{"type": "int8", "scale": 0, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": 64, "expression": null}
+column:attachment:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:draft:{"type": "bool", "scale": null, "length": null, "default": "true", "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:label:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:budget:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:amount:{"type": "numeric", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:budget_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:unit_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:cotisation:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:email:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:email:data:{"type": "jsonb", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:email:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:email:email_campaign_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 9, "generated": "NEVER", "precision": null, "expression": null}
+column:email:error:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 11, "generated": "NEVER", "precision": null, "expression": null}
+column:email:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:email:message:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 8, "generated": "NEVER", "precision": null, "expression": null}
+column:email:state:{"type": "text", "scale": null, "length": null, "default": "'WAITING'::text", "identity": "NO", "nullable": "NO", "position": 10, "generated": "NEVER", "precision": null, "expression": null}
+column:email:subject:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:email:to:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:email:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:data:{"type": "jsonb", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:email_template_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:title:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:email_campaign:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:label:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:message:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:subject:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:email_template:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:amount:{"type": "numeric", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:budget_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:label:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:expense:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:member:address:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 9, "generated": "NEVER", "precision": null, "expression": null}
+column:member:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:member:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:member:email:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 8, "generated": "NEVER", "precision": null, "expression": null}
+column:member:first_name:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:member:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:member:last_name:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:member:phone_number:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:member:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:member_unit:member_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:member_unit:unit_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:amount:{"type": "numeric", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 8, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:comment:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 9, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:cotisation_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:date:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:payment:user_id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:unit:address:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:unit:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:unit:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:unit:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:unit:number:{"type": "int8", "scale": 0, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": 64, "expression": null}
+column:unit:share:{"type": "int8", "scale": 0, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": 64, "expression": null}
+column:unit:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:user:actions:{"type": "_text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 8, "generated": "NEVER", "precision": null, "expression": null}
+column:user:admin:{"type": "bool", "scale": null, "length": null, "default": "false", "identity": "NO", "nullable": "NO", "position": 7, "generated": "NEVER", "precision": null, "expression": null}
+column:user:created_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 2, "generated": "NEVER", "precision": null, "expression": null}
+column:user:deleted_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 4, "generated": "NEVER", "precision": null, "expression": null}
+column:user:enabled:{"type": "bool", "scale": null, "length": null, "default": "false", "identity": "NO", "nullable": "NO", "position": 6, "generated": "NEVER", "precision": null, "expression": null}
+column:user:id:{"type": "uuid", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 1, "generated": "NEVER", "precision": null, "expression": null}
+column:user:updated_at:{"type": "timestamptz", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "YES", "position": 3, "generated": "NEVER", "precision": null, "expression": null}
+column:user:username:{"type": "text", "scale": null, "length": null, "default": null, "identity": "NO", "nullable": "NO", "position": 5, "generated": "NEVER", "precision": null, "expression": null}
+constraint:attachment:attachment_pkey:PRIMARY KEY (id)
+constraint:attachment:fk_email_template_attachments:FOREIGN KEY (email_template_id) REFERENCES email_template(id)
+constraint:budget:budget_pkey:PRIMARY KEY (id)
+constraint:cotisation:cotisation_pkey:PRIMARY KEY (id)
+constraint:cotisation:fk_budget_cotisations:FOREIGN KEY (budget_id) REFERENCES budget(id)
+constraint:cotisation:fk_cotisation_unit:FOREIGN KEY (unit_id) REFERENCES unit(id)
+constraint:email:email_pkey:PRIMARY KEY (id)
+constraint:email:fk_email_campaign_emails:FOREIGN KEY (email_campaign_id) REFERENCES email_campaign(id)
+constraint:email_campaign:email_campaign_pkey:PRIMARY KEY (id)
+constraint:email_campaign:fk_email_template_campaigns:FOREIGN KEY (email_template_id) REFERENCES email_template(id)
+constraint:email_template:email_template_pkey:PRIMARY KEY (id)
+constraint:expense:expense_pkey:PRIMARY KEY (id)
+constraint:expense:fk_budget_expenses:FOREIGN KEY (budget_id) REFERENCES budget(id)
+constraint:member:member_pkey:PRIMARY KEY (id)
+constraint:member_unit:fk_member_unit_member:FOREIGN KEY (member_id) REFERENCES member(id)
+constraint:member_unit:fk_member_unit_unit:FOREIGN KEY (unit_id) REFERENCES unit(id)
+constraint:member_unit:member_unit_pkey:PRIMARY KEY (unit_id, member_id)
+constraint:payment:fk_cotisation_payments:FOREIGN KEY (cotisation_id) REFERENCES cotisation(id)
+constraint:payment:fk_payment_user:FOREIGN KEY (user_id) REFERENCES "user"(id)
+constraint:payment:payment_pkey:PRIMARY KEY (id)
+constraint:unit:unit_pkey:PRIMARY KEY (id)
+constraint:user:user_pkey:PRIMARY KEY (id)
+index:attachment:attachment_pkey:CREATE UNIQUE INDEX attachment_pkey ON public.attachment USING btree (id)
+index:attachment:idx_attachment_deleted_at:CREATE INDEX idx_attachment_deleted_at ON public.attachment USING btree (deleted_at)
+index:budget:budget_pkey:CREATE UNIQUE INDEX budget_pkey ON public.budget USING btree (id)
+index:budget:idx_budget_deleted_at:CREATE INDEX idx_budget_deleted_at ON public.budget USING btree (deleted_at)
+index:cotisation:cotisation_pkey:CREATE UNIQUE INDEX cotisation_pkey ON public.cotisation USING btree (id)
+index:cotisation:idx_cotisation_deleted_at:CREATE INDEX idx_cotisation_deleted_at ON public.cotisation USING btree (deleted_at)
+index:email:email_pkey:CREATE UNIQUE INDEX email_pkey ON public.email USING btree (id)
+index:email:idx_email_deleted_at:CREATE INDEX idx_email_deleted_at ON public.email USING btree (deleted_at)
+index:email_campaign:email_campaign_pkey:CREATE UNIQUE INDEX email_campaign_pkey ON public.email_campaign USING btree (id)
+index:email_campaign:idx_email_campaign_deleted_at:CREATE INDEX idx_email_campaign_deleted_at ON public.email_campaign USING btree (deleted_at)
+index:email_template:email_template_pkey:CREATE UNIQUE INDEX email_template_pkey ON public.email_template USING btree (id)
+index:email_template:idx_email_template_deleted_at:CREATE INDEX idx_email_template_deleted_at ON public.email_template USING btree (deleted_at)
+index:expense:expense_pkey:CREATE UNIQUE INDEX expense_pkey ON public.expense USING btree (id)
+index:expense:idx_expense_deleted_at:CREATE INDEX idx_expense_deleted_at ON public.expense USING btree (deleted_at)
+index:member:idx_member_deleted_at:CREATE INDEX idx_member_deleted_at ON public.member USING btree (deleted_at)
+index:member:member_pkey:CREATE UNIQUE INDEX member_pkey ON public.member USING btree (id)
+index:member_unit:member_unit_pkey:CREATE UNIQUE INDEX member_unit_pkey ON public.member_unit USING btree (unit_id, member_id)
+index:payment:idx_payment_deleted_at:CREATE INDEX idx_payment_deleted_at ON public.payment USING btree (deleted_at)
+index:payment:payment_pkey:CREATE UNIQUE INDEX payment_pkey ON public.payment USING btree (id)
+index:unit:idx_unit_address:CREATE UNIQUE INDEX idx_unit_address ON public.unit USING btree (address)
+index:unit:idx_unit_deleted_at:CREATE INDEX idx_unit_deleted_at ON public.unit USING btree (deleted_at)
+index:unit:idx_unit_number:CREATE UNIQUE INDEX idx_unit_number ON public.unit USING btree (number)
+index:unit:unit_pkey:CREATE UNIQUE INDEX unit_pkey ON public.unit USING btree (id)
+index:user:idx_user_deleted_at:CREATE INDEX idx_user_deleted_at ON public."user" USING btree (deleted_at)
+index:user:idx_user_username:CREATE UNIQUE INDEX idx_user_username ON public."user" USING btree (username)
+index:user:user_pkey:CREATE UNIQUE INDEX user_pkey ON public."user" USING btree (id)
+table:attachment:false:false
+table:budget:false:false
+table:cotisation:false:false
+table:email:false:false
+table:email_campaign:false:false
+table:email_template:false:false
+table:expense:false:false
+table:member:false:false
+table:member_unit:false:false
+table:payment:false:false
+table:unit:false:false
+table:user:false:false

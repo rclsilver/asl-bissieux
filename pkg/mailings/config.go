@@ -1,0 +1,88 @@
+package mailings
+
+import (
+	"errors"
+	"net/url"
+	"os"
+	"strings"
+
+	"github.com/ovh/go-ovh/ovh"
+	"github.com/rclsilver/asl-bissieux/pkg/config"
+)
+
+type mailingConfig struct {
+	Domain  string
+	Members string
+	Bureau  string
+}
+
+func (c *mailingConfig) SetDefaults() { *c = mailingConfig{} }
+
+var targets mailingConfig
+
+func init() {
+	config.RegisterSection("ml", &targets)
+}
+
+type Config struct {
+	Endpoint          string `json:"endpoint"`
+	ApplicationKey    string `json:"application_key"`
+	ApplicationSecret string `json:"application_secret"`
+	ConsumerKey       string `json:"consumer_key"`
+	ClientID          string `json:"client_id"`
+	ClientSecret      string `json:"client_secret"`
+	Domain           string `json:"domain"`
+	Members           string `json:"members_list"`
+	Bureau            string `json:"bureau_list"`
+}
+
+func LoadConfig() (*Config, error) {
+	// Application targets use the shared Viper loader; client credentials keep
+	// the standard OVH environment names, outside Viper's APP prefix.
+	cfg := Config{
+		Endpoint:          os.Getenv("OVH_ENDPOINT"),
+		ApplicationKey:    os.Getenv("OVH_APPLICATION_KEY"),
+		ApplicationSecret: os.Getenv("OVH_APPLICATION_SECRET"),
+		ConsumerKey:       os.Getenv("OVH_CONSUMER_KEY"),
+		ClientID:          os.Getenv("OVH_CLIENT_ID"),
+		ClientSecret:      os.Getenv("OVH_CLIENT_SECRET"),
+		Domain:            targets.Domain,
+		Members:           targets.Members,
+		Bureau:            targets.Bureau,
+	}
+	if cfg == (Config{}) {
+		return nil, nil
+	}
+	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() ||!validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
+		return nil, errors.New("configuration OVH incomplète ou listes invalides")
+	}
+	return &cfg, nil
+}
+
+// UsesOAuth2 reports whether the IAM service account (client credentials) is
+// used instead of the legacy application/consumer key triplet.
+func (c *Config) UsesOAuth2() bool { return c.ClientID != "" || c.ClientSecret != "" }
+
+// validCredentials requires exactly one complete credential set: the IAM
+// service account (OVH_CLIENT_ID/OVH_CLIENT_SECRET) or the legacy triplet.
+// Mixing both is rejected to avoid an ambiguous authentication mode.
+func (c *Config) validCredentials() bool {
+	legacy := c.ApplicationKey != "" || c.ApplicationSecret != "" || c.ConsumerKey != ""
+	if c.UsesOAuth2() {
+		return !legacy && c.ClientID != "" && c.ClientSecret != ""
+	}
+	return c.ApplicationKey != "" && c.ApplicationSecret != "" && c.ConsumerKey != ""
+}
+
+// Like the OVH SDK, accept official endpoint names or an explicit HTTP(S) URL.
+// In development the URL points to Smocker using the same OVH_ENDPOINT variable.
+func validEndpoint(endpoint string) bool {
+	if _, ok := ovh.Endpoints[endpoint]; ok {
+		return true
+	}
+	u, err := url.ParseRequestURI(endpoint)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Hostname() != "" && u.User == nil && u.RawQuery == "" && u.Fragment == "" && !strings.ContainsAny(endpoint, "#?\\ \t\r\n") && !strings.HasSuffix(endpoint, "/")
+}
+func validPart(s string) bool {
+	return s != "" && !strings.ContainsAny(s, "/\\?#@ \t\r\n") && s != "." && s != ".."
+}

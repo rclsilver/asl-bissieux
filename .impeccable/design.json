@@ -1,0 +1,831 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T12:47:34.548Z",
+  "title": "Design System: ASL Bissieux",
+  "extensions": {
+    "colorMeta": {
+      "light-ground": {
+        "role": "neutral",
+        "displayName": "Fond · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.01007 228.888)",
+          "oklch(26.429% 0.01007 228.888)",
+          "oklch(37.857% 0.01007 228.888)",
+          "oklch(49.286% 0.01007 228.888)",
+          "oklch(60.714% 0.01007 228.888)",
+          "oklch(72.143% 0.01007 228.888)",
+          "oklch(83.571% 0.01007 228.888)",
+          "oklch(95.000% 0.01007 228.888)"
+        ]
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Surface · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 89.876)",
+          "oklch(26.429% 0.00000 89.876)",
+          "oklch(37.857% 0.00000 89.876)",
+          "oklch(49.286% 0.00000 89.876)",
+          "oklch(60.714% 0.00000 89.876)",
+          "oklch(72.143% 0.00000 89.876)",
+          "oklch(83.571% 0.00000 89.876)",
+          "oklch(95.000% 0.00000 89.876)"
+        ]
+      },
+      "light-raised": {
+        "role": "neutral",
+        "displayName": "Surface de niveau supérieur · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00684 247.895)",
+          "oklch(26.429% 0.00684 247.895)",
+          "oklch(37.857% 0.00684 247.895)",
+          "oklch(49.286% 0.00684 247.895)",
+          "oklch(60.714% 0.00684 247.895)",
+          "oklch(72.143% 0.00684 247.895)",
+          "oklch(83.571% 0.00684 247.895)",
+          "oklch(95.000% 0.00684 247.895)"
+        ]
+      },
+      "light-border": {
+        "role": "neutral",
+        "displayName": "Séparation · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.02467 238.437)",
+          "oklch(26.429% 0.02467 238.437)",
+          "oklch(37.857% 0.02467 238.437)",
+          "oklch(49.286% 0.02467 238.437)",
+          "oklch(60.714% 0.02467 238.437)",
+          "oklch(72.143% 0.02467 238.437)",
+          "oklch(83.571% 0.02467 238.437)",
+          "oklch(95.000% 0.02467 238.437)"
+        ]
+      },
+      "light-ink": {
+        "role": "neutral",
+        "displayName": "Encre · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.06096 255.181)",
+          "oklch(26.429% 0.06096 255.181)",
+          "oklch(37.857% 0.06096 255.181)",
+          "oklch(49.286% 0.06096 255.181)",
+          "oklch(60.714% 0.06096 255.181)",
+          "oklch(72.143% 0.06096 255.181)",
+          "oklch(83.571% 0.06096 255.181)",
+          "oklch(95.000% 0.06096 255.181)"
+        ]
+      },
+      "light-muted": {
+        "role": "neutral",
+        "displayName": "Encre secondaire · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.04209 245.000)",
+          "oklch(26.429% 0.04209 245.000)",
+          "oklch(37.857% 0.04209 245.000)",
+          "oklch(49.286% 0.04209 245.000)",
+          "oklch(60.714% 0.04209 245.000)",
+          "oklch(72.143% 0.04209 245.000)",
+          "oklch(83.571% 0.04209 245.000)",
+          "oklch(95.000% 0.04209 245.000)"
+        ]
+      },
+      "light-primary": {
+        "role": "primary",
+        "displayName": "Accent primaire · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.19620 262.302)",
+          "oklch(26.429% 0.19620 262.302)",
+          "oklch(37.857% 0.19620 262.302)",
+          "oklch(49.286% 0.19620 262.302)",
+          "oklch(60.714% 0.19620 262.302)",
+          "oklch(72.143% 0.19620 262.302)",
+          "oklch(83.571% 0.19620 262.302)",
+          "oklch(95.000% 0.19620 262.302)"
+        ]
+      },
+      "light-on-primary": {
+        "role": "primary",
+        "displayName": "Encre sur primaire · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 89.876)",
+          "oklch(26.429% 0.00000 89.876)",
+          "oklch(37.857% 0.00000 89.876)",
+          "oklch(49.286% 0.00000 89.876)",
+          "oklch(60.714% 0.00000 89.876)",
+          "oklch(72.143% 0.00000 89.876)",
+          "oklch(83.571% 0.00000 89.876)",
+          "oklch(95.000% 0.00000 89.876)"
+        ]
+      },
+      "light-tint": {
+        "role": "neutral",
+        "displayName": "Teinte de sélection · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.02411 259.824)",
+          "oklch(26.429% 0.02411 259.824)",
+          "oklch(37.857% 0.02411 259.824)",
+          "oklch(49.286% 0.02411 259.824)",
+          "oklch(60.714% 0.02411 259.824)",
+          "oklch(72.143% 0.02411 259.824)",
+          "oklch(83.571% 0.02411 259.824)",
+          "oklch(95.000% 0.02411 259.824)"
+        ]
+      },
+      "light-header": {
+        "role": "primary",
+        "displayName": "Bandeau Repères · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.17475 262.141)",
+          "oklch(26.429% 0.17475 262.141)",
+          "oklch(37.857% 0.17475 262.141)",
+          "oklch(49.286% 0.17475 262.141)",
+          "oklch(60.714% 0.17475 262.141)",
+          "oklch(72.143% 0.17475 262.141)",
+          "oklch(83.571% 0.17475 262.141)",
+          "oklch(95.000% 0.17475 262.141)"
+        ]
+      },
+      "light-header-ink": {
+        "role": "neutral",
+        "displayName": "Encre du bandeau · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 89.876)",
+          "oklch(26.429% 0.00000 89.876)",
+          "oklch(37.857% 0.00000 89.876)",
+          "oklch(49.286% 0.00000 89.876)",
+          "oklch(60.714% 0.00000 89.876)",
+          "oklch(72.143% 0.00000 89.876)",
+          "oklch(83.571% 0.00000 89.876)",
+          "oklch(95.000% 0.00000 89.876)"
+        ]
+      },
+      "light-nav-active": {
+        "role": "neutral",
+        "displayName": "Fond de page active · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 89.876)",
+          "oklch(26.429% 0.00000 89.876)",
+          "oklch(37.857% 0.00000 89.876)",
+          "oklch(49.286% 0.00000 89.876)",
+          "oklch(60.714% 0.00000 89.876)",
+          "oklch(72.143% 0.00000 89.876)",
+          "oklch(83.571% 0.00000 89.876)",
+          "oklch(95.000% 0.00000 89.876)"
+        ]
+      },
+      "light-nav-ink": {
+        "role": "primary",
+        "displayName": "Encre de page active · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.16925 262.133)",
+          "oklch(26.429% 0.16925 262.133)",
+          "oklch(37.857% 0.16925 262.133)",
+          "oklch(49.286% 0.16925 262.133)",
+          "oklch(60.714% 0.16925 262.133)",
+          "oklch(72.143% 0.16925 262.133)",
+          "oklch(83.571% 0.16925 262.133)",
+          "oklch(95.000% 0.16925 262.133)"
+        ]
+      },
+      "light-error": {
+        "role": "semantic",
+        "displayName": "Erreur · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.15773 21.391)",
+          "oklch(26.429% 0.15773 21.391)",
+          "oklch(37.857% 0.15773 21.391)",
+          "oklch(49.286% 0.15773 21.391)",
+          "oklch(60.714% 0.15773 21.391)",
+          "oklch(72.143% 0.15773 21.391)",
+          "oklch(83.571% 0.15773 21.391)",
+          "oklch(95.000% 0.15773 21.391)"
+        ]
+      },
+      "light-error-tint": {
+        "role": "semantic",
+        "displayName": "Fond d’erreur · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.01969 9.777)",
+          "oklch(26.429% 0.01969 9.777)",
+          "oklch(37.857% 0.01969 9.777)",
+          "oklch(49.286% 0.01969 9.777)",
+          "oklch(60.714% 0.01969 9.777)",
+          "oklch(72.143% 0.01969 9.777)",
+          "oklch(83.571% 0.01969 9.777)",
+          "oklch(95.000% 0.01969 9.777)"
+        ]
+      },
+      "light-warning": {
+        "role": "semantic",
+        "displayName": "Avertissement · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.10605 68.018)",
+          "oklch(26.429% 0.10605 68.018)",
+          "oklch(37.857% 0.10605 68.018)",
+          "oklch(49.286% 0.10605 68.018)",
+          "oklch(60.714% 0.10605 68.018)",
+          "oklch(72.143% 0.10605 68.018)",
+          "oklch(83.571% 0.10605 68.018)",
+          "oklch(95.000% 0.10605 68.018)"
+        ]
+      },
+      "light-surplus": {
+        "role": "semantic",
+        "displayName": "Trop-perçu · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.24123 292.581)",
+          "oklch(26.429% 0.24123 292.581)",
+          "oklch(37.857% 0.24123 292.581)",
+          "oklch(49.286% 0.24123 292.581)",
+          "oklch(60.714% 0.24123 292.581)",
+          "oklch(72.143% 0.24123 292.581)",
+          "oklch(83.571% 0.24123 292.581)",
+          "oklch(95.000% 0.24123 292.581)"
+        ]
+      },
+      "light-surplus-tint": {
+        "role": "semantic",
+        "displayName": "Fond de trop-perçu · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.01606 293.756)",
+          "oklch(26.429% 0.01606 293.756)",
+          "oklch(37.857% 0.01606 293.756)",
+          "oklch(49.286% 0.01606 293.756)",
+          "oklch(60.714% 0.01606 293.756)",
+          "oklch(72.143% 0.01606 293.756)",
+          "oklch(83.571% 0.01606 293.756)",
+          "oklch(95.000% 0.01606 293.756)"
+        ]
+      },
+      "dark-ground": {
+        "role": "neutral",
+        "displayName": "Fond · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.02166 251.814)",
+          "oklch(26.429% 0.02166 251.814)",
+          "oklch(37.857% 0.02166 251.814)",
+          "oklch(49.286% 0.02166 251.814)",
+          "oklch(60.714% 0.02166 251.814)",
+          "oklch(72.143% 0.02166 251.814)",
+          "oklch(83.571% 0.02166 251.814)",
+          "oklch(95.000% 0.02166 251.814)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Surface · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.02535 251.230)",
+          "oklch(26.429% 0.02535 251.230)",
+          "oklch(37.857% 0.02535 251.230)",
+          "oklch(49.286% 0.02535 251.230)",
+          "oklch(60.714% 0.02535 251.230)",
+          "oklch(72.143% 0.02535 251.230)",
+          "oklch(83.571% 0.02535 251.230)",
+          "oklch(95.000% 0.02535 251.230)"
+        ]
+      },
+      "dark-raised": {
+        "role": "neutral",
+        "displayName": "Surface de niveau supérieur · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.03171 248.913)",
+          "oklch(26.429% 0.03171 248.913)",
+          "oklch(37.857% 0.03171 248.913)",
+          "oklch(49.286% 0.03171 248.913)",
+          "oklch(60.714% 0.03171 248.913)",
+          "oklch(72.143% 0.03171 248.913)",
+          "oklch(83.571% 0.03171 248.913)",
+          "oklch(95.000% 0.03171 248.913)"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Séparation · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.03849 247.388)",
+          "oklch(26.429% 0.03849 247.388)",
+          "oklch(37.857% 0.03849 247.388)",
+          "oklch(49.286% 0.03849 247.388)",
+          "oklch(60.714% 0.03849 247.388)",
+          "oklch(72.143% 0.03849 247.388)",
+          "oklch(83.571% 0.03849 247.388)",
+          "oklch(95.000% 0.03849 247.388)"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "Encre · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.01488 251.159)",
+          "oklch(26.429% 0.01488 251.159)",
+          "oklch(37.857% 0.01488 251.159)",
+          "oklch(49.286% 0.01488 251.159)",
+          "oklch(60.714% 0.01488 251.159)",
+          "oklch(72.143% 0.01488 251.159)",
+          "oklch(83.571% 0.01488 251.159)",
+          "oklch(95.000% 0.01488 251.159)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Encre secondaire · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.03110 251.335)",
+          "oklch(26.429% 0.03110 251.335)",
+          "oklch(37.857% 0.03110 251.335)",
+          "oklch(49.286% 0.03110 251.335)",
+          "oklch(60.714% 0.03110 251.335)",
+          "oklch(72.143% 0.03110 251.335)",
+          "oklch(83.571% 0.03110 251.335)",
+          "oklch(95.000% 0.03110 251.335)"
+        ]
+      },
+      "dark-primary": {
+        "role": "primary",
+        "displayName": "Accent primaire · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.07396 243.243)",
+          "oklch(26.429% 0.07396 243.243)",
+          "oklch(37.857% 0.07396 243.243)",
+          "oklch(49.286% 0.07396 243.243)",
+          "oklch(60.714% 0.07396 243.243)",
+          "oklch(72.143% 0.07396 243.243)",
+          "oklch(83.571% 0.07396 243.243)",
+          "oklch(95.000% 0.07396 243.243)"
+        ]
+      },
+      "dark-on-primary": {
+        "role": "primary",
+        "displayName": "Encre sur primaire · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.05690 244.748)",
+          "oklch(26.429% 0.05690 244.748)",
+          "oklch(37.857% 0.05690 244.748)",
+          "oklch(49.286% 0.05690 244.748)",
+          "oklch(60.714% 0.05690 244.748)",
+          "oklch(72.143% 0.05690 244.748)",
+          "oklch(83.571% 0.05690 244.748)",
+          "oklch(95.000% 0.05690 244.748)"
+        ]
+      },
+      "dark-tint": {
+        "role": "neutral",
+        "displayName": "Teinte de sélection · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.04637 248.192)",
+          "oklch(26.429% 0.04637 248.192)",
+          "oklch(37.857% 0.04637 248.192)",
+          "oklch(49.286% 0.04637 248.192)",
+          "oklch(60.714% 0.04637 248.192)",
+          "oklch(72.143% 0.04637 248.192)",
+          "oklch(83.571% 0.04637 248.192)",
+          "oklch(95.000% 0.04637 248.192)"
+        ]
+      },
+      "dark-header": {
+        "role": "primary",
+        "displayName": "Bandeau Repères · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.01971 252.206)",
+          "oklch(26.429% 0.01971 252.206)",
+          "oklch(37.857% 0.01971 252.206)",
+          "oklch(49.286% 0.01971 252.206)",
+          "oklch(60.714% 0.01971 252.206)",
+          "oklch(72.143% 0.01971 252.206)",
+          "oklch(83.571% 0.01971 252.206)",
+          "oklch(95.000% 0.01971 252.206)"
+        ]
+      },
+      "dark-header-ink": {
+        "role": "neutral",
+        "displayName": "Encre du bandeau · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.01488 251.159)",
+          "oklch(26.429% 0.01488 251.159)",
+          "oklch(37.857% 0.01488 251.159)",
+          "oklch(49.286% 0.01488 251.159)",
+          "oklch(60.714% 0.01488 251.159)",
+          "oklch(72.143% 0.01488 251.159)",
+          "oklch(83.571% 0.01488 251.159)",
+          "oklch(95.000% 0.01488 251.159)"
+        ]
+      },
+      "dark-nav-active": {
+        "role": "neutral",
+        "displayName": "Fond de page active · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.04815 248.253)",
+          "oklch(26.429% 0.04815 248.253)",
+          "oklch(37.857% 0.04815 248.253)",
+          "oklch(49.286% 0.04815 248.253)",
+          "oklch(60.714% 0.04815 248.253)",
+          "oklch(72.143% 0.04815 248.253)",
+          "oklch(83.571% 0.04815 248.253)",
+          "oklch(95.000% 0.04815 248.253)"
+        ]
+      },
+      "dark-nav-ink": {
+        "role": "primary",
+        "displayName": "Encre de page active · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.06172 241.884)",
+          "oklch(26.429% 0.06172 241.884)",
+          "oklch(37.857% 0.06172 241.884)",
+          "oklch(49.286% 0.06172 241.884)",
+          "oklch(60.714% 0.06172 241.884)",
+          "oklch(72.143% 0.06172 241.884)",
+          "oklch(83.571% 0.06172 241.884)",
+          "oklch(95.000% 0.06172 241.884)"
+        ]
+      },
+      "dark-error": {
+        "role": "semantic",
+        "displayName": "Erreur · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.08908 26.757)",
+          "oklch(26.429% 0.08908 26.757)",
+          "oklch(37.857% 0.08908 26.757)",
+          "oklch(49.286% 0.08908 26.757)",
+          "oklch(60.714% 0.08908 26.757)",
+          "oklch(72.143% 0.08908 26.757)",
+          "oklch(83.571% 0.08908 26.757)",
+          "oklch(95.000% 0.08908 26.757)"
+        ]
+      },
+      "dark-error-tint": {
+        "role": "semantic",
+        "displayName": "Fond d’erreur · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.05809 20.597)",
+          "oklch(26.429% 0.05809 20.597)",
+          "oklch(37.857% 0.05809 20.597)",
+          "oklch(49.286% 0.05809 20.597)",
+          "oklch(60.714% 0.05809 20.597)",
+          "oklch(72.143% 0.05809 20.597)",
+          "oklch(83.571% 0.05809 20.597)",
+          "oklch(95.000% 0.05809 20.597)"
+        ]
+      },
+      "dark-warning": {
+        "role": "semantic",
+        "displayName": "Avertissement · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.10394 79.338)",
+          "oklch(26.429% 0.10394 79.338)",
+          "oklch(37.857% 0.10394 79.338)",
+          "oklch(49.286% 0.10394 79.338)",
+          "oklch(60.714% 0.10394 79.338)",
+          "oklch(72.143% 0.10394 79.338)",
+          "oklch(83.571% 0.10394 79.338)",
+          "oklch(95.000% 0.10394 79.338)"
+        ]
+      },
+      "dark-surplus": {
+        "role": "semantic",
+        "displayName": "Trop-perçu · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.10643 302.711)",
+          "oklch(26.429% 0.10643 302.711)",
+          "oklch(37.857% 0.10643 302.711)",
+          "oklch(49.286% 0.10643 302.711)",
+          "oklch(60.714% 0.10643 302.711)",
+          "oklch(72.143% 0.10643 302.711)",
+          "oklch(83.571% 0.10643 302.711)",
+          "oklch(95.000% 0.10643 302.711)"
+        ]
+      },
+      "dark-surplus-tint": {
+        "role": "semantic",
+        "displayName": "Fond de trop-perçu · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.05925 304.652)",
+          "oklch(26.429% 0.05925 304.652)",
+          "oklch(37.857% 0.05925 304.652)",
+          "oklch(49.286% 0.05925 304.652)",
+          "oklch(60.714% 0.05925 304.652)",
+          "oklch(72.143% 0.05925 304.652)",
+          "oklch(83.571% 0.05925 304.652)",
+          "oklch(95.000% 0.05925 304.652)"
+        ]
+      },
+      "map-settled": {
+        "role": "semantic",
+        "displayName": "Soldé · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.07469 156.520)",
+          "oklch(26.429% 0.07469 156.520)",
+          "oklch(37.857% 0.07469 156.520)",
+          "oklch(49.286% 0.07469 156.520)",
+          "oklch(60.714% 0.07469 156.520)",
+          "oklch(72.143% 0.07469 156.520)",
+          "oklch(83.571% 0.07469 156.520)",
+          "oklch(95.000% 0.07469 156.520)"
+        ]
+      },
+      "map-partial": {
+        "role": "semantic",
+        "displayName": "Partiellement réglé · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.10547 72.966)",
+          "oklch(26.429% 0.10547 72.966)",
+          "oklch(37.857% 0.10547 72.966)",
+          "oklch(49.286% 0.10547 72.966)",
+          "oklch(60.714% 0.10547 72.966)",
+          "oklch(72.143% 0.10547 72.966)",
+          "oklch(83.571% 0.10547 72.966)",
+          "oklch(95.000% 0.10547 72.966)"
+        ]
+      },
+      "map-unpaid": {
+        "role": "semantic",
+        "displayName": "Sans paiement · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.09624 11.355)",
+          "oklch(26.429% 0.09624 11.355)",
+          "oklch(37.857% 0.09624 11.355)",
+          "oklch(49.286% 0.09624 11.355)",
+          "oklch(60.714% 0.09624 11.355)",
+          "oklch(72.143% 0.09624 11.355)",
+          "oklch(83.571% 0.09624 11.355)",
+          "oklch(95.000% 0.09624 11.355)"
+        ]
+      },
+      "map-overpaid": {
+        "role": "semantic",
+        "displayName": "Trop-perçu · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.10251 305.982)",
+          "oklch(26.429% 0.10251 305.982)",
+          "oklch(37.857% 0.10251 305.982)",
+          "oklch(49.286% 0.10251 305.982)",
+          "oklch(60.714% 0.10251 305.982)",
+          "oklch(72.143% 0.10251 305.982)",
+          "oklch(83.571% 0.10251 305.982)",
+          "oklch(95.000% 0.10251 305.982)"
+        ]
+      },
+      "map-neutral": {
+        "role": "neutral",
+        "displayName": "Sans cotisation · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.01197 239.923)",
+          "oklch(26.429% 0.01197 239.923)",
+          "oklch(37.857% 0.01197 239.923)",
+          "oklch(49.286% 0.01197 239.923)",
+          "oklch(60.714% 0.01197 239.923)",
+          "oklch(72.143% 0.01197 239.923)",
+          "oklch(83.571% 0.01197 239.923)",
+          "oklch(95.000% 0.01197 239.923)"
+        ]
+      },
+      "map-focus": {
+        "role": "primary",
+        "displayName": "Contour d’interaction · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.19620 262.302)",
+          "oklch(26.429% 0.19620 262.302)",
+          "oklch(37.857% 0.19620 262.302)",
+          "oklch(49.286% 0.19620 262.302)",
+          "oklch(60.714% 0.19620 262.302)",
+          "oklch(72.143% 0.19620 262.302)",
+          "oklch(83.571% 0.19620 262.302)",
+          "oklch(95.000% 0.19620 262.302)"
+        ]
+      },
+      "map-ground": {
+        "role": "neutral",
+        "displayName": "Fond · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.00416 236.495)",
+          "oklch(26.429% 0.00416 236.495)",
+          "oklch(37.857% 0.00416 236.495)",
+          "oklch(49.286% 0.00416 236.495)",
+          "oklch(60.714% 0.00416 236.495)",
+          "oklch(72.143% 0.00416 236.495)",
+          "oklch(83.571% 0.00416 236.495)",
+          "oklch(95.000% 0.00416 236.495)"
+        ]
+      },
+      "map-label": {
+        "role": "neutral",
+        "displayName": "Numéro de lot · Carte",
+        "tonalRamp": [
+          "oklch(15.000% 0.04215 180.840)",
+          "oklch(26.429% 0.04215 180.840)",
+          "oklch(37.857% 0.04215 180.840)",
+          "oklch(49.286% 0.04215 180.840)",
+          "oklch(60.714% 0.04215 180.840)",
+          "oklch(72.143% 0.04215 180.840)",
+          "oklch(83.571% 0.04215 180.840)",
+          "oklch(95.000% 0.04215 180.840)"
+        ]
+      },
+      "light-on-error": {
+        "role": "semantic",
+        "displayName": "Encre sur erreur · Bassin clair",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 89.876)",
+          "oklch(26.429% 0.00000 89.876)",
+          "oklch(37.857% 0.00000 89.876)",
+          "oklch(49.286% 0.00000 89.876)",
+          "oklch(60.714% 0.00000 89.876)",
+          "oklch(72.143% 0.00000 89.876)",
+          "oklch(83.571% 0.00000 89.876)",
+          "oklch(95.000% 0.00000 89.876)"
+        ]
+      },
+      "dark-on-error": {
+        "role": "semantic",
+        "displayName": "Encre sur erreur · Graphite",
+        "tonalRamp": [
+          "oklch(15.000% 0.05809 20.597)",
+          "oklch(26.429% 0.05809 20.597)",
+          "oklch(37.857% 0.05809 20.597)",
+          "oklch(49.286% 0.05809 20.597)",
+          "oklch(60.714% 0.05809 20.597)",
+          "oklch(72.143% 0.05809 20.597)",
+          "oklch(83.571% 0.05809 20.597)",
+          "oklch(95.000% 0.05809 20.597)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Titre principal",
+        "purpose": "h1 fluide de l’application."
+      },
+      "title": {
+        "displayName": "Titre de section",
+        "purpose": "h2."
+      },
+      "subtitle": {
+        "displayName": "Sous-section",
+        "purpose": "h3."
+      },
+      "body": {
+        "displayName": "Texte courant",
+        "purpose": "Corps de page."
+      },
+      "label": {
+        "displayName": "Libellé Material",
+        "purpose": "Bouton avec suivi ramené à zéro par l’application."
+      },
+      "metric": {
+        "displayName": "Indicateur",
+        "purpose": "Montant ou taux tabulaire du tableau de bord."
+      }
+    },
+    "shadows": [
+      {
+        "name": "asl-shadow-light",
+        "value": "0 8px 26px rgb(20 43 72 / 7%)",
+        "purpose": "Panneau de connexion dans Bassin clair."
+      },
+      {
+        "name": "asl-shadow-dark",
+        "value": "0 8px 26px rgb(0 0 0 / 18%)",
+        "purpose": "Panneau de connexion dans Graphite."
+      }
+    ],
+    "motion": [
+      {
+        "name": "map-stroke",
+        "value": "stroke-width 140ms ease-out, stroke 140ms ease-out",
+        "purpose": "État du contour des lots ; supprimé avec prefers-reduced-motion."
+      },
+      {
+        "name": "lot-detail",
+        "value": "box-shadow 180ms ease-out",
+        "purpose": "Transition déclarée sur le détail de lot ; supprimée avec prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "account-name-hidden",
+        "value": "1500px"
+      },
+      {
+        "name": "mobile-navigation",
+        "value": "1100px"
+      },
+      {
+        "name": "map-stack",
+        "value": "1050px"
+      },
+      {
+        "name": "compact-page",
+        "value": "600px"
+      },
+      {
+        "name": "pagination-container",
+        "value": "32rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Connexion — action principale",
+      "kind": "button",
+      "refersTo": "button-primary-light",
+      "description": "Traduction autonome de l’action de connexion. Les dimensions internes Material restent gérées par Material dans l’application.",
+      "html": "<button type=\"button\" class=\"ds-primary\">Se connecter</button>",
+      "css": ".ds-primary{background:var(--asl-primary,#124dc5);color:var(--asl-on-primary,#fff);border:0;border-radius:10px;min-height:48px;width:100%;padding:0 24px;font:500 .875rem/1.25rem \"Segoe UI\",Roboto,sans-serif;letter-spacing:0;cursor:pointer}.ds-primary:hover{background:color-mix(in srgb,var(--asl-primary,#124dc5),var(--asl-on-primary,#fff) 8%)}.ds-primary:focus-visible{outline:2px solid var(--asl-primary,#124dc5);outline-offset:3px}.ds-primary:active{background:color-mix(in srgb,var(--asl-primary,#124dc5),var(--asl-on-primary,#fff) 12%)}.ds-primary:disabled{cursor:default;color:color-mix(in srgb,var(--asl-ink,#142b48) 38%,transparent);background:color-mix(in srgb,var(--asl-ink,#142b48) 12%,transparent)}"
+    },
+    {
+      "name": "Action secondaire du détail",
+      "kind": "button",
+      "description": "Lien à contour du détail d’un lot, avec retour à la ligne. Le texte est un libellé de composant.",
+      "html": "<a href=\"#lot\" class=\"ds-outlined\">Consulter le lot</a>",
+      "css": ".ds-outlined{display:inline-flex;align-items:center;min-height:44px;padding:12px;border:1px solid var(--asl-muted,#52697d);border-radius:10px;background:transparent;color:var(--asl-ink,#142b48);font:500 .875rem/1.25rem \"Segoe UI\",Roboto,sans-serif;letter-spacing:0;text-align:start;white-space:normal;text-decoration:underline;text-underline-offset:.22em}.ds-outlined:hover{background:var(--asl-tint,#e5efff);text-decoration-thickness:2px}.ds-outlined:focus-visible{outline:2px solid var(--asl-primary,#124dc5);outline-offset:3px}.ds-outlined:active{background:var(--asl-tint,#e5efff)}"
+    },
+    {
+      "name": "Champ de recherche",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Représentation statique du champ avec libellé. Le champ flottant, la validation et la géométrie interne sont fournis par Material dans l’application.",
+      "html": "<label class=\"ds-field\">Rechercher un membre ou un lot<input class=\"ds-input\" type=\"search\" placeholder=\"Nom ou numéro de lot\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;width:100%;border-radius:10px 10px 0 0;background:var(--mat-sys-surface-variant,light-dark(#e0e2ec,#44474e));color:var(--asl-muted,#52697d);font:400 .875rem/1.25rem \"Segoe UI\",Roboto,sans-serif}.ds-input{min-width:0;width:100%;background:transparent;color:var(--asl-ink,#142b48);border:0;border-bottom:1px solid var(--asl-muted,#52697d);font:400 1rem/1.5rem \"Segoe UI\",Roboto,sans-serif;caret-color:var(--asl-primary,#124dc5)}.ds-input:hover{border-bottom-color:var(--asl-ink,#142b48)}.ds-input:focus-visible{outline:2px solid var(--asl-primary,#124dc5);outline-offset:3px;border-bottom-color:var(--asl-primary,#124dc5)}"
+    },
+    {
+      "name": "Navigation Repères",
+      "kind": "nav",
+      "refersTo": "navigation-active-light",
+      "description": "Liens du bandeau supérieur ; page active et focus utilisent leurs paires d’encre dédiées.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Menu principal\"><a class=\"ds-nav-link ds-nav-active\" href=\"#accueil\" aria-current=\"page\">Accueil</a><a class=\"ds-nav-link\" href=\"#budgets\">Budgets</a><a class=\"ds-nav-link\" href=\"#lots\">Lots</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:3px;background:var(--asl-header,#1246ae);color:var(--asl-header-ink,#fff);padding:14px 2rem;font-family:\"Segoe UI\",Roboto,sans-serif}.ds-nav-link{color:inherit;text-decoration:none;padding:10px 12px;border-radius:8px;font-size:.875rem;white-space:nowrap}.ds-nav-link:hover{background:color-mix(in srgb,currentColor 12%,transparent)}.ds-nav-link.ds-nav-active{background:var(--asl-nav-active,#fff);color:var(--asl-nav-ink,#1244a8);font-weight:650}.ds-nav-link:focus-visible{outline:2px solid var(--asl-header-ink,#fff);outline-offset:-3px}.ds-nav-active:focus-visible{outline-color:var(--asl-nav-ink,#1244a8)}.ds-nav-link:active{background:var(--asl-nav-active,#fff);color:var(--asl-nav-ink,#1244a8)}"
+    },
+    {
+      "name": "Statut de budget",
+      "kind": "chip",
+      "refersTo": "status-light",
+      "description": "Statut informatif du budget ; il ne représente pas un état de paiement.",
+      "html": "<span class=\"ds-status\">Brouillon</span>",
+      "css": ".ds-status{display:inline-block;font-family:\"Segoe UI\",Roboto,sans-serif;font-size:.75rem;padding:.3rem .6rem;background:var(--asl-tint,#e5efff);color:var(--asl-primary,#124dc5);border-radius:6px}"
+    },
+    {
+      "name": "Panneau de détail sélectionné",
+      "kind": "card",
+      "refersTo": "panel-light",
+      "description": "Surface de contexte liée à la sélection ; aucun montant fictif n’est affiché.",
+      "html": "<section class=\"ds-detail\"><h3 class=\"ds-detail-title\">Détail du lot</h3><p class=\"ds-detail-text\">Les informations du lot sélectionné apparaissent ici.</p></section>",
+      "css": ".ds-detail{background:var(--asl-surface,#fff);color:var(--asl-ink,#142b48);border:1px solid var(--asl-primary,#124dc5);border-radius:16px;padding:1.5rem;transition:box-shadow 180ms ease-out;font-family:\"Segoe UI\",Roboto,sans-serif;font-size:.875rem}.ds-detail-title{margin:0 0 1rem;font-size:1.5rem;font-weight:650;line-height:1.4}.ds-detail-text{line-height:1.55;max-width:75ch;overflow-wrap:anywhere}@media(prefers-reduced-motion:reduce){.ds-detail{transition:none}}"
+    },
+    {
+      "name": "Contour de lot — fragment d’état",
+      "kind": "custom",
+      "description": "Fragment SVG schématique montrant le contour sélectionné et le focus. Ce fragment ne remplace pas le plan géographique des 42 lots.",
+      "html": "<svg class=\"ds-map\" viewBox=\"0 0 180 100\" role=\"img\" aria-label=\"Fragment illustratif : lot soldé sélectionné\"><g class=\"ds-lot ds-selected\" tabindex=\"0\" role=\"button\" aria-label=\"Fragment de lot soldé\"><polygon points=\"20,20 155,15 160,75 25,80\"></polygon></g></svg>",
+      "css": ".ds-map{display:block;max-width:100%;height:auto;background:#f8fbfd;border-radius:12px}.ds-lot{cursor:pointer}.ds-lot polygon{fill:var(--asl-map-settled,#a6ddba);transition:stroke-width 140ms ease-out,stroke 140ms ease-out;vector-effect:non-scaling-stroke}.ds-lot:hover polygon{stroke:var(--asl-map-focus,#124dc5);stroke-width:2px}.ds-selected polygon{stroke:var(--asl-map-focus,#124dc5);stroke-width:4px}.ds-lot:focus{outline:none}.ds-lot:focus polygon{stroke:var(--asl-map-focus,#124dc5);stroke-width:4px;stroke-dasharray:5 3}@media(prefers-reduced-motion:reduce){.ds-lot polygon{transition:none}}"
+    },
+    {
+      "name": "Action destructive",
+      "kind": "button",
+      "refersTo": "button-warn-light",
+      "description": "Variante pleine existante, avec couleurs explicitement reliées aux overrides Material 3. Libellé de démonstration de composant.",
+      "html": "<button type=\"button\" class=\"ds-warn\">Supprimer</button>",
+      "css": ".ds-warn{background:var(--asl-error,#a72d36);color:var(--mat-sys-on-error,var(--asl-on-error,#fff));border:0;border-radius:10px;height:40px;padding:0 24px;font:500 .875rem/1.25rem \"Segoe UI\",Roboto,sans-serif;letter-spacing:0;cursor:pointer}.ds-warn:hover{background:color-mix(in srgb,var(--asl-error,#a72d36),var(--asl-on-primary,#fff) 8%)}.ds-warn:focus-visible{outline:2px solid var(--asl-primary,#124dc5);outline-offset:3px}.ds-warn:active{background:color-mix(in srgb,var(--asl-error,#a72d36),var(--asl-on-primary,#fff) 12%)}.ds-warn:disabled{cursor:default;color:color-mix(in srgb,var(--asl-ink,#142b48) 38%,transparent);background:color-mix(in srgb,var(--asl-ink,#142b48) 12%,transparent)}"
+    },
+    {
+      "name": "Action accent",
+      "kind": "button",
+      "refersTo": "button-accent-light",
+      "description": "Variante pleine existante, avec couleurs explicitement reliées aux overrides Material 3. Libellé de démonstration de composant.",
+      "html": "<button type=\"button\" class=\"ds-accent\">Enregistrer</button>",
+      "css": ".ds-accent{background:var(--asl-raised,#f4f8fc);color:var(--asl-ink,#142b48);border:0;border-radius:10px;height:40px;padding:0 24px;font:500 .875rem/1.25rem \"Segoe UI\",Roboto,sans-serif;letter-spacing:0;cursor:pointer}.ds-accent:hover{background:color-mix(in srgb,var(--asl-raised,#f4f8fc),var(--asl-on-primary,#fff) 8%)}.ds-accent:focus-visible{outline:2px solid var(--asl-primary,#124dc5);outline-offset:3px}.ds-accent:active{background:color-mix(in srgb,var(--asl-raised,#f4f8fc),var(--asl-on-primary,#fff) 12%)}.ds-accent:disabled{cursor:default;color:color-mix(in srgb,var(--asl-ink,#142b48) 38%,transparent);background:color-mix(in srgb,var(--asl-ink,#142b48) 12%,transparent)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Bassin clair / Graphite",
+    "overview": "Le monde choisi associe le cobalt, le bleu eau et les surfaces blanches de Bassin clair à une variante sombre Graphite. La navigation supérieure reprend Repères. Les surfaces unies, les séparations fines et une typographie sans empattement donnent une interface accueillante, précise et adaptée à la gestion de l’association.\n\nLa densité reste celle de Material 3 à zéro, avec des panneaux aérés et des listes compactes dans leur organisation. Les chiffres tabulaires facilitent la lecture des montants. La carte SVG constitue une matière fonctionnelle : sa couleur décrit les paiements, son contour décrit l’interaction.",
+    "keyCharacteristics": [
+      "Deux thèmes complets sous une même hiérarchie visuelle.",
+      "Surfaces unies, bordures fines et angles adoucis selon le rôle.",
+      "Navigation supérieure et commandes regroupées, repliées sur petit écran.",
+      "Carte, recherche et détail liés sans effacer les états financiers."
+    ],
+    "rules": [
+      {
+        "name": "The Payment Color Rule",
+        "body": "La sélection, les résultats de recherche et le focus ne remplacent jamais le remplissage financier d’un lot ; ils utilisent son contour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Number Rule",
+        "body": "Les tableaux et indicateurs financiers gardent des chiffres tabulaires pour stabiliser la comparaison des montants.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do utiliser les variables sémantiques `--asl-*` pour que les deux thèmes restent cohérents.",
+      "Do garder la légende financière, les libellés d’état et le contour de sélection indépendants.",
+      "Do conserver les chiffres tabulaires, les libellés accessibles et les états de chargement, vide et erreur distincts.",
+      "Do vérifier le focus sur le bandeau, les menus et la carte dans les deux thèmes, puis le rendu sur ordinateur et mobile."
+    ],
+    "donts": [
+      "Don't réutiliser le violet de trop-perçu comme couleur de sélection de la carte.",
+      "Don't assombrir le fond géographique de la carte sans revoir ses routes et ses numéros.",
+      "Don't remplacer le bouton + compact des listes par une action sans nom accessible ni infobulle.",
+      "Don't présenter une extraction de code, un build ou une vignette du sidecar comme une validation visuelle de l’application."
+    ]
+  }
+}

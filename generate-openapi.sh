@@ -1,11 +1,6 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
-curl --fail -o ./frontend/openapi.json http://localhost:8080/api/spec.json
-
-if [ -x docker-compose ]; then
-    docker-compose exec -u node -w /app frontend npm run openapi
-else
-    docker compose exec -u node -w /app frontend npm run openapi
-fi
+curl --fail --silent --show-error "${OPENAPI_URL:-http://localhost:8080/api/spec.json}" |
+    docker compose exec -T -w /app frontend npm run --silent openapi

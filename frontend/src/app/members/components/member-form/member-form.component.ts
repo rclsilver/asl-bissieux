@@ -1,4 +1,9 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -8,6 +13,7 @@ import {
   forkJoin,
   of,
   switchMap,
+  tap,
 } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -18,6 +24,8 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-member-form',
   templateUrl: './member-form.component.html',
   styleUrls: ['./member-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class MemberFormComponent {
   private readonly _notifications = inject(NotificationsService);
@@ -27,6 +35,8 @@ export class MemberFormComponent {
   private _saving$ = new BehaviorSubject(false);
   readonly saving$ = this._saving$.asObservable();
 
+  private savedId?: string;
+  private persisted = false;
   readonly form: FormGroup;
 
   // units
@@ -40,12 +50,14 @@ export class MemberFormComponent {
     },
     private readonly _dialogRef: MatDialogRef<MemberFormComponent>
   ) {
+    this.savedId = this.data.member?.id;
     this.form = this._builder.group({
       first_name: [this.data.member?.first_name, [Validators.required]],
       last_name: [this.data.member?.last_name, [Validators.required]],
       email: [this.data.member?.email, [Validators.required]],
       phone_number: [this.data.member?.phone_number],
       address: [this.data.member?.address],
+      bureau: [this.data.member?.bureau ?? false],
     });
 
     this.selectedUnits = this.data.member?.units ?? [];
@@ -56,11 +68,11 @@ export class MemberFormComponent {
   }
 
   displayUnit(unit: APISchemas['ModelsUnit']) {
-    return `Unit ${unit.number} (${unit.address})`;
+    return `Lot ${unit.number} (${unit.address})`;
   }
 
   displaySelectedUnit(unit: APISchemas['ModelsUnit']) {
-    return `Unit ${unit.number}`;
+    return `Lot ${unit.number}`;
   }
 
   filterUnit(filter: string, unit: APISchemas['ModelsUnit']) {
@@ -80,10 +92,16 @@ export class MemberFormComponent {
   }
 
   cancel() {
-    this._dialogRef.close(false);
+    if (this._saving$.value) return;
+    this._dialogRef.close(this.persisted);
   }
 
   submit() {
+    if (this._saving$.value) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this._saving$.next(true);
 
     const payload: Partial<APISchemas['ModelsMember']> = {
@@ -92,15 +110,21 @@ export class MemberFormComponent {
       email: this.form.value.email,
       phone_number: this.form.value.phone_number,
       address: this.form.value.address,
+      bureau: this.form.value.bureau,
     };
 
-    const result$ = !this.data.member?.id
+    const result$ = !this.savedId
       ? this._api.createMember(payload)
-      : this._api.updateMember(this.data.member.id, payload);
+      : this._api.updateMember(this.savedId!, payload);
 
     result$
       .pipe(
-        finalize(() => this._saving$.next(false)),
+        tap((member) => {
+          if (member?.id) {
+            this.savedId = member.id;
+            this.persisted = true;
+          }
+        }),
         switchMap((member) => this._api.getMember(member?.id!)),
         switchMap((member) => {
           const operations: Observable<null>[] = [];
@@ -126,26 +150,28 @@ export class MemberFormComponent {
           } else {
             return of(member);
           }
-        })
+        }),
+        finalize(() => this._saving$.next(false))
       )
       .subscribe({
         next: (member) => {
           this._notifications
             .showDialog({
-              title: 'Success',
+              title: 'Enregistrement terminé',
               message: this.data.member?.id
-                ? `Member ${member?.first_name} ${member?.last_name} has been updated`
-                : `Member ${member?.first_name} ${member?.last_name} has been created`,
+                ? `Membre ${member?.first_name} ${member?.last_name} a été modifié(e)`
+                : `Membre ${member?.first_name} ${member?.last_name} a été créé(e)`,
               level: NotificationDialogLevel.Info,
             })
             .afterClosed()
             .subscribe(() => this._dialogRef.close(true));
         },
-        error: this._api.handleError(
-          this.data.member?.id
-            ? 'Unable to update member'
-            : 'Unable to create member'
-        ),
+        error: (error) =>
+          this._api.handleError(
+            this.persisted
+              ? 'Le membre est enregistré, mais la vérification ou l’association aux lots a échoué. Réessaie ou actualise l’annuaire.'
+              : 'Impossible d’enregistrer le membre'
+          )(error),
       });
   }
 }

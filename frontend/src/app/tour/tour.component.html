@@ -1,0 +1,117 @@
+<header class="tour-heading">
+  <div>
+    <h1>Visite guidée</h1>
+    <p>Des exemples fictifs pour prendre tes repères, selon tes droits.</p>
+  </div>
+  <a mat-button routerLink="/dashboard">Quitter la visite</a>
+</header>
+@if (tour.loading()) {
+  <p role="status">Chargement du parcours et de ta progression…</p>
+} @else if (tour.error()) {
+  <p role="alert">
+    Impossible de charger la visite. Tu peux continuer à utiliser le site.
+  </p>
+  <button mat-stroked-button type="button" (click)="tour.reload()">
+    Réessayer
+  </button>
+} @else if (tour.state(); as state) {
+  @if (finished() || !chapters().length) {
+    <section class="tour-complete">
+      <h2 #chapterTitle tabindex="-1">
+        {{ finished() ? "Les repères sont posés" : "Tu es à jour" }}
+      </h2>
+      <p>
+        Tu as parcouru les étapes disponibles pour ton compte dans la version
+        {{ state.version }}.
+      </p>
+      <p>
+        Tu retrouveras cette visite dans le menu de ton compte. Lors d’une mise
+        à jour, seules les nouveautés utiles te seront proposées.
+      </p>
+      <a mat-flat-button routerLink="/dashboard">Revenir à l’accueil</a>
+      <a mat-button routerLink="/tour" [queryParams]="{ mode: 'all' }"
+        >Revoir toute la visite</a
+      >
+    </section>
+  } @else if (current(); as step) {
+    <div class="tour-progress" role="status">
+      Étape {{ index() + 1 }} sur {{ chapters().length }} · Visite version
+      {{ state.version }}
+      @if (mode() !== "all" && state.seen_version) {
+        · Nouveautés depuis ta dernière visite
+      }
+    </div>
+    <progress
+      [value]="index()"
+      [max]="chapters().length"
+      aria-label="Progression dans la visite"
+    ></progress>
+    <div class="tour-workspace">
+      <section class="tour-guidance" aria-labelledby="tour-chapter-title">
+        <h2 #chapterTitle id="tour-chapter-title" tabindex="-1">
+          {{ step.title }}
+        </h2>
+        <p>{{ step.description }}</p>
+        @if ((step.changes ?? []).length) {
+          <h3>Ce qui a changé</h3>
+          <ul>
+            @for (change of step.changes; track change) {
+              <li>{{ change }}</li>
+            }
+          </ul>
+        } @else if (state.seen_version && !step.seen_revision) {
+          <p>Cette étape est nouvelle pour ton compte.</p>
+        }
+        <p class="demo-notice">
+          Démonstration · Les noms, coordonnées et montants sont fictifs. Les
+          manipulations restent dans cet exemple ; seule ta progression est
+          enregistrée.
+        </p>
+      </section>
+      <section
+        class="tour-example"
+        aria-label="Exemple interactif avec des données fictives"
+      >
+        @for (example of [step]; track example.id) {
+          <app-tour-example [step]="example"></app-tour-example>
+        }
+      </section>
+    </div>
+    @if (saveError()) {
+      <p role="alert">{{ saveError() }}</p>
+      <button
+        mat-button
+        type="button"
+        (click)="tour.reload()"
+        [disabled]="saving()"
+      >
+        Recharger le parcours
+      </button>
+    }
+    <footer class="tour-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="previous()"
+        [disabled]="index() === 0 || saving()"
+      >
+        Précédent
+      </button>
+      <a mat-button routerLink="/dashboard">Reprendre plus tard</a>
+      <button
+        mat-flat-button
+        type="button"
+        (click)="next()"
+        [disabled]="saving()"
+      >
+        {{
+          saving()
+            ? "Enregistrement…"
+            : index() + 1 === chapters().length
+              ? "Terminer la visite"
+              : "Suivant"
+        }}
+      </button>
+    </footer>
+  }
+}

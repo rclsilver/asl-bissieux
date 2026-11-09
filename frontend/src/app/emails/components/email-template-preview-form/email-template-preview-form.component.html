@@ -1,18 +1,97 @@
-<h1 mat-dialog-title>Preview of the template {{data.template.label}}</h1>
-<form [formGroup]="form" (submit)="submit()">
+<h1 mat-dialog-title>Aperçu du modèle enregistré</h1>
+<form [formGroup]="form" (ngSubmit)="submit()">
   <div mat-dialog-content class="content">
-    <mat-form-field appearance="fill">
-      <mat-label>Data</mat-label>
-      <textarea matInput rows="15" formControlName="data" [required]="true"></textarea>
-      <mat-error *ngIf="form.controls['data'].touched && form.controls['data'].invalid">
-        <span *ngIf="form.controls['data'].errors!['required']">This field is mandatory</span>
-        <span *ngIf="form.controls['data'].errors!['server']">{{ form.controls['data'].errors!['server'] }}</span>
-      </mat-error>
+    <p class="model-name">{{ data.template.label }}</p>
+    <p>
+      Cet essai utilise la dernière version enregistrée du modèle. Il ne crée
+      aucun e-mail et n’envoie aucun message.
+    </p>
+    <mat-form-field subscriptSizing="dynamic" class="full-width">
+      <mat-label>Données pour l’aperçu</mat-label>
+      <mat-select formControlName="source">
+        <mat-option value="sample">Exemple fictif de budget</mat-option>
+        <mat-option value="custom">Mes données d’essai</mat-option>
+      </mat-select>
     </mat-form-field>
+    @if (form.controls.source.value === 'sample') {
+      <p>
+        L’exemple de départ représente Camille Exemple, deux lots et 250 € de
+        cotisations incluses. Ces données sont fictives ; aucun membre réel
+        n’est consulté.
+      </p>
+      <p>
+        Les champs ci-dessous correspondent aux valeurs supplémentaires du
+        modèle. Le mode avancé permet aussi de consulter ou modifier les données
+        fictives du budget.
+      </p>
+      <app-template-data-editor
+        [formControl]="form.controls.sampleData"
+        [suggestedFields]="data.template.custom_fields?.fields"
+        [preserveRoots]="automaticRoots"
+      ></app-template-data-editor>
+    } @else {
+      <p>
+        Fournis toutes les données attendues par le modèle. Le membre, le budget
+        et les cotisations ne sont pas ajoutés automatiquement ici. Le mode JSON
+        permet de renseigner des objets et des listes.
+      </p>
+      <app-template-data-editor
+        [formControl]="form.controls.customData"
+        [suggestedFields]="data.template.custom_fields?.fields"
+        [preserveRoots]="automaticRoots"
+      ></app-template-data-editor>
+    }
+    @if (data.template.custom_fields?.advanced) {
+      <p>
+        Des expressions avancées peuvent nécessiter des données supplémentaires
+        non détectées. Le mode JSON reste disponible.
+      </p>
+    }
+    @if (activeData.invalid) {
+      <p role="status">
+        Corrige les données d’essai avant de changer de source ou de
+        prévisualiser.
+      </p>
+    }
+    <p>
+      Pour un aperçu avec un membre et ses cotisations réels, utilise Préparer
+      les e-mails depuis un budget.
+    </p>
+    @if (previewing) {
+      <p role="status">Calcul de l’aperçu…</p>
+    }
+    @if (error) {
+      <p role="alert">{{ error }}</p>
+    }
+    @if (result) {
+      <section class="preview-block" aria-label="Résultat de l’aperçu">
+        @if (!previewCurrent && !previewing) {
+          <p role="status">
+            Cet aperçu n’est plus à jour. Relance-le après tes modifications.
+          </p>
+        }
+        <p>{{ resultSource }}</p>
+        <h2>{{ result.subject }}</h2>
+        <div
+          class="preview-message"
+          role="region"
+          aria-label="Corps de l’aperçu du message"
+          tabindex="0"
+          [innerHTML]="result.message"
+        ></div>
+      </section>
+    }
   </div>
-  <div mat-dialog-actions>
-    <button mat-button color="secondary" type="button" (click)="close()">Close</button>
-    <div class="spacer"></div>
-    <button mat-button color="primary" type="submit" [disabled]="form.invalid || !form.touched">Submit</button>
+  <div mat-dialog-actions class="form-actions">
+    <button mat-button type="button" (click)="close()">Fermer</button>
+    <span class="spacer"></span>
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      [disabled]="!canPreview"
+    >
+      {{ previewing ? 'Calcul de l’aperçu…' : 'Prévisualiser' }}
+    </button>
   </div>
 </form>

@@ -1,35 +1,256 @@
+<a
+  class="skip-link"
+  href="#main-content"
+  (click)="skipToContent($event, mainContent)"
+  >Aller au contenu</a
+>
 <mat-toolbar id="top-menu" color="primary">
-  <button mat-icon-button type="button" aria-label="Toggle sidenav" (click)="drawer.toggle()" *ngIf="isHandset$ | async">
-    <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
-  </button>
-  <span>ASL Bissieux</span>
+  @if ((active$ | async) && (isHandset$ | async)) {
+    <button
+      mat-icon-button
+      type="button"
+      [attr.aria-label]="drawer.opened ? 'Fermer le menu' : 'Ouvrir le menu'"
+      [attr.aria-expanded]="drawer.opened"
+      aria-controls="primary-navigation"
+      (click)="mobileMenuOpen = !mobileMenuOpen"
+    >
+      <mat-icon aria-hidden="true">menu</mat-icon>
+    </button>
+  }
+  <span class="brand">ASL Bissieux</span>
+  @if ((active$ | async) && (isHandset$ | async) === false) {
+    <nav id="top-navigation" aria-label="Menu principal">
+      @for (link of links; track link.path) {
+        @if (link.allowed$ | async) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            >{{ link.label }}</a
+          >
+        }
+      }
+    </nav>
+  }
   <span class="spacer"></span>
-  <with-google-auth-button *ngIf="!(authenticated$ | async)"></with-google-auth-button>
-  <span style="vertical-align:middle" *ngIf="user$ | async as user">{{ user.username }}</span>
-  <button mat-icon-button *ngIf="authenticated$ | async" type="button" aria-label="Logout" (click)="logout()">
-    <mat-icon>logout</mat-icon>
+  <button
+    mat-icon-button
+    type="button"
+    [matMenuTriggerFor]="themeMenu"
+    aria-label="Choisir le thème"
+    class="theme-trigger"
+  >
+    <mat-icon aria-hidden="true">{{
+      theme.resolved() === "dark" ? "dark_mode" : "light_mode"
+    }}</mat-icon>
   </button>
+  <mat-menu #themeMenu="matMenu" xPosition="before">
+    <button
+      mat-menu-item
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="theme.preference() === 'light'"
+      (click)="theme.setPreference('light')"
+    >
+      <mat-icon aria-hidden="true">light_mode</mat-icon
+      ><span>Clair · Bassin clair</span>
+    </button>
+    <button
+      mat-menu-item
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="theme.preference() === 'dark'"
+      (click)="theme.setPreference('dark')"
+    >
+      <mat-icon aria-hidden="true">dark_mode</mat-icon
+      ><span>Sombre · Graphite</span>
+    </button>
+    <button
+      mat-menu-item
+      type="button"
+      role="menuitemradio"
+      [attr.aria-checked]="theme.preference() === 'system'"
+      (click)="theme.setPreference('system')"
+    >
+      <mat-icon aria-hidden="true">contrast</mat-icon
+      ><span>Suivre le système</span>
+    </button>
+  </mat-menu>
+  @if (user$ | async; as user) {
+    <div class="account-area">
+      <span class="account-name">{{ user.username }}</span>
+      <button
+        mat-icon-button
+        type="button"
+        class="account-menu-trigger"
+        [matMenuTriggerFor]="accountMenu"
+        [attr.aria-label]="
+          'Menu du compte : ' + (user.username || 'Compte connecté')
+        "
+      >
+        <mat-icon aria-hidden="true">account_circle</mat-icon>
+      </button>
+      <mat-menu #accountMenu="matMenu" xPosition="before">
+        <div class="account-details">
+          <p class="account-label">Compte connecté</p>
+          <p class="account-identity">{{ user.username }}</p>
+        </div>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon aria-hidden="true">logout</mat-icon>
+          <span>Se déconnecter</span>
+        </button>
+        @if (user.enabled) {
+          <a mat-menu-item routerLink="/tour" [queryParams]="{ mode: 'all' }">
+            <mat-icon aria-hidden="true">explore</mat-icon
+            ><span>Revoir la visite guidée</span>
+          </a>
+        }
+      </mat-menu>
+    </div>
+  }
 </mat-toolbar>
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(authenticated$ | async) && (isHandset$ | async) === false">
+  <mat-sidenav
+    #drawer
+    id="primary-navigation"
+    aria-label="Menu principal"
+    class="sidenav"
+    [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+    [mode]="(isHandset$ | async) ? 'over' : 'side'"
+    [opened]="(active$ | async) && (isHandset$ | async) && mobileMenuOpen"
+    (closedStart)="mobileMenuOpen = false"
+    [attr.aria-modal]="(isHandset$ | async) && drawer.opened ? true : null"
+  >
     <mat-nav-list id="left-menu">
-      <ng-container *ngFor="let link of links">
-        <a mat-list-item *ngIf="link.allowed$ | async" [routerLink]="link.path" routerLinkActive="active">
-          <span mat-list-icon class="fa fa-{{ link.icon }}"></span>
-          <span mat-line>{{ link.label }}</span>
-        </a>
-      </ng-container>
+      @for (link of links; track link) {
+        @if (link.allowed$ | async) {
+          <a
+            mat-list-item
+            [routerLink]="link.path"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMobileMenu(drawer.mode === 'over')"
+          >
+            <mat-icon matListItemIcon aria-hidden="true">{{
+              link.icon
+            }}</mat-icon>
+            <span matListItemTitle>{{ link.label }}</span>
+          </a>
+        }
+      }
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content class="main-container">
-    <div *ngIf="authenticated$ | async">
-      <router-outlet></router-outlet>
-    </div>
-    <mat-card *ngIf="!(authenticated$ | async)" class="need-login">
-      <mat-card-title>Restricted area</mat-card-title>
-      <mat-card-content>
-        <p>You need to login to continue.</p>
-      </mat-card-content>
-    </mat-card>
+    <main
+      #mainContent
+      id="main-content"
+      tabindex="-1"
+      class="page-content"
+      [class.auth-content]="!(active$ | async)"
+    >
+      @if (active$ | async) {
+        @if (message$ | async; as message) {
+          <p role="alert" class="auth-message">{{ message }}</p>
+        }
+        <app-tour-prompt></app-tour-prompt>
+        <router-outlet></router-outlet>
+      } @else {
+        <div class="auth-layout">
+          <mat-card
+            appearance="outlined"
+            class="auth-panel"
+            aria-labelledby="auth-title"
+          >
+            <mat-card-content>
+              @if (loading$ | async) {
+                <h1 id="auth-title">Connexion à l’ASL</h1>
+                <p role="status" aria-live="polite">
+                  Vérification de la connexion…
+                </p>
+              } @else if (authenticated$ | async) {
+                <h1 id="auth-title">
+                  {{ accessTitle((user$ | async)?.access_status) }}
+                </h1>
+                <p>{{ accessMessage((user$ | async)?.access_status) }}</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="refreshAccess()"
+                  [disabled]="checkingAccess"
+                >
+                  {{
+                    checkingAccess ? "Vérification…" : "Actualiser mon accès"
+                  }}
+                </button>
+                <p>Tu peux te déconnecter pour utiliser un autre compte.</p>
+                @if (message$ | async; as message) {
+                  <p role="alert" class="auth-message">{{ message }}</p>
+                }
+                <button mat-stroked-button type="button" (click)="logout()">
+                  Se déconnecter
+                </button>
+              } @else {
+                @if (configuration$ | async; as configuration) {
+                  <h1 id="auth-title">Connexion à l’ASL</h1>
+                  <p>
+                    Connecte-toi pour retrouver les budgets, les lots et les
+                    membres de l’association.
+                  </p>
+                  @if (message$ | async; as message) {
+                    <p role="alert" class="auth-message">{{ message }}</p>
+                  }
+                  <div class="sign-in-action">
+                    @if (configuration.mode === "google") {
+                      <with-google-auth-button></with-google-auth-button>
+                    } @else if (configuration.login_url) {
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        type="button"
+                        class="sign-in"
+                        (click)="login()"
+                      >
+                        {{ loginLabel(configuration.label) }}
+                      </button>
+                    } @else {
+                      <p role="alert">
+                        La connexion est indisponible. Recharge la page pour
+                        réessayer.
+                      </p>
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        (click)="reloadPage()"
+                      >
+                        Recharger la page
+                      </button>
+                    }
+                  </div>
+                  <p class="auth-help">
+                    L’accès à l’application doit être activé par un
+                    administrateur.
+                  </p>
+                } @else {
+                  <h1 id="auth-title">Connexion indisponible</h1>
+                  <p role="alert">
+                    {{
+                      (message$ | async) ||
+                        "Impossible de charger la connexion. Recharge la page pour réessayer."
+                    }}
+                  </p>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="reloadPage()"
+                  >
+                    Recharger la page
+                  </button>
+                }
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+    </main>
   </mat-sidenav-content>
 </mat-sidenav-container>

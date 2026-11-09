@@ -5,7 +5,12 @@ import { UsersModule } from './users/users.module';
 import { AppComponent } from './app.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+  withXhr,
+} from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
@@ -18,10 +23,10 @@ import {
 
 @NgModule({
   declarations: [AppComponent],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    HttpClientModule,
     WithGoogleAuthModule,
     CoreModule,
     AppRoutingModule,
@@ -53,7 +58,7 @@ import {
       useClass: AuthInterceptor,
       multi: true,
     },
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
   ],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}

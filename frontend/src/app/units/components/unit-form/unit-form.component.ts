@@ -1,6 +1,12 @@
-import { Component, Inject, inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { finalize } from 'rxjs';
 import { APISchemas } from 'src/app/core/api/openapi';
 import { ApiService } from 'src/app/core/services/api.service';
 import { NotificationDialogLevel } from 'src/app/shared/components/notification-dialog/notification-dialog.component';
@@ -10,12 +16,15 @@ import { NotificationsService } from 'src/app/shared/services/notifications.serv
   selector: 'app-unit-form',
   templateUrl: './unit-form.component.html',
   styleUrls: ['./unit-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class UnitFormComponent {
   private readonly _notifications = inject(NotificationsService);
   private readonly _builder = inject(FormBuilder);
   private readonly _api = inject(ApiService);
 
+  saving = false;
   readonly form: FormGroup;
 
   constructor(
@@ -27,7 +36,10 @@ export class UnitFormComponent {
   ) {
     this.form = this._builder.group({
       number: [this.data.unit?.number, [Validators.required]],
-      share: [this.data.unit?.share, [Validators.required]],
+      share: [
+        this.data.unit?.share,
+        [Validators.required, Validators.min(0), Validators.pattern(/^\d+$/)],
+      ],
       address: [this.data.unit?.address, [Validators.required]],
     });
 
@@ -37,10 +49,16 @@ export class UnitFormComponent {
   }
 
   cancel() {
+    if (this.saving) return;
     this._dialogRef.close(false);
   }
 
   submit() {
+    if (this.saving) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const payload: Partial<APISchemas['ModelsUnit']> = {
       number: this.form.value.number,
       share: this.form.value.share,
@@ -51,19 +69,22 @@ export class UnitFormComponent {
       ? this._api.createUnit(payload)
       : this._api.updateUnit(this.data.unit.id, payload);
 
-    result$.subscribe({
+    this.saving = true;
+    result$.pipe(finalize(() => (this.saving = false))).subscribe({
       next: (unit) => {
         this._dialogRef.close(true);
         this._notifications.showDialog({
-          title: 'Success',
+          title: 'Enregistrement terminé',
           message: this.data.unit?.id
-            ? `Unit ${unit?.number} has been updated`
-            : `Unit ${unit?.number} has been created`,
+            ? `Lot ${unit?.number} a été modifié(e)`
+            : `Lot ${unit?.number} a été créé(e)`,
           level: NotificationDialogLevel.Info,
         });
       },
       error: this._api.handleError(
-        this.data.unit?.id ? 'Unable to update unit' : 'Unable to create unit'
+        this.data.unit?.id
+          ? 'Impossible de modifier le lot'
+          : 'Impossible de créer le lot'
       ),
     });
   }

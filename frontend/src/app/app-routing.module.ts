@@ -1,42 +1,59 @@
-import { NgModule } from '@angular/core';
-import { ExtraOptions, RouterModule, Routes } from '@angular/router';
+import { NgModule } from "@angular/core";
+import { ExtraOptions, RouterModule, Routes } from "@angular/router";
+import { isAuthenticated } from "./core/guards/auth.guard";
 
 const routes: Routes = [
   {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: '/budgets',
+    path: "tour",
+    canActivate: [isAuthenticated],
+    loadComponent: () => import("./tour/tour.component").then(m => m.TourComponent),
   },
   {
-    path: 'budgets',
-    loadChildren: () =>
-      import('./budgets/budgets.module').then((mod) => mod.BudgetsModule),
+    path: "",
+    pathMatch: "full",
+    redirectTo: "/dashboard",
   },
   {
-    path: 'units',
+    path: "dashboard",
     loadChildren: () =>
-      import('./units/units.module').then((mod) => mod.UnitsModule),
+      import("./dashboard/dashboard.module").then((m) => m.DashboardModule),
   },
   {
-    path: 'members',
+    path: "budgets",
     loadChildren: () =>
-      import('./members/members.module').then((mod) => mod.MembersModule),
+      import("./budgets/budgets.module").then((mod) => mod.BudgetsModule),
   },
   {
-    path: 'emails',
+    path: "units",
     loadChildren: () =>
-      import('./emails/emails.module').then((mod) => mod.EmailsModule),
+      import("./units/units.module").then((mod) => mod.UnitsModule),
   },
   {
-    path: 'users',
+    path: "members",
     loadChildren: () =>
-      import('./users/users.module').then((mod) => mod.UsersModule),
+      import("./members/members.module").then((mod) => mod.MembersModule),
+  },
+  {
+    path: "emails",
+    loadChildren: () =>
+      import("./emails/emails.module").then((mod) => mod.EmailsModule),
+  },
+  {
+    path: "users",
+    loadChildren: () =>
+      import("./users/users.module").then((mod) => mod.UsersModule),
+  },
+  {
+    path: "mailing-lists",
+    loadChildren: () =>
+      import("./mailings/mailings.module").then((m) => m.MailingsModule),
   },
 ];
 
 const config: ExtraOptions = {
   useHash: true,
-  initialNavigation: 'disabled',
+  // Guards wait for the session check; bootstrap must still resolve the URL.
+  initialNavigation: "enabledNonBlocking",
 };
 
 @NgModule({

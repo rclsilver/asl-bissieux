@@ -8,6 +8,7 @@ import {
   OnInit,
   Output,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -27,6 +28,8 @@ export type FilterFunction<T> = (filter: string, option: T) => boolean;
   selector: 'app-multi-select',
   templateUrl: './multi-select.component.html',
   styleUrls: ['./multi-select.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class MultiSelectComponent<T> implements OnInit, OnDestroy {
   private _destroyed$ = new Subject<void>();

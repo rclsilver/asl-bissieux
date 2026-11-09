@@ -1,0 +1,779 @@
+<div class="dashboard-heading">
+  <div class="page-heading">
+    <div>
+      <h1>Accueil de l’ASL</h1>
+      <p>Budget, paiements et vie de l’association.</p>
+    </div>
+  </div>
+  <div class="selectors context-controls">
+    <mat-form-field
+      appearance="outline"
+      class="context-field"
+      subscriptSizing="dynamic"
+      ><mat-label>Budget à consulter</mat-label
+      ><mat-select
+        [value]="budgetId"
+        (selectionChange)="selectBudget($event.value)"
+        [disabled]="budgets.loading || budgets.error"
+        ><mat-option value="">Choisir un budget</mat-option>
+        @for (budget of budgets.value ?? []; track budget.id) {
+          <mat-option [value]="budget.id"
+            >{{ budget.label }} —
+            {{ budget.draft ? "brouillon" : "publié" }}</mat-option
+          >
+        }
+      </mat-select></mat-form-field
+    >
+    <button
+      mat-icon-button
+      class="context-refresh"
+      type="button"
+      (click)="refresh()"
+      [disabled]="budgets.loading || finance.loading"
+      aria-label="Actualiser les données"
+      matTooltip="Actualiser les données"
+    >
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+    </button>
+    @if (budgets.loading) {
+      <p role="status">Chargement des budgets…</p>
+    }
+    @if (budgets.error) {
+      <p role="alert">La liste des budgets est indisponible.</p>
+      <button mat-button type="button" (click)="retry('budgets')">
+        Réessayer
+      </button>
+    }
+    @if (!budgets.loading && !budgets.error && budgets.value?.length === 0) {
+      <p>
+        Aucun budget enregistré.
+        <a routerLink="/budgets">Consulter les budgets</a>
+      </p>
+    }
+  </div>
+</div>
+@if (!budgetId) {
+  <p>
+    Choisis un budget pour consulter sa situation et la carte des paiements. Les
+    modules Annuaire et E-mails portent sur toute l’association.
+  </p>
+}
+@if (finance.loading) {
+  <p role="status">Chargement de la situation du budget…</p>
+}
+@if (finance.error) {
+  <p role="alert">
+    Impossible de charger ce budget. Vérifie la sélection ou réessaie.
+  </p>
+  <button mat-stroked-button type="button" (click)="retry('finance')">
+    Réessayer le budget
+  </button>
+}
+@if (finance.value; as view) {
+  <h2 class="budget-title">
+    {{ view.budget?.label }}
+    <span class="status-label">{{
+      view.budget?.draft ? "Brouillon" : "Publié"
+    }}</span>
+  </h2>
+  <p>
+    <a [routerLink]="['/budgets', budgetId]"
+      >Consulter les dépenses et cotisations du budget</a
+    >
+  </p>
+  @if (!view.budget?.draft) {
+    <dl class="indicators">
+      <div>
+        <dt><a [routerLink]="['/budgets', budgetId]">Total appelé</a></dt>
+        <dd>{{ money(view.recovery?.called) }}</dd>
+      </div>
+      <div>
+        <dt>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'received' }"
+            >Encaissé net</a
+          >
+        </dt>
+        <dd>{{ money(view.recovery?.paid) }}</dd>
+      </div>
+      <div>
+        <dt>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'remaining' }"
+            >Reste à encaisser</a
+          >
+        </dt>
+        <dd>{{ money(view.recovery?.remaining) }}</dd>
+      </div>
+      <div>
+        <dt>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'settled' }"
+            >Taux de recouvrement</a
+          >
+        </dt>
+        <dd>{{ rate(view.recovery?.rate) }}</dd>
+      </div>
+    </dl>
+    <details class="calculation-note">
+      <summary>Comprendre les indicateurs</summary>
+      <p>
+        Situation actuelle, toutes dates. L’encaissé net déduit
+        {{ money(view.recovery?.refunded) }} de remboursements nets. Le reste
+        additionne les soldes positifs ; aucun trop-perçu ne couvre la dette
+        d’un autre lot.
+      </p>
+      <p>
+        Le taux mesure les appels couverts lot par lot, plafonnés au montant
+        appelé.
+        @if (view.recovery?.rate == null) {
+          Aucun montant appelé : taux indisponible.
+        }
+      </p>
+    </details>
+    <ul class="inline-facts">
+      <li>
+        <a
+          [routerLink]="['/budgets', budgetId]"
+          [queryParams]="{ coverage: 'settled' }"
+          >{{ view.recovery?.settled }} lots à jour</a
+        >
+      </li>
+      <li>
+        <a
+          [routerLink]="['/budgets', budgetId]"
+          [queryParams]="{ coverage: 'partial' }"
+          >{{ view.recovery?.partial }} partiellement réglés</a
+        >
+      </li>
+      <li>
+        <a
+          [routerLink]="['/budgets', budgetId]"
+          [queryParams]="{ coverage: 'unpaid' }"
+          >{{ view.recovery?.unpaid }} sans paiement</a
+        >
+      </li>
+      <li>
+        <a
+          [routerLink]="['/budgets', budgetId]"
+          [queryParams]="{ coverage: 'overpaid' }"
+          >{{ view.recovery?.overpaid }} trop-perçus :
+          {{ money(view.recovery?.surplus) }}</a
+        >
+      </li>
+    </ul>
+    @if (view.recovery?.lots === 0) {
+      <p>Aucune cotisation active n’est enregistrée pour ce budget publié.</p>
+    }
+  } @else if (view.budget?.preview; as preview) {
+    <p>
+      Prévisions uniquement : ce brouillon ne génère aucune dette ni aucun
+      paiement.
+    </p>
+    <dl class="indicators">
+      <div>
+        <dt>Total prévisionnel</dt>
+        <dd>{{ money(preview.amount) }}</dd>
+      </div>
+      <div>
+        <dt>Parts actuelles</dt>
+        <dd>{{ preview.total_shares }}</dd>
+      </div>
+      <div>
+        <dt>Annuel par part</dt>
+        <dd>
+          {{ preview.total_shares ? perShare(preview.annual_per_share) : "—" }}
+        </dd>
+      </div>
+      <div>
+        <dt>Mensuel par part</dt>
+        <dd>
+          {{ preview.total_shares ? perShare(preview.monthly_per_share) : "—" }}
+        </dd>
+      </div>
+    </dl>
+    <p>
+      Mensualisation sur {{ preview.months }} mois. Montants par part
+      indicatifs, à six décimales ; la publication répartit les cotisations au
+      centime.
+    </p>
+    @if (!preview.ready) {
+      <p role="status">{{ preview.message }}</p>
+    }
+  }
+}
+
+@if (finance.value && !finance.value.budget?.draft) {
+  <div class="map-workspace">
+    <section class="section map-panel" aria-labelledby="map-title">
+      <div class="map-heading">
+        <div>
+          <h2 id="map-title">Paiements des lots</h2>
+          <p>Chercher un membre ou un lot, puis consulter sa situation.</p>
+        </div>
+        <a
+          mat-stroked-button
+          routerLink="/members"
+          [queryParams]="{ view: 'map' }"
+          >Annuaire</a
+        >
+      </div>
+      <mat-form-field
+        class="map-search"
+        appearance="outline"
+        subscriptSizing="dynamic"
+      >
+        <mat-label>Rechercher sur la carte</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="search"
+          [value]="mapSearch"
+          (input)="searchMap($any($event.target).value)"
+          placeholder="Nom, lot, adresse, e-mail ou téléphone"
+          aria-describedby="map-search-help"
+        />
+        @if (mapSearch) {
+          <button
+            matSuffix
+            mat-icon-button
+            type="button"
+            (click)="searchMap('')"
+            aria-label="Effacer la recherche"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <p id="map-search-help" class="map-help">
+        La recherche met les lots en évidence sans changer leur couleur de
+        paiement.
+      </p>
+      @if (mapSearch.trim() && !units.loading && !units.error) {
+        <div class="map-results">
+          <p role="status">
+            {{ matchingMapUnits.length }} lot{{
+              matchingMapUnits.length > 1 ? "s" : ""
+            }}
+            trouvé{{ matchingMapUnits.length > 1 ? "s" : "" }}.
+          </p>
+          <div class="result-buttons">
+            @for (unit of matchingMapUnits; track unit.id) {
+              <button
+                mat-stroked-button
+                type="button"
+                [attr.aria-pressed]="selectedLot === unit.number"
+                (click)="selectLot(unit.number ?? null)"
+              >
+                Lot {{ unit.number }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      <ul class="legend">
+        <li><span class="dot settled" aria-hidden="true"></span>Soldé</li>
+        <li>
+          <span class="dot partial" aria-hidden="true"></span>Partiellement
+          réglé
+        </li>
+        <li>
+          <span class="dot unpaid" aria-hidden="true"></span>Sans paiement
+        </li>
+        <li><span class="dot overpaid" aria-hidden="true"></span>Trop-perçu</li>
+        <li>
+          <span class="dot no-call" aria-hidden="true"></span>Sans cotisation ou
+          lot non référencé
+        </li>
+      </ul>
+      @if (units.loading) {
+        <p role="status">Chargement du catalogue des lots…</p>
+      }
+      @if (units.error) {
+        <p role="alert">
+          Le catalogue des lots est indisponible. Seules les cotisations connues
+          sont renseignées sur la carte.
+        </p>
+        <button mat-button type="button" (click)="retry('units')">
+          Réessayer les lots
+        </button>
+      }
+
+      <app-interactive-map
+        label="Carte des paiements du budget sélectionné"
+        [showLabels]="true"
+        [unitClasses]="mapClasses"
+        [highlightedUnits]="highlightedMapUnits"
+        [selectedUnit]="selectedLot"
+        (unitClick)="selectLot($event.unitId)"
+      ></app-interactive-map>
+      <details class="map-help">
+        <summary>Choisir un lot dans une liste ou utiliser le clavier</summary>
+        <mat-form-field subscriptSizing="dynamic"
+          ><mat-label>Consulter un lot</mat-label
+          ><mat-select
+            [value]="selectedLot"
+            (selectionChange)="selectLot($event.value)"
+            ><mat-option [value]="null">Aucun lot sélectionné</mat-option>
+            @for (unit of units.value ?? []; track unit.id) {
+              <mat-option [value]="unit.number"
+                >Lot {{ unit.number }}</mat-option
+              >
+            }
+          </mat-select></mat-form-field
+        >
+        <p>
+          Clavier : Tab, flèches, puis Entrée ou Espace pour sélectionner un
+          lot.
+        </p>
+      </details>
+    </section>
+    <aside class="map-context">
+      @if (selectedLot !== null) {
+        <section class="lot-detail" aria-label="Lot sélectionné">
+          <h3>Lot {{ selectedLot }}</h3>
+          <p role="status">
+            Lot {{ selectedLot }} sélectionné.
+            {{
+              selectedCotisation
+                ? state(selectedCotisation)
+                : "Consulter sa situation ci-dessous."
+            }}
+          </p>
+          @if (selectedUnit; as unit) {
+            <p>{{ unit.address }}</p>
+            <ul>
+              @for (member of unit.members ?? []; track member.id) {
+                <li>{{ member.first_name }} {{ member.last_name }}</li>
+              } @empty {
+                <li>Aucun membre associé à ce lot.</li>
+              }
+            </ul>
+          }
+          @if (selectedCotisation; as c) {
+            <p>
+              {{ state(c) }} · Appelé : {{ money(c.amount) }} · Encaissé net :
+              {{ money(c.paid) }} · Solde : {{ money(c.remaining) }}
+            </p>
+            <a
+              mat-stroked-button
+              [routerLink]="['/budgets', budgetId]"
+              [queryParams]="{ cotisation: c.id }"
+              >Consulter l’historique complet et les actions autorisées</a
+            >
+            @if (payments.loading) {
+              <p role="status">Chargement des paiements du lot…</p>
+            }
+            @if (payments.error) {
+              <p role="alert">Impossible de charger les paiements de ce lot.</p>
+              <button mat-button type="button" (click)="retry('payments')">
+                Réessayer les paiements
+              </button>
+            }
+            @if (payments.value; as rows) {
+              <h4>Paiements reçus</h4>
+              <ul>
+                @for (payment of rows; track payment.id) {
+                  <li>
+                    {{ businessDate(payment.date) }} —
+                    {{ money(payment.amount) }} — {{ payment.comment }}
+                  </li>
+                } @empty {
+                  <li>Aucun paiement enregistré.</li>
+                }
+              </ul>
+            }
+          } @else {
+            <p>
+              {{
+                units.loading
+                  ? "Chargement de la situation du lot…"
+                  : units.error
+                    ? "La situation de ce lot ne peut pas être confirmée sans le catalogue."
+                    : selectedUnit
+                      ? "Aucune cotisation pour ce lot dans le budget sélectionné."
+                      : "Ce numéro de la carte ne correspond pas à un lot actif du catalogue."
+              }}
+            </p>
+          }
+          @if (selectedUnit) {
+            <a
+              routerLink="/members"
+              [queryParams]="{ view: 'map', lot: selectedLot }"
+              >Consulter le lot et ses membres dans l’annuaire</a
+            >
+          }
+        </section>
+      }
+      @if (selectedLot === null) {
+        <section class="selection-prompt">
+          <h2>Consulter un lot</h2>
+          <p>
+            Sélectionne un lot sur la carte ou dans les résultats pour retrouver
+            ses membres et ses paiements.
+          </p>
+        </section>
+      }
+      <section aria-labelledby="actions-title" class="section">
+        <h2 id="actions-title">À traiter</h2>
+        @if (!hasActions && actionsComplete) {
+          <p>Aucun point à traiter n’est signalé par les modules ci-dessous.</p>
+        }
+        @if (!actionsComplete) {
+          <p>La liste se complète lorsque les modules sont disponibles.</p>
+        }
+        <ul class="actions-list">
+          @if (
+            finance.value &&
+            !finance.value.budget?.draft &&
+            (finance.value.recovery?.remaining ?? 0) > 0
+          ) {
+            <li>
+              <a
+                [routerLink]="['/budgets', budgetId]"
+                [queryParams]="{ coverage: 'remaining' }"
+                >Consulter les lots avec un reste à encaisser :
+                {{ money(finance.value.recovery?.remaining) }}</a
+              >
+            </li>
+          }
+          @if ((finance.value?.recovery?.overpaid ?? 0) > 0) {
+            <li>
+              <a
+                [routerLink]="['/budgets', budgetId]"
+                [queryParams]="{ coverage: 'overpaid' }"
+                >Examiner les trop-perçus à rembourser</a
+              >
+            </li>
+          }
+          @if ((emails.value?.counts?.error ?? 0) > 0) {
+            <li>
+              <a routerLink="/emails/campaigns"
+                >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
+                toutes campagnes</a
+              >
+            </li>
+          }
+          @if ((emails.value?.counts?.unknown ?? 0) > 0) {
+            <li>
+              <a routerLink="/emails/campaigns"
+                >Vérifier {{ emails.value?.counts?.unknown }} envois incertains
+                — toutes campagnes</a
+              >
+            </li>
+          }
+          @if ((directory.value?.invalid_shares ?? 0) > 0) {
+            <li>
+              <a routerLink="/units"
+                >Vérifier les parts de
+                {{ directory.value?.invalid_shares }} lots</a
+              >
+            </li>
+          }
+          @if (administrator && (access.value?.pending ?? 0) > 0) {
+            <li>
+              <a routerLink="/users" [queryParams]="{ status: 'pending' }"
+                >Examiner {{ access.value?.pending }} demandes d’accès</a
+              >
+            </li>
+          }
+        </ul>
+      </section>
+    </aside>
+  </div>
+}
+@if (!finance.value || finance.value.budget?.draft) {
+  <section aria-labelledby="actions-title" class="section">
+    <h2 id="actions-title">À traiter</h2>
+    @if (!hasActions && actionsComplete) {
+      <p>Aucun point à traiter n’est signalé par les modules ci-dessous.</p>
+    }
+    @if (!actionsComplete) {
+      <p>La liste se complète lorsque les modules sont disponibles.</p>
+    }
+    <ul class="actions-list">
+      @if (
+        finance.value &&
+        !finance.value.budget?.draft &&
+        (finance.value.recovery?.remaining ?? 0) > 0
+      ) {
+        <li>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'remaining' }"
+            >Consulter les lots avec un reste à encaisser :
+            {{ money(finance.value.recovery?.remaining) }}</a
+          >
+        </li>
+      }
+      @if ((finance.value?.recovery?.overpaid ?? 0) > 0) {
+        <li>
+          <a
+            [routerLink]="['/budgets', budgetId]"
+            [queryParams]="{ coverage: 'overpaid' }"
+            >Examiner les trop-perçus à rembourser</a
+          >
+        </li>
+      }
+      @if ((emails.value?.counts?.error ?? 0) > 0) {
+        <li>
+          <a routerLink="/emails/campaigns"
+            >Examiner {{ emails.value?.counts?.error }} e-mails en erreur —
+            toutes campagnes</a
+          >
+        </li>
+      }
+      @if ((emails.value?.counts?.unknown ?? 0) > 0) {
+        <li>
+          <a routerLink="/emails/campaigns"
+            >Vérifier {{ emails.value?.counts?.unknown }} envois incertains —
+            toutes campagnes</a
+          >
+        </li>
+      }
+      @if ((directory.value?.invalid_shares ?? 0) > 0) {
+        <li>
+          <a routerLink="/units"
+            >Vérifier les parts de {{ directory.value?.invalid_shares }} lots</a
+          >
+        </li>
+      }
+      @if (administrator && (access.value?.pending ?? 0) > 0) {
+        <li>
+          <a routerLink="/users" [queryParams]="{ status: 'pending' }"
+            >Examiner {{ access.value?.pending }} demandes d’accès</a
+          >
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+@if (finance.value; as view) {
+  <details class="section comparison-section" [open]="!!referenceId">
+    <summary id="comparison-title">Comparer les budgets annuels</summary>
+
+    <p>
+      Comparaison des dépenses
+      {{
+        view.budget?.draft
+          ? "prévisionnelles du brouillon"
+          : "initiales publiées"
+      }}
+      de « {{ view.budget?.label }} ». Les ajustements de cotisations ne
+      réécrivent pas les dépenses initiales.
+    </p>
+    <mat-form-field subscriptSizing="dynamic"
+      ><mat-label>Budget de référence</mat-label
+      ><mat-select
+        [value]="referenceId"
+        (selectionChange)="selectReference($event.value)"
+        ><mat-option value="">Choisir explicitement la référence</mat-option>
+        @for (budget of budgets.value ?? []; track budget.id) {
+          @if (budget.id !== budgetId) {
+            <mat-option [value]="budget.id"
+              >{{ budget.label }} —
+              {{ budget.draft ? "brouillon" : "publié" }}</mat-option
+            >
+          }
+        }
+      </mat-select></mat-form-field
+    >
+    @if (reference.loading) {
+      <p role="status">Chargement du budget de référence…</p>
+    }
+    @if (reference.error) {
+      <p role="alert">Impossible de charger cette référence.</p>
+      <button mat-button type="button" (click)="retry('reference')">
+        Réessayer la référence
+      </button>
+    }
+    @if (!referenceId || referenceId === budgetId) {
+      <p>
+        Choisis un autre budget pour afficher les écarts. L’exercice n’est pas
+        déduit du titre ni de la date de création.
+      </p>
+    }
+    @if (reference.value; as ref) {
+      <dl class="comparison">
+        <div>
+          <dt>
+            {{ view.budget?.label }} —
+            {{ view.budget?.draft ? "brouillon" : "publié" }}
+          </dt>
+          <dd>{{ money(view.budget?.amount) }}</dd>
+        </div>
+        <div>
+          <dt>{{ ref.label }} — {{ ref.draft ? "brouillon" : "publié" }}</dt>
+          <dd>{{ money(ref.amount) }}</dd>
+        </div>
+        <div>
+          <dt>Écart annuel</dt>
+          <dd>{{ money(comparisonDifference) }}</dd>
+        </div>
+        <div>
+          <dt>Écart relatif à la référence</dt>
+          <dd>{{ rate(comparisonPercent) }}</dd>
+        </div>
+      </dl>
+      @if (comparisonPercent === null) {
+        <p>
+          La référence ne comporte pas de montant positif : le pourcentage n’est
+          pas calculé.
+        </p>
+      }
+      <p>
+        Les parts des budgets publiés n’ont pas été historisées : aucune
+        ancienne répartition par part n’est reconstituée.
+        @if (view.budget?.draft) {
+          Le brouillon utilise {{ view.budget?.preview?.total_shares }} parts
+          actuelles.
+        }
+        @if (ref.draft) {
+          La référence est aussi un brouillon, calculé avec les parts actuelles.
+        }
+      </p>
+    }
+  </details>
+}
+<div class="global-modules">
+  <section class="section" aria-labelledby="directory-title">
+    <h2 id="directory-title">Annuaire — toute l’association</h2>
+    @if (directory.loading) {
+      <p role="status">Chargement des points à compléter…</p>
+    }
+    @if (directory.error) {
+      <p role="alert">La synthèse de l’annuaire est indisponible.</p>
+      <button mat-button type="button" (click)="retry('directory')">
+        Réessayer l’annuaire
+      </button>
+    }
+    @if (directory.value; as data) {
+      <ul>
+        <li>
+          <a routerLink="/members"
+            >{{ data.missing_email }} membres sans adresse e-mail</a
+          >
+        </li>
+        <li>
+          <a routerLink="/units"
+            >{{ data.no_member }} lots sans membre associé</a
+          >
+        </li>
+        <li>
+          <a routerLink="/units"
+            >{{ data.invalid_shares }} lots sans parts positives</a
+          >
+        </li>
+      </ul>
+      <details>
+        <summary>À propos des coordonnées manquantes</summary>
+        <p>
+          Une adresse e-mail manquante peut être volontaire. Complète seulement
+          les informations disponibles. Les membres de l’annuaire et les
+          utilisateurs de l’application sont gérés séparément.
+        </p>
+      </details>
+    }
+  </section>
+  <section class="section" aria-labelledby="email-title">
+    <h2 id="email-title">E-mails — toutes campagnes</h2>
+    @if (emails.loading) {
+      <p role="status">Chargement de la synthèse des e-mails…</p>
+    }
+    @if (emails.error) {
+      <p role="alert">La synthèse des e-mails est indisponible.</p>
+      <button mat-button type="button" (click)="retry('emails')">
+        Réessayer les e-mails
+      </button>
+    }
+    @if (emails.value; as data) {
+      <p>
+        Toutes dates, campagnes et messages actifs.
+        {{ data.campaigns }} campagnes, {{ data.counts?.total }} e-mails.
+      </p>
+      <ul>
+        <li>
+          <a routerLink="/emails/campaigns"
+            >{{ data.counts?.waiting }} en attente</a
+          >
+        </li>
+        <li>
+          <a routerLink="/emails/campaigns"
+            >{{ data.counts?.successful }} envoyés</a
+          >
+        </li>
+        <li>
+          <a routerLink="/emails/campaigns"
+            >{{ data.counts?.error }} en erreur</a
+          >
+        </li>
+        <li>
+          <a routerLink="/emails/campaigns"
+            >{{ data.counts?.unknown }} envois à vérifier</a
+          >
+        </li>
+        <li>
+          <a routerLink="/emails/campaigns"
+            >{{ data.counts?.sending }} en cours d’envoi</a
+          >
+        </li>
+      </ul>
+      <p>
+        Les signaux d’ouverture restent inclus une seule fois dans les envois
+        réussis. Un pixel d’ouverture ne prouve pas la lecture humaine.
+      </p>
+      <details class="recent-campaigns">
+        <summary>Les cinq campagnes les plus récentes</summary>
+        <ul>
+          @for (campaign of data.recent ?? []; track campaign.id) {
+            <li>
+              <a [routerLink]="['/emails/campaigns', campaign.id]">{{
+                campaign.title
+              }}</a>
+              — {{ campaign.created_at | date: "dd/MM/yyyy" }}
+              @if ((campaign.counts?.error ?? 0) > 0) {
+                ·
+                <a
+                  [routerLink]="['/emails/campaigns', campaign.id]"
+                  [queryParams]="{ state: 'ERROR' }"
+                  >{{ campaign.counts?.error }} erreurs à examiner</a
+                >
+              }
+            </li>
+          } @empty {
+            <li>Aucune campagne enregistrée.</li>
+          }
+        </ul>
+      </details>
+    }
+  </section>
+</div>
+@if (administrator) {
+  <section class="section" aria-labelledby="access-title">
+    <h2 id="access-title">Demandes d’accès — administration</h2>
+    @if (access.loading) {
+      <p role="status">Chargement des demandes d’accès…</p>
+    }
+    @if (access.error) {
+      <p role="alert">Impossible de charger les demandes.</p>
+      <button mat-button type="button" (click)="retry('access')">
+        Réessayer les demandes
+      </button>
+    }
+    @if (access.value; as data) {
+      <p>
+        <a routerLink="/users" [queryParams]="{ status: 'pending' }"
+          >{{ data.pending }} demandes en attente</a
+        >
+      </p>
+      <p>
+        Les comptes volontairement désactivés ou refusés ne sont pas comptés
+        comme nouvelles demandes.
+      </p>
+    }
+  </section>
+}

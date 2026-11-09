@@ -25,7 +25,8 @@ ml:
 | `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY` | Ancien mode (alternative, ne pas combiner avec l’IAM) ; utilisé par Smocker en développement |
 | `APP_ML_DOMAIN` | Domaine hébergeant les listes, par exemple `example.invalid` |
 | `APP_ML_MEMBERS` | Nom local de la liste Membres, par exemple `membres` |
-| `APP_ML_BUREAU` | Nom local de la liste Bureau, par exemple `bureau` |
+| `APP_ML_BUREAU` | Nom local de la liste Bureau (ou de la redirection), par exemple `bureau` |
+| `APP_ML_BUREAU_TYPE` | Optionnel. `mailing-list` (défaut) ou `redirection` : Bureau est alors porté par des redirections e-mail `bureau@domaine` |
 
 Les paramètres sont requis dès que l’un est renseigné : endpoint, les trois cibles et un jeu d’identifiants complet, soit IAM (`OVH_CLIENT_ID` + `OVH_CLIENT_SECRET`), soit l’ancien triplet. Mélanger les deux est refusé. Les trois cibles peuvent venir de Viper plutôt que de variables d’environnement. Une configuration partielle ou invalide bloque les opérations, sans afficher les valeurs secrètes. Si tous les paramètres sont absents ou vides, la fonction reste non configurée et ne contacte pas OVH. L’endpoint n’a pas de valeur implicite. Les noms de listes sont **sans `@domaine`** et doivent être distincts. Une URL d’endpoint ne doit contenir ni identifiants, ni paramètres, ni fragment, ni barre oblique finale.
 
@@ -98,3 +99,7 @@ Elle imprime uniquement des compteurs par groupe et le statut vérifié, jamais
 les identifiants ni les adresses. Sans configuration OVH ni cibles Viper, elle retourne
 `configured: false` et `verified: false` sans requête OVH. Elle n’applique aucun
 changement et peut servir à vérifier la configuration avant la première synchronisation.
+
+### Bureau géré par redirections
+
+Avec `APP_ML_BUREAU_TYPE=redirection` (YAML `ml.bureau_type`, option `--ml-bureau-type`), le groupe Bureau n’est pas une liste de diffusion mais un ensemble de redirections `APP_ML_BUREAU@APP_ML_DOMAIN` : une redirection par destinataire, sans copie locale. Les ajouts créent une redirection, les retraits suppriment les redirections vers l’adresse retirée. Membres reste une liste de diffusion. Les tâches en attente sont lues via `task/redirection`. Les droits IAM nécessaires s’ajoutent à ceux des listes : `emailDomain:apiovh:redirection/get`, `redirection/create`, `redirection/delete` et `task/redirection/get`.

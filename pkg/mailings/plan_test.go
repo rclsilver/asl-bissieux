@@ -2,6 +2,7 @@ package mailings
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -190,5 +191,96 @@ func TestOVHClientUsesScopedSignedSubscriberRoutes(t *testing.T) {
 	}
 	if len(calls) != 4 || calls[2] != "DELETE /email/domain/example.invalid/mailingList/bureau/subscriber/bob@example.invalid" {
 		t.Fatalf("unexpected routes %v", calls)
+	}
+}
+
+func TestOVHClientBureauAsRedirections(t *testing.T) {
+	calls := []string{}
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/auth/time" {
+			fmt.Fprintf(w, "%d", time.Now().Unix())
+			return
+		}
+		calls = append(calls, r.Method+" "+r.URL.Path+"?"+r.URL.RawQuery)
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.URL.Path == "/email/domain/example.invalid/task/redirection":
+			fmt.Fprint(w, `[7]`)
+		case r.Method == http.MethodGet && r.URL.Path == "/email/domain/example.invalid/redirection":
+			if r.URL.Query().Get("from") != "bureau@example.invalid" {
+				t.Error("wrong redirection source filter")
+			}
+			fmt.Fprint(w, `["11","12"]`)
+		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/mailingList/"):
+			fmt.Fprint(w, `["member@example.invalid"]`)
+		case r.Method == http.MethodGet:
+			fmt.Fprint(w, `{"id":"11","from":"bureau@example.invalid","to":"alice@example.invalid"}`)
+		case r.Method == http.MethodPost:
+			var body map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body["from"] != "bureau@example.invalid" || body["to"] != "bob@example.invalid" || body["localCopy"] != false {
+				t.Errorf("unexpected redirection body %v %v", body, err)
+			}
+			fmt.Fprint(w, `{"id":1}`)
+		default:
+			fmt.Fprint(w, `{"id":2}`)
+		}
+	}))
+	defer s.Close()
+	c, err := NewClient(&Config{Endpoint: s.URL, ApplicationKey: "k", ApplicationSecret: "s", ConsumerKey: "c", Domain: "example.invalid", Members: "membres", Bureau: "bureau", BureauType: BureauRedirection})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	subs, err := c.Subscribers(ctx, "bureau")
+	if err != nil || len(subs) != 2 || subs[0] != "alice@example.invalid" {
+		t.Fatalf("redirection subscribers %v: %v", subs, err)
+	}
+	if err := c.Add(ctx, "bureau", "bob@example.invalid"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Remove(ctx, "bureau", "alice@example.invalid"); err != nil {
+		t.Fatal(err)
+	}
+	if ids, err := c.Pending(ctx, "bureau"); err != nil || len(ids) != 1 || ids[0] != 7 {
+		t.Fatalf("pending redirection tasks %v: %v", ids, err)
+	}
+	// Membres stays a mailing list even when Bureau uses redirections.
+	if _, err := c.Subscribers(ctx, "membres"); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"GET /email/domain/example.invalid/redirection?from=bureau%40example.invalid",
+		"GET /email/domain/example.invalid/redirection/11?",
+		"GET /email/domain/example.invalid/redirection/12?",
+		"POST /email/domain/example.invalid/redirection?",
+		"GET /email/domain/example.invalid/redirection?from=bureau%40example.invalid&to=alice%40example.invalid",
+		"DELETE /email/domain/example.invalid/redirection/11?",
+		"DELETE /email/domain/example.invalid/redirection/12?",
+		"GET /email/domain/example.invalid/task/redirection?account=bureau",
+		"GET /email/domain/example.invalid/mailingList/membres/subscriber?",
+	}
+	if strings.Join(calls, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected routes:\n%s", strings.Join(calls, "\n"))
+	}
+}
+
+func TestBureauTypeConfiguration(t *testing.T) {
+	previous := targets
+	t.Cleanup(func() { targets = previous })
+	for name, value := range map[string]string{"OVH_ENDPOINT": "ovh-eu", "OVH_CLIENT_ID": "id", "OVH_CLIENT_SECRET": "secret", "OVH_APPLICATION_KEY": "", "OVH_APPLICATION_SECRET": "", "OVH_CONSUMER_KEY": "", "APP_ML_DOMAIN": "example.invalid", "APP_ML_MEMBERS": "membres", "APP_ML_BUREAU": "bureau"} {
+		t.Setenv(name, value)
+	}
+	for _, tc := range []struct {
+		value string
+		ok    bool
+	}{{"", true}, {"mailing-list", true}, {"redirection", true}, {"forward", false}} {
+		t.Setenv("APP_ML_BUREAU_TYPE", tc.value)
+		if err := config.Load(); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := LoadConfig()
+		if (err == nil) != tc.ok || (tc.ok && cfg.UsesRedirection() != (tc.value == "redirection")) {
+			t.Fatalf("bureau type %q: cfg=%v err=%v", tc.value, cfg, err)
+		}
 	}
 }

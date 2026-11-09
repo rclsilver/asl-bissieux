@@ -150,7 +150,7 @@ func TestOIDCAndOVHSecretReferences(t *testing.T) {
 		refs[env.Name] = env.ValueFrom.SecretKeyRef.Name + "/" + env.ValueFrom.SecretKeyRef.Key
 		valuesByName[env.Name] = env.Value
 	}
-	for _, key := range []string{"OVH_ENDPOINT", "OVH_CLIENT_ID", "OVH_CLIENT_SECRET", "OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY", "APP_ML_DOMAIN", "APP_ML_MEMBERS", "APP_ML_BUREAU"} {
+	for _, key := range []string{"OVH_ENDPOINT", "OVH_CLIENT_ID", "OVH_CLIENT_SECRET", "OVH_APPLICATION_KEY", "OVH_APPLICATION_SECRET", "OVH_CONSUMER_KEY", "APP_ML_DOMAIN", "APP_ML_MEMBERS", "APP_ML_BUREAU", "APP_ML_BUREAU_TYPE"} {
 		if refs[key] != "ovh-private/"+key || valuesByName[key] != "" {
 			t.Fatalf("%s must only reference the configured Secret", key)
 		}

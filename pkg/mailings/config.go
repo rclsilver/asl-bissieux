@@ -14,6 +14,9 @@ type mailingConfig struct {
 	Domain  string
 	Members string
 	Bureau  string
+	// BureauType selects how the Bureau group is stored at OVH: "mailing-list"
+	// (default) or "redirection" (one bureau@domain redirection per recipient).
+	BureauType string `mapstructure:"bureau_type"`
 }
 
 func (c *mailingConfig) SetDefaults() { *c = mailingConfig{} }
@@ -31,9 +34,10 @@ type Config struct {
 	ConsumerKey       string `json:"consumer_key"`
 	ClientID          string `json:"client_id"`
 	ClientSecret      string `json:"client_secret"`
-	Domain           string `json:"domain"`
+	Domain            string `json:"domain"`
 	Members           string `json:"members_list"`
 	Bureau            string `json:"bureau_list"`
+	BureauType        string `json:"bureau_type"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -49,11 +53,12 @@ func LoadConfig() (*Config, error) {
 		Domain:            targets.Domain,
 		Members:           targets.Members,
 		Bureau:            targets.Bureau,
+		BureauType:        targets.BureauType,
 	}
 	if cfg == (Config{}) {
 		return nil, nil
 	}
-	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() ||!validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau {
+	if !validEndpoint(cfg.Endpoint) || !cfg.validCredentials() || !validPart(cfg.Domain) || !validPart(cfg.Members) || !validPart(cfg.Bureau) || cfg.Members == cfg.Bureau || !cfg.validBureauType() {
 		return nil, errors.New("configuration OVH incomplète ou listes invalides")
 	}
 	return &cfg, nil
@@ -85,4 +90,17 @@ func validEndpoint(endpoint string) bool {
 }
 func validPart(s string) bool {
 	return s != "" && !strings.ContainsAny(s, "/\\?#@ \t\r\n") && s != "." && s != ".."
+}
+
+const (
+	BureauMailingList = "mailing-list"
+	BureauRedirection = "redirection"
+)
+
+// UsesRedirection reports whether the Bureau group is held as OVH email
+// redirections instead of a mailing list.
+func (c *Config) UsesRedirection() bool { return c.BureauType == BureauRedirection }
+
+func (c *Config) validBureauType() bool {
+	return c.BureauType == "" || c.BureauType == BureauMailingList || c.BureauType == BureauRedirection
 }

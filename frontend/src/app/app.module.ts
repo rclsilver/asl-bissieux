@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { AppRoutingModule } from './app-routing.module';
 import { CoreModule } from './core/core.module';
 import { UsersModule } from './users/users.module';
@@ -16,6 +16,7 @@ import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
 import { LEGACY_GOOGLE_AUTH_PROVIDER } from './core/services/legacy-google-auth.service';
+import { StaleBundleErrorHandler } from './core/services/stale-bundle-error-handler';
 import { MatDialogModule } from '@angular/material/dialog';
 import {
   WithGoogleAuthConfig,
@@ -36,6 +37,7 @@ import {
   ],
   providers: [
     AuthService,
+    { provide: ErrorHandler, useClass: StaleBundleErrorHandler },
     ApiService,
     LEGACY_GOOGLE_AUTH_PROVIDER,
     {

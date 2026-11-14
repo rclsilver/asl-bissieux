@@ -15,6 +15,7 @@ import { environment } from 'src/environments/environment';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
+import { LEGACY_GOOGLE_AUTH_PROVIDER } from './core/services/legacy-google-auth.service';
 import { MatDialogModule } from '@angular/material/dialog';
 import {
   WithGoogleAuthConfig,
@@ -36,6 +37,7 @@ import {
   providers: [
     AuthService,
     ApiService,
+    LEGACY_GOOGLE_AUTH_PROVIDER,
     {
       provide: 'WithGoogleAuthConfig',
       useValue: {

@@ -209,6 +209,15 @@ statuts. Les erreurs ne contiennent pas l’URL portant le jeton. Les jetons
 expirés, destinés à un autre client ou sans compte vérifié sont refusés.
 Les rôles et permissions applicatives restent conservés dans la base.
 
+En mode Google historique, le bouton utilise le fournisseur Angular local
+`LegacyGoogleAuthService` : l’événement de connexion est émis après réception
+du jeton d’accès, puis à chaque renouvellement. Le service d’origine de
+`ngx-sign-in-with-google` émettait cet événement trop tôt et omettait les
+renouvellements. Les clés de stockage existantes sont conservées ; les jetons
+expirés et les réponses devenues obsolètes après déconnexion ou changement de
+compte sont écartés. Les validations de compte en cours sont annulées lorsque
+le jeton change. Le fournisseur OIDC conserve son parcours indépendant.
+
 ## Budgets publiés (lot 4)
 
 Règle choisie par Thomas : les dépenses et les cotisations d’un budget publié
@@ -270,7 +279,7 @@ Sur ce PC, ajouter `-p 55432` aux arguments de `psql`.
 
 ## Socle backend et images (lot 6)
 
-Le backend nécessite Go **1.27.3**. Docker et la CI utilisent la même version ;
+Le backend nécessite Go **1.27.4**. Docker et la CI utilisent la même version ;
 les images Go et Alpine **3.24.2** sont figées par version et digest. Les modules
 Go sont verrouillés par `go.mod` et `go.sum`, vérifiés avec `go mod verify`.
 `make asl-bissieux` reconstruit systématiquement un binaire statique, avec

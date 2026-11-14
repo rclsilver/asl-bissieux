@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   Observable,
   Subject,
+  Subscription,
   catchError,
   from,
   map,
@@ -28,6 +29,7 @@ export class AuthService {
   private readonly _api = inject(ApiService);
   private readonly _navigate = inject(AUTH_NAVIGATE);
   private _google?: WithGoogleAuthService;
+  private _googleSession?: Subscription;
   private _initialized = false;
   private _returnPath?: string;
 
@@ -103,9 +105,11 @@ export class AuthService {
   }
 
   private googleTokenChanged() {
+    // A response for the previous token/account must not restore stale access.
+    this._googleSession?.unsubscribe();
     const token = this._google?.getAccessToken();
     this._token$.next(token);
-    if (token) this.loadSession().subscribe();
+    if (token) this._googleSession = this.loadSession().subscribe();
     else {
       this.clearUser();
       this._loading$.next(false);

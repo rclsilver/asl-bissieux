@@ -15,6 +15,7 @@ import { environment } from 'src/environments/environment';
 import { AuthInterceptor } from './core/interceptors/auth-interceptor';
 import { ApiService } from './core/services/api.service';
 import { AuthService } from './core/services/auth.service';
+import { LEGACY_GOOGLE_AUTH_PROVIDER } from './core/services/legacy-google-auth.service';
 import { StaleBundleErrorHandler } from './core/services/stale-bundle-error-handler';
 import { MatDialogModule } from '@angular/material/dialog';
 import {
@@ -38,6 +39,7 @@ import {
     AuthService,
     { provide: ErrorHandler, useClass: StaleBundleErrorHandler },
     ApiService,
+    LEGACY_GOOGLE_AUTH_PROVIDER,
     {
       provide: 'WithGoogleAuthConfig',
       useValue: {
